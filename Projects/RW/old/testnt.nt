@@ -1,0 +1,4 @@
+Global:
+  testvar: 1
+Testing: 
+  testvar2: {{Global.testvar1}}

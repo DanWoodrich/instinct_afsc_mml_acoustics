@@ -1,0 +1,168 @@
+Global:
+  cache_root: C:/Apps/INSTINCT_2/Cache
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/16000
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+Job:
+  EventDetector:
+    parameters:
+      methodID: contour-w-slope-r-source
+      methodvers: v1-9
+      t_samp_rate: 1024
+      window_length: 132
+      overlap: 90
+      img_thresh1: 85
+      img_thresh2: 50
+      isoblur_sigma1: 1.2
+      isoblur_sigma2: 2
+      hough_slope_min: 0.25
+      hough_slope_max: 3
+      noise_thresh: 0.9
+      noise_win_length: 2.5
+      desired_slope: Upsweep
+      high_freq: 260
+      low_freq: 60
+      pix_thresh: 40
+    arguments:
+      splits: 1
+      cpu: 99
+      file_chunk_size: 20
+    descriptors:
+      runtype: lib
+      language: R
+      wrapper: True
+  FeatureExtraction:
+    parameters:
+      methodID: feat-ext-hough-light-source
+      methodvers: v1-3
+      channel_normalize: n
+      img_thresh: 75
+      isoblur_sigma: 1.5
+      overlap: 30
+      spectrogram_func: specgram
+      t_samp_rate: 1024
+      tile_axis_size: 24
+      time_min_buffer: 0
+      window_length: 50
+      zero_padding: 0
+    arguments: 
+      splits: 1
+    descriptors:
+      runtype: lib
+      language: R
+  MergeFE_AL:
+    parameters:
+      methodID: merge-fe-al-simple
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval1:
+    parameters:
+      methodID: pe1-simple
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval2:
+    parameters:
+      methodID: pe2-simple
+      methodvers: v1-3
+    descriptors:
+      runtype: lib
+      language: R
+  ApplyCutoff:
+    parameters:
+      cutoff: 0.95
+    descriptors:
+      runtype: no_method
+  AssignLabels:
+    parameters: 
+      methodID: labels-w-iou-simple
+      methodvers: v1-1
+      iou_thresh: 0.15
+    descriptors:
+      runtype: lib
+      language: R
+  TrainModel_base:
+    TrainModel:
+      parameters:
+        methodID: train-rf-simple
+        methodvers: v1-1
+        balance_tpfp: y
+        fp_multiple: 1
+        mtry: 11
+        ntree: 500
+        #these cv_ params will affect hashing, although they do not have an influence on final training
+        cv_it: 60
+        cv_split: 0.75
+    FormatFG:
+      parameters:
+        decimate_data: y
+        methodID: matlabdecimate
+        methodvers: V1s0
+        target_samp_rate: 16000
+        file_groupID:
+            - XB12_AU_TI01_reduce_GSex.csv
+            - XB13_AU_LI01_reduce_GSex.csv
+            - XB15_AU_LB01_reduce_GSex.csv
+            - XB17_AM_ES01_reduce_GSex.csv
+            - XB18_AM_OG01_reduce_GSex.csv
+            - XB18_AU_BB01_reduce_GSex.csv
+            - XB19_AM_CS01_reduce_GSex.csv
+            - DFO_mixed_train_GSex.csv
+      descriptors:
+        runtype: bin
+        language: MATLAB
+    FormatGT:
+      parameters: 
+        signal_code: GS
+      descriptors:
+        runtype: no_method
+  FormatFG:
+      parameters:
+        decimate_data: y
+        methodID: matlabdecimate
+        methodvers: V1s0
+        target_samp_rate: 16000
+        file_groupID:
+            - DFO_mixed_train_GSex.csv
+      descriptors:
+        runtype: bin
+        language: MATLAB
+  FormatGT:
+    parameters: 
+      signal_code: GS
+    descriptors:
+      runtype: no_method
+  RavenViewDETx:
+    parameters: 
+      #methodID: rv-rawdata
+      methodID: rv-simple-w-metadata
+      methodvers: v1-1
+    arguments:
+    #previously called RavenFill
+    #this shuold really be a parameter, not an argument
+      fg_fill: T
+    descriptors:
+      runtype: lib
+      language: R
+  #making this its own level to show how it will automatically override top level for ReduceGTall job
+  ReduceByField:
+    parameters:
+      methodID: reduce-by-label-and-string
+      methodvers: v1-1
+      ByFileOrCycle: File
+      ColString: Type
+      UseLabel: y
+      Label: y
+      UseString: n
+      LabelStringInt_or_Union: Union
+      String: OBS
+      StringInt_or_Union: Union
+    descriptors:
+      runtype: lib
+      language: R

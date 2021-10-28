@@ -1,0 +1,51 @@
+Global:
+  cache_root: C:/Apps/INSTINCT_2/Cache
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True or False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+  pipe_arguments:
+    Write123: 
+      #12-3 or param_based
+      arg1: 12-3
+      #defaults to base. options: down_lvl
+      arg1-1: down_lvl
+Job:
+  Writex:
+    parameters:
+      num:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+    arguments:
+    descriptors:
+  Write1:
+    parameters:
+      num: 1
+    arguments:
+    descriptors:
+  Write2:
+    parameters:
+      num: 2
+    arguments:
+    descriptors:
+  Write3:
+    parameters:
+      num: 3
+    arguments:
+    descriptors:
+  Write12:
+    Write1:
+      parameters:
+        num: 2
+      arguments:
+      descriptors:
+    Write2:
+      parameters:
+        num: 2
+      arguments:
+      descriptors:

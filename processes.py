@@ -593,8 +593,11 @@ class FormatFG(INSTINCT_process):
 
             FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
 
-            
+            self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
             #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
+
+            self.run_cmd()
+            
             command = PARAMSET_GLOBALS['project_root'] + "bin/FormatFG/" + self.parameters['methodID'] + self.parameters['methodvers']+ "/" + self.parameters['methodID']\
                       + self.parameters['methodvers'] + ".exe" + ' ' + PARAMSET_GLOBALS['SF_raw'] + ' ' + ffpPath + ' ' + self.parameters['target_samp_rate']
             print(command)

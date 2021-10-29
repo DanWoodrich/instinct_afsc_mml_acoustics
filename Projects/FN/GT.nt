@@ -14,12 +14,12 @@ Job:
         methodvers: V1s0
         target_samp_rate: 512
         file_groupID:
-          - AW12_AU_CL01_files_418-568_fn_hg
-          - AW13_AU_PH01_files_1283-1433_fn_hg
-          - BS12_AU_PM08_files_8091-8241_fn_hg
-          - AW15_AU_NM01_files_20-170_fn_hg
-          - AW15_AU_CL01_files_1-93_fn_hg
-          - BS12_AU_PM02-b_files_1-150_fn_hg
+          - AW12_AU_CL01_files_418-568_fn_hg.csv
+          - AW13_AU_PH01_files_1283-1433_fn_hg.csv
+          - BS12_AU_PM08_files_8091-8241_fn_hg.csv
+          - AW15_AU_NM01_files_20-170_fn_hg.csv
+          - AW15_AU_CL01_files_1-93_fn_hg.csv
+          - BS12_AU_PM02-b_files_1-150_fn_hg.csv
       descriptors:
         runtype: bin
         language: MATLAB

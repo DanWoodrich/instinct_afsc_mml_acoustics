@@ -5,13 +5,13 @@ design other contributor modules. For this reason, more extensive documentation 
 
 To populate your INSTINCT user folder with this module, first run in git bash
 
-bash ```
+```bash 
 git submodule update --remote --merge
 ```
 
 And then run in cmd. NOTE THAT THIS WILL OVERWRITE YOUR USER FOLDER!
 
-bash ```
+```bash 
 instinct pull_contrib instinct_afsc_mml_acoustics
 ```
 

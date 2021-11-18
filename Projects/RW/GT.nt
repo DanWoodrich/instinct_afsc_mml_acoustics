@@ -1,5 +1,5 @@
 Global:
-  cache_root: C:/Apps/INSTINCT_2/Cache
+  cache_root: C:/Apps/INSTINCT/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -31,9 +31,12 @@ Job:
         language: MATLAB
   FormatGT:
     parameters: 
+      methodID: pull-from-dbuddy
+      methodvers: v1-0
       signal_code: RW
     descriptors:
-      runtype: no_method
+      language: batch
+      runtype: lib
   RavenViewDETx:
     parameters: 
       #methodID: rv-simple-w-metadata

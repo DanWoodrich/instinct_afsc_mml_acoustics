@@ -508,31 +508,40 @@ class FormatGT(INSTINCT_process):
         return _dir,path
 
     def __init__(self, *args, **kwargs):
+
+        
         super().__init__(*args, **kwargs)
 
-        #add infile to hash
-        _dir,path = self.infile()
-
         #import code
-        #code.interact(local=locals())
-        
-        if not os.path.exists(path): #if GT file doesn't exist, create an empty file
-            GT = pd.DataFrame(columns = ["StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","label","Type","SignalCode"])
-            #import code
-            #code.interact(local=locals())
-            os.makedirs(_dir,exist_ok=True)
-            GT.to_csv(path,index=False)
+        #code.interact(local=dict(globals(), **locals()))
 
-        self._Task__hash = hash(str(self._Task__hash)+ hashfile(path))
-        self._Task__hash = int(str(self._Task__hash)[1:(1+self.hash_length)])
+        if self.descriptors["runtype"]=='no_method':
+
+            #add infile to hash
+            _dir,path = self.infile()
+            
+            if not os.path.exists(path): #if GT file doesn't exist, create an empty file
+                GT = pd.DataFrame(columns = ["StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","label","Type","SignalCode"])
+                #import code
+                #code.interact(local=locals())
+                os.makedirs(_dir,exist_ok=True)
+                GT.to_csv(path,index=False)
+
+            self._Task__hash = hash(str(self._Task__hash)+ hashfile(path))
+            self._Task__hash = int(str(self._Task__hash)[1:(1+self.hash_length)])
 
     def run(self):
         #import code
         #code.interact(local=locals())
-        GT = pd.read_csv(self.infile()[1])
+        if self.descriptors["runtype"]=='no_method':
+            GT = pd.read_csv(self.infile()[1])
 
-        GT.to_csv(self.outfilegen(),index=False,compression='gzip')
+            GT.to_csv(self.outfilegen(),index=False,compression='gzip')
+        elif self.descriptors["runtype"]=='lib':
 
+            self.cmd_args=[self.outfilegen(),self.ports[0].parameters['file_groupID'],self.param_string]
+
+            self.run_cmd()
 
 class FormatFG(INSTINCT_process):
     

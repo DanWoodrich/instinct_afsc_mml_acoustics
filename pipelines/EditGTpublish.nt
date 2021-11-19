@@ -1,0 +1,14 @@
+pipe: PublishData.pipe
+PublishData.pipe: 
+  process: PublishData
+  GetEditData:
+    pipe: ViewFileToDETx
+    pipe_link:
+      name: EditGT.nt
+  GetPriorData:
+    pipe: FormatGT.pipe
+    loop_on: FormatFG
+    FormatGT.pipe:
+      process: FormatGT
+      GetFG:
+        process: FormatFG

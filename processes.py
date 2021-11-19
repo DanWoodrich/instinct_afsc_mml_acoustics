@@ -488,12 +488,26 @@ class QueryData(INSTINCT_process):
     outfile = 'table.csv.gz' #could be FG, detx, etc, who knows
 
     def run(self):
-        #import code
-        #code.interact(local=locals())
+
         self.cmd_args=[self.outpath(),PARAMSET_GLOBALS['SF_raw'],self.outfile,self.param_string]
         
         self.run_cmd()
 
+class PublishData(INSTINCT_process):#
+
+    pipeshape = TwoUpstream_noCon
+    upstreamdef = ["GetPriorData","GetEditData"]
+
+    outfile = 'receipt.txt' #record of the database transaction
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string]
+
+        self.run_cmd()
 
 class FormatGT(INSTINCT_process):
 

@@ -1,0 +1,5 @@
+pipe: ViewDETx
+#doesn't have to use the .pipe notation as seen here
+loop_on: FormatFG
+pipe_link: 
+  name: ViewGT.nt

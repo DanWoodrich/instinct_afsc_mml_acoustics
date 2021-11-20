@@ -1,4 +1,4 @@
-MethodID<-"rv-simple-w-metadata-v1-4"
+MethodID<-"rv-simple-w-metadata-v1-5"
 
 #add argument for placeholder detections to be inserted to see every soundFile. Need it when formatting for GT, may not need it for browsing detections.
 #make formatToDets function to let this be general to either placeholder or not considered types. 
@@ -53,6 +53,12 @@ fillDat <- args[5]
 
 Dets<-read.csv(paste(DETpath,"DETx.csv.gz",sep="/"),stringsAsFactors = FALSE) #add this in 1.3 for better backwards compatability with R
 FG<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"),stringsAsFactors = FALSE)
+
+#v1-5: if commment column is present in Dets, replace NA values with ""
+
+if("Comments" %in% colnames(Dets)){
+  Dets$Comments[is.na(Dets$Comments)]<-""
+}
 
 #mandatory column names
 reqCols<-c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile")

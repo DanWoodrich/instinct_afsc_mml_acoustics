@@ -1,6 +1,5 @@
 pipe: ViewDETx
 #doesn't have to use the .pipe notation as seen here
-loop_on: FormatFG
 ViewDETx:
   process: RavenViewDETx
   GetDETx:

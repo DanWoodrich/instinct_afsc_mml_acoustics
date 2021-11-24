@@ -1,6 +1,6 @@
-pipe: PublishData.pipe
-PublishData.pipe: 
-  process: PublishData
+pipe: CompareAndPublishDets.pipe
+CompareAndPublishDets.pipe: 
+  process: CompareAndPublishDets
   GetEditData:
     pipe: ViewFileToDETx
     pipe_link:

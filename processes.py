@@ -493,7 +493,7 @@ class QueryData(INSTINCT_process):
         
         self.run_cmd()
 
-class PublishData(INSTINCT_process):#
+class CompareAndPublishDets(INSTINCT_process):#
 
     pipeshape = TwoUpstream_noCon
     upstreamdef = ["GetPriorData","GetEditData"]
@@ -574,35 +574,39 @@ class FormatFG(INSTINCT_process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        #add infile to hash
-
-        if self.ports[0]!=None:
-            self._Task__hash = hash(str(self._Task__hash)+ hashfile(self.infile()))
+        if self.descriptors["runtype"]=='no_method':
+            #add infile to hash
+            if self.ports[0]!=None:
+                self._Task__hash = hash(str(self._Task__hash)+ hashfile(self.infile()))
 
     def run(self):
 
-        #here, insert a conditional to see if there is an upstream. if so, have the upstream file take precedence over the specified one. And, insert the upstream parameter
-        #into the parameters of FormatFG.
-
-        #import code
-        #code.interact(local=locals())
-        #need to catch if querydata has been run or not. question is how I want it to behave? Default to saved FG, or newly run FG? (newly run -if querying, likely doing it for
-        #a reason!)
-
         #catch by looking for upstream
-        file = self.infile()
-        #supports additional metadata fields
-        FG_dict = file_peek(file,fn_type = object,fp_type = object,st_type = object,dur_type = 'float64')
-        FG = pd.read_csv(file, dtype=FG_dict)
-        FG['StartTime'] = pd.to_datetime(FG['StartTime'], format='%y%m%d-%H%M%S')
-        #import code
-        #code.interact(local=locals())
-       # FG['FullPath']="/" + self.parameters['target_samp_rate'] +pd.Series(FG["FullPath"], dtype="string")
-        #import code
-        #code.interact(local=locals())
-        FG=get_difftime(FG)
+        if self.descriptors["runtype"]=='no_method':
+            file = self.infile()
+            FG_dict = file_peek(file,fn_type = object,fp_type = object,st_type = object,dur_type = 'float64')
+            FG = pd.read_csv(file, dtype=FG_dict)
+            
+        elif self.descriptors["runtype"]=='lib':
 
-        if self.parameters['decimate_data'] == 'y':
+            temppath = self.outpath()+"/tempFG.csv.gz"
+
+            self.cmd_args=[temppath,self.parameters['file_groupID']]
+
+            self.run_cmd()
+
+            FG_dict = file_peek(temppath,fn_type = object,fp_type = object,st_type = object,dur_type = 'float64')
+            FG = pd.read_csv(temppath, dtype=FG_dict)
+
+            os.remove(temppath)
+            
+        #supports additional metadata fields
+        
+        FG['StartTime'] = pd.to_datetime(FG['StartTime'], format='%y%m%d-%H%M%S')
+
+        FG=get_difftime(FG)
+        
+        if 'decimate_data' in self.parameters and self.parameters['decimate_data'] == 'y':
             #if decimating, run decimate. Check will matter in cases where MATLAB supporting library is not installed.
             #note that this can be pretty slow if not on a VM! Might want to figure out another way to perform this
             #to speed up if running on slow latency.
@@ -616,6 +620,21 @@ class FormatFG(INSTINCT_process):
 
             FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
 
+            #this is a little hacky- reset descriptors and methods vars to reflect the decimation method.
+
+            #import code
+            #code.interact(local=dict(globals(), **locals()))
+
+            #'unfreeze' parameters and descriptors. Couldn't hurt anything right? 
+
+            self.parameters = dict(self.parameters)
+            self.descriptors = dict(self.descriptors)
+
+            self.parameters['methodID']=self.parameters['methodID2m']
+            self.parameters['methodvers']=self.parameters['methodvers2m']
+            self.descriptors['runtype']=self.descriptors['runtype2m']
+            self.descriptors['language']=self.descriptors['language2m']
+            
             self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
             #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
 

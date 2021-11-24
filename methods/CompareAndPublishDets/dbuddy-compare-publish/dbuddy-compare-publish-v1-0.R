@@ -1,6 +1,6 @@
-MethodID<-"push-to-dbuddy-v1-0"
+MethodID<-"dbuddy-compare-publish-v1-0"
 
-args="C:/Apps/INSTINCT/Cache/125353/639236/923571/891474/735868/168456 C:/Apps/INSTINCT/Cache/696361/979514/299372 C:/Apps/INSTINCT/Cache/125353/639236/923571/891474/735868/168456/492245  push-to-dbuddy-v1-0"
+args="C:/Apps/INSTINCT/Cache/809545/548038/950334/563707/279418 C:/Apps/INSTINCT/Cache/809545/548038 C:/Apps/INSTINCT/Cache/809545/548038/950334/563707/279418/227655  dbuddy-compare-publish-v1-0"
 
 args<-strsplit(args,split=" ")[[1]]
 

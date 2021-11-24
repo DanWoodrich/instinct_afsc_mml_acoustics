@@ -8,28 +8,36 @@ Global:
   Wrapper: False
 Job:
   FormatFG:
-      parameters:
-        decimate_data: y
-        methodID: matlabdecimate
-        methodvers: V1s0
-        #target_samp_rate: 4096
-        target_samp_rate: 2048
-        file_groupID:
-          #- DFO_mixed_train_GSex.csv
-          #- XB17_AM_ES01_reduce_GSex.csv
-          #- XB18_AU_BB01_reduce_GSex.csv
-          #- XB18_AM_OG01_reduce_GSex.csv
-          #- XB19_AM_CS01_reduce_GSex.csv
-          #- XB15_AU_LB01_reduce_GSex.csv
-          - XB12_AU_TI01_reduce_GSex.csv
-          #- XB13_AU_LI01_reduce_GSex.csv
-          #- DFO_neg_train_GSex.csv
-      descriptors:
-        runtype: bin
-        language: MATLAB
+    #this process has 2 methods, which isn't offically supported. If you have a process with >1 method need to do more modification of process
+    parameters:
+      decimate_data: y
+      methodID: dbuddy-pull-FG
+      methodvers: v1-0
+      methodID2m: matlabdecimate
+      methodvers2m: V1s0
+      #target_samp_rate: 4096
+      target_samp_rate: 2048
+      file_groupID:
+        #- DFO_mixed_train_GSex.csv
+        - XB17_AM_ES01_reduce_GSex.csv
+        #- XB18_AU_BB01_reduce_GSex.csv
+        #- XB18_AM_OG01_reduce_GSex.csv
+        #- XB19_AM_CS01_reduce_GSex.csv
+        #- XB15_AU_LB01_reduce_GSex.csv
+        #- XB12_AU_TI01_reduce_GSex.csv
+        #- XB13_AU_LI01_reduce_GSex.csv
+        #- DFO_neg_train_GSex.csv
+    arguments: 
+      rerun_key: 0
+      hard_rerun: n
+    descriptors:
+      language: batch
+      runtype: lib
+      runtype2m: bin
+      language2m: MATLAB
   FormatGT:
     parameters: 
-      methodID: pull-from-dbuddy
+      methodID: dbuddy-pull-GT
       methodvers: v1-0
       signal_code: GS
     arguments: 
@@ -88,9 +96,9 @@ Job:
       hard_rerun: n
     descriptors:
       runtype: no_method
-  PublishData:
+  CompareAndPublishDets:
     parameters:
-      methodID: push-to-dbuddy
+      methodID: dbuddy-compare-publish
       methodvers: v1-0
     descriptors:
       language: R

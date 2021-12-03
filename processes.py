@@ -505,7 +505,7 @@ class CompareAndPublishDets(INSTINCT_process):#
         #import code
         #code.interact(local=locals())
 
-        self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.arguments['transfer_loc'],self.param_string]
 
         self.run_cmd()
 
@@ -526,10 +526,12 @@ class FormatGT(INSTINCT_process):
         
         super().__init__(*args, **kwargs)
 
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
+        #
 
         if self.descriptors["runtype"]=='no_method':
+
+            #import code
+            #code.interact(local=dict(globals(), **locals()))
 
             #add infile to hash
             _dir,path = self.infile()

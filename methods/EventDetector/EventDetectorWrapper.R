@@ -86,7 +86,7 @@ mIDind<-gregexpr("-",MethodID)[[1]][length(gregexpr("-",MethodID)[[1]])-1]
 MethodIDcut<-substr(MethodID,0,mIDind-1)
 
 #populate with needed fxns for ED
-SourcePath<-paste(ProjectRoot,"/lib/methods/EventDetector/",MethodIDcut,"/",MethodID,".R",sep="")
+SourcePath<-paste(ProjectRoot,"/lib/user/methods/EventDetector/",MethodIDcut,"/",MethodID,".R",sep="")
 source(SourcePath) 
 
 #load ED libraries: 

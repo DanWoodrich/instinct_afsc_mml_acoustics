@@ -36,7 +36,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="C:/Apps/INSTINCT/Cache/125353/639236 C:/Apps/INSTINCT/Cache/125353 C:/Apps/INSTINCT/Cache/125353/639236/660606 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 T 1 rv-simple-w-metadata v1-4"
+args="C:/Apps/INSTINCT/Cache/303067/736988 C:/Apps/INSTINCT/Cache/303067 C:/Apps/INSTINCT/Cache/303067/736988/177465 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/8192 T 1 rv-simple-w-metadata v1-5"
 args<-strsplit(args,split=" ")[[1]]
 
 args<-commandArgs(trailingOnly = TRUE)

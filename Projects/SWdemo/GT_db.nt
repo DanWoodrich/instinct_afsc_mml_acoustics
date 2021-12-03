@@ -8,46 +8,42 @@ Global:
   Wrapper: False
 Job:
   FormatFG:
-    #this process has 2 methods, which isn't offically supported. If you have a process with >1 method need to do more modification of process
-    parameters:
-      decimate_data: y
-      #methodID: dbuddy-pull-FG
-      #methodvers: v1-0
-      methodID2m: matlabdecimate
-      methodvers2m: V1s0
-      #target_samp_rate: 4096
-      target_samp_rate: 2048
-      file_groupID:
-        #- DFO_mixed_train_GSex.csv
-        #- XB17_AM_ES01_reduce_GSex.csv
-        - XB18_AU_BB01_reduce_GSex.csv
-        #- XB18_AM_OG01_reduce_GSex.csv
-        #- XB19_AM_CS01_reduce_GSex.csv
-        #- XB15_AU_LB01_reduce_GSex.csv
-        #- XB12_AU_TI01_reduce_GSex.csv
-        #- XB13_AU_LI01_reduce_GSex.csv
-        #- DFO_neg_train_GSex.csv
-    arguments: 
-      rerun_key: 0
-      hard_rerun: n
-    descriptors:
-      #language: batch
-      #seems to work with method and with no_method
-      runtype: no_method
-      runtype2m: bin
-      language2m: MATLAB
+      parameters:
+        decimate_data: y
+        methodID: dbuddy-pull-FG
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        target_samp_rate: 8192
+        file_groupID:
+          - AL16_AU_CC02_files_All_bn_hg.csv
+          - AL17_AU_CC02_files_All_bn_hg.csv
+          #- AW12_AU_CL01_files_1-384_bn_hg.csv
+          #- AW12_AU_CL01_files_385-523_bn_hg.csv
+          #- AW12_AU_KZ01_files_All_bn_hg.csv
+          #- AW13_AU_CL01_files_1-123_bn_hg.csv
+          #- AW13_AU_CL01_files_124-360_bn_hg.csv
+          #- AW13_AU_PH01_files_All_bn_hg.csv
+          #- AW13_AU_CL01_files_361-370_bn_hg.csv
+          #- AW14_AU_NM01_files_All_bn_hg.csv
+          #- AW14_AU_PH01_files_All_bn_hg.csv
+          #- CZ11_AU_IC01-03_files_All_bn_hg.csv
+      descriptors:
+        runtype: lib
+        language: batch
+        runtype2m: bin
+        language2m: MATLAB
   FormatGT:
     parameters: 
       methodID: dbuddy-pull-GT
       methodvers: v1-0
-      signal_code: GS
+      signal_code: BN
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. Recommend to walk up by 1 integer as you change
       rerun_key: 0
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
-      language: batch
-      runtype: lib
+      runtype: no_method
   RavenViewDETx:
     parameters: 
       methodID: rv-simple-w-metadata
@@ -64,7 +60,7 @@ Job:
   RavenToDETx:
     parameters: 
       methodID: rd-simple-w-metadata
-      methodvers: v1-3
+      methodvers: v1-2
     descriptors:
       runtype: lib
       language: R
@@ -100,10 +96,7 @@ Job:
   CompareAndPublishDets:
     parameters:
       methodID: dbuddy-compare-publish
-      methodvers: v1-1
-    arguments: 
-      hard_rerun: n
-      transfer_loc: //161.55.120.117/NMML_AcousticsData/Working_Folders/test_db/transfer
+      methodvers: v1-0
     descriptors:
       language: R
       runtype: lib

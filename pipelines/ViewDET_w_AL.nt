@@ -1,0 +1,20 @@
+pipe: ViewDETx
+loop_on: FormatFG
+ViewDETx:
+  process: RavenViewDETx
+  GetDETx:
+    pipe: AssignLabels.pipe
+    #loop_on: FormatFG
+    AssignLabels.pipe:
+      process: AssignLabels
+      GetDETx:
+        process: EventDetector
+      GetFG:
+        process: FormatFG
+      GetGT: 
+        process: FormatGT
+  GetFG:
+    #loop_on: FormatFG
+    pipe: FormatFG.pipe
+    FormatFG.pipe:
+      process: FormatFG

@@ -9,7 +9,7 @@ To populate your INSTINCT user folder with this module, first run in git bash
 git submodule update --remote --merge
 ```
 
-And then run in cmd. NOTE THAT THIS WILL OVERWRITE YOUR USER FOLDER!
+And then run in cmd. NOTE THAT THIS WILL OVERWRITE IDENTICALLY NAMED FILES IN YOUR USER FOLDER!
 
 ```bash 
 instinct pull_contrib instinct_afsc_mml_acoustics

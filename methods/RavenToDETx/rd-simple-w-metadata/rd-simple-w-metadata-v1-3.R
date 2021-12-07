@@ -3,16 +3,16 @@ MethodID<-"rd-simple-w-metadata-v1-2"
 #1.1: make it so any extra metadata is retained
 #1.2: include a filename arg
 
-args="C:/Apps/INSTINCT/Cache/696361/979514/942467/219053/376837 C:/Apps/INSTINCT/Cache/125353 C:/Apps/INSTINCT/Cache/696361/979514/942467/219053/376837/264251 RAVENx.txt"
+args="  C:/Apps/INSTINCT/Cache/696361/979514/942467/219053/376837/264251 RAVENx.txt"
 
 args<-strsplit(args,split=" ")[[1]]
 
 args<-commandArgs(trailingOnly = TRUE)
 
-RAVpath <- args[1]
-FGpath <-args[2]
-resultPath <- args[3]
-fileName <- args[4]
+RAVpath <- args[1] #//akc0ss-n086/NMML_CAEP_Acoustics/Detector/LF moan project/Cole Summer 2021 materials and analysis/Review of INSTINCT positive sound files/Cole data product
+FGpath <-args[2] #C:/Users/daniel.woodrich/Desktop/database/FileGroups/oneHRonePerc.csv
+resultPath <- args[3] #C:/Users/daniel.woodrich/Desktop/database/GroundTruth/LM
+fileName <- args[4]#RAVENx.txt
 
 RavGT<-read.delim(paste(RAVpath,fileName,sep="/"))
 FG<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))

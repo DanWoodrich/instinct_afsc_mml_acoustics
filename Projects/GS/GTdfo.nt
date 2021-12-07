@@ -44,7 +44,7 @@ Job:
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. Recommend to walk up by 1 integer as you change
       rerun_key: 0
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       language: batch
       runtype: lib
@@ -100,10 +100,10 @@ Job:
   CompareAndPublishDets:
     parameters:
       methodID: dbuddy-compare-publish
-      methodvers: v1-1
+      methodvers: v1-2
     arguments: 
       hard_rerun: n
-      transfer_loc: //161.55.120.117/NMML_AcousticsData/Working_Folders/test_db/transfer
+      #transfer_loc: //161.55.120.117/NMML_AcousticsData/Working_Folders/test_db/transfer
     descriptors:
       language: R
       runtype: lib

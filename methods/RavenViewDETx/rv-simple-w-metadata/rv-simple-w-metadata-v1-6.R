@@ -1,5 +1,6 @@
 MethodID<-"rv-simple-w-metadata-v1-5"
 
+#1-6: be more tolerant of extra detection data 
 #add argument for placeholder detections to be inserted to see every soundFile. Need it when formatting for GT, may not need it for browsing detections.
 #make formatToDets function to let this be general to either placeholder or not considered types. 
 
@@ -27,9 +28,8 @@ formatToDets<-function(data,data2){
   if(length(colnames(data2))>length(colnames(data))){
     
     addCols<-colnames(data2)[!(colnames(data2) %in% colnames(data))]
-    dummy<-data.frame(addCols)
-    colnames(dummy)<-addCols
-    dummy[,]<-NA
+    dummy<-setNames(data.frame(matrix(ncol = length(addCols), nrow = nrow(data))),addCols)
+    dummy[1:nrow(data),1:length(addCols)]<-NA
     data<-cbind(data,dummy)
     
   }

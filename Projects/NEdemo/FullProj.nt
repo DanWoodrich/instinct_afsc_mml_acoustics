@@ -1,5 +1,5 @@
 Global:
-  cache_root: C:/Apps/INSTINCT/Cache
+  cache_root: C:/Apps/INSTINCT_2/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -14,7 +14,6 @@ Job:
       t_samp_rate: 1024
       window_length: 132
       overlap: 90
-      #previously 85 below
       img_thresh1: 85
       img_thresh2: 50
       isoblur_sigma1: 1.2
@@ -79,13 +78,14 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0.94
+      cutoff: 0.90
     descriptors:
       runtype: no_method
   SplitForPE:
     descriptors:
       runtype: no_method
   AssignLabels:
+  #this one is used for training labels
     parameters: 
       methodID: labels-w-iou-simple
       methodvers: v1-2
@@ -96,10 +96,11 @@ Job:
       language: R
   AL_write_GT: 
       AssignLabels:
+      #this one is used for performance assessment labels
         parameters: 
           methodID: labels-w-iou-simple
           methodvers: v1-1
-          iou_thresh: 0.15
+          iou_thresh: 0.01
         descriptors:
           runtype: lib
           language: R
@@ -127,18 +128,25 @@ Job:
         methodvers2m: V1s0
         target_samp_rate: 1024
         file_groupID:
-            #- BS15_AU_PM02-a_files_1-104.csv
-            #- BS16_AU_PM02-a_files_1-175.csv
+            - BS15_AU_PM02-a_files_1-104.csv
+            - BS16_AU_PM02-a_files_1-175.csv
             - BS16_AU_PM05_files_All.csv
-            #- BS15_AU_PM04_files_301-417.csv
-            #- AL16_AU_BS01_files_All.csv
-            #- BS15_AU_PM02-b_files_All.csv
-            #- BS14_AU_PM04_files_All.csv
-            #- BS13_AU_PM04_files_All.csv
-            #- BS13_AU_PM02-a_files_All.csv
-            #- AW14_AU_BS03_files_1-160.csv
-            #- AW14_AU_BS02_filesn_All.csv
-            #- AW12_AU_BS03_files_All.csv
+            - BS15_AU_PM04_files_301-417.csv
+            - AL16_AU_BS01_files_All.csv
+            - BS15_AU_PM02-b_files_All.csv
+            - BS14_AU_PM04_files_All.csv
+            - BS13_AU_PM04_files_All.csv
+            - BS13_AU_PM02-a_files_All.csv
+            - AW14_AU_BS03_files_1-160.csv
+            - AW14_AU_BS02_files_All.csv
+            - AW12_AU_BS03_files_All.csv
+            #- NOPP6_EST_20090328_files_All.csv
+            #- NOPP6_EST_20090329_files_All.csv
+            #- NOPP6_EST_20090330_files_All.csv
+            #- NOPP6_EST_20090331_files_All.csv
+            #- NOPP6_EST_20090401_files_All.csv
+            #- NOPP6_EST_20090402_files_All.csv
+            #- NOPP6_EST_20090403_files_All.csv
       descriptors:
         runtype: no_method
         runtype2m: bin
@@ -155,8 +163,8 @@ Job:
         methodvers2m: V1s0
         target_samp_rate: 1024
         file_groupID:
-          - BS15_AU_PM02-a_files_1-104.csv
-          - BS16_AU_PM02-a_files_1-175.csv
+          #- BS15_AU_PM02-a_files_1-104.csv
+          #- BS16_AU_PM02-a_files_1-175.csv
           #- BS16_AU_PM05_files_All.csv
           #- BS15_AU_PM04_files_301-417.csv
           #- AL16_AU_BS01_files_All.csv
@@ -167,6 +175,13 @@ Job:
           #- AW14_AU_BS03_files_1-160.csv
           #- AW14_AU_BS02_files_All.csv
           #- AW12_AU_BS03_files_All.csv
+          - NOPP6_EST_20090328_files_All.csv
+          - NOPP6_EST_20090329_files_All.csv
+          - NOPP6_EST_20090330_files_All.csv
+          - NOPP6_EST_20090331_files_All.csv
+          - NOPP6_EST_20090401_files_All.csv
+          - NOPP6_EST_20090402_files_All.csv
+          - NOPP6_EST_20090403_files_All.csv
       descriptors:
         runtype: no_method
         runtype2m: bin
@@ -174,12 +189,15 @@ Job:
   FormatGT:
     parameters: 
       signal_code: RW
+    arguments: 
+      rerun_key: 1
+      hard_rerun: n
     descriptors:
       runtype: no_method
   RavenViewDETx:
     parameters: 
       methodID: rv-simple-w-metadata
-      methodvers: v1-1
+      methodvers: v1-6
     arguments:
     #previously called RavenFill
     #this shuold really be a parameter, not an argument
@@ -192,22 +210,6 @@ Job:
     parameters: 
       methodID: rd-simple-w-metadata
       methodvers: v1-2
-    descriptors:
-      runtype: lib
-      language: R
-  #making this its own level to show how it will automatically override top level for ReduceGTall job
-  ReduceByField:
-    parameters:
-      methodID: reduce-by-label-and-string
-      methodvers: v1-1
-      ByFileOrCycle: File
-      ColString: Type
-      UseLabel: y
-      Label: y
-      UseString: n
-      LabelStringInt_or_Union: Union
-      String: OBS
-      StringInt_or_Union: Union
     descriptors:
       runtype: lib
       language: R

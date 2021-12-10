@@ -1,0 +1,24 @@
+pipe: AssignLabels.pipe
+params_drop: AL_write_GT
+AssignLabels.pipe:
+  process: AssignLabels
+  GetDETx:
+    pipe: ApplyCutoff.pipe
+    ApplyCutoff.pipe: 
+      process: ApplyCutoff
+      GetDETx:
+        pipe: SplitForPE.pipe
+        SplitForPE.pipe:
+          process: SplitForPE
+          GetFG:
+            process: FormatFG
+          GetModel_w_probs:
+            pipe: TrainModel_RF_CV.pipe
+            # resets the AL drop from earlier
+            params_drop: Job-TrainModel_paramset
+            pipe_link: 
+              name: TrainModel_CV.nt
+  GetFG:
+    process: FormatFG
+  GetGT: 
+    process: FormatGT

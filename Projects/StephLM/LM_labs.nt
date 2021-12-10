@@ -1,0 +1,100 @@
+Global:
+  cache_root: C:/Apps/INSTINCT/Cache
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+Job:
+  FormatFG:
+    #this process has 2 methods, which isn't offically supported. If you have a process with >1 method need to do more modification of process
+    parameters:
+      decimate_data: y
+      methodID: dbuddy-pull-FG
+      methodvers: v1-0
+      methodID2m: matlabdecimate
+      methodvers2m: V1s0
+      #target_samp_rate: 4096
+      target_samp_rate: 512
+      file_groupID:
+       #original ground truth: (Analysis id 10)
+        #- BS13_AU_PM02-a_files_38-122_lm.csv
+        #- BS13_AU_PM02-a_files_343-408_lm.csv
+        #- BS13_AU_PM02-a_files_510-628_lm.csv
+        #- BS14_AU_PM04_files_45-188_lm.csv
+        #- BS14_AU_PM04_files_189-285_lm.csv
+        #- BS14_AU_PM04_files_304-430_lm.csv
+       #Cole random review analysis (Analysis id 8)
+        #- oneHRonePerc.csv
+       #Cole review of SFs with INSTINCT positives (Analysis id 7)
+        #- LMyesSample_1.csv
+    arguments: 
+      rerun_key: 0
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: batch
+      #seems to work with method and with no_method
+      #runtype: no_method
+      runtype2m: bin
+      language2m: MATLAB
+  FormatGT:
+    parameters:
+      #specify any combination of restrictions on pull
+      methodID: R-pull-dbuddy-anyparam
+      methodvers: v1-0
+      #any combination of the below
+      SignalCode: LM
+      Analysis_ID: 10
+      Type: i_neg
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. Recommend to walk up by 1 integer as you change
+      rerun_key: 0
+      hard_rerun: y
+    descriptors:
+      language: R
+      runtype: lib
+  RavenViewDETx:
+    parameters: 
+      methodID: rv-simple-w-metadata
+      methodvers: v1-6
+      #methodID: rv-rawdata
+    arguments:
+    #previously called RavenFill
+    #this shuold really be a parameter, not an argument
+    #I should change this to y/n to be more consistent with other parameters
+      fg_fill: T
+    descriptors:
+      runtype: lib
+      language: R
+  RavenToDETx:
+    parameters: 
+      methodID: rd-simple-w-metadata
+      methodvers: v1-3
+    descriptors:
+      runtype: lib
+      language: R
+  #making this its own level to show how it will automatically override top level for ReduceGTall job
+  EditRAVENx:
+    #this process always has an instructions parameter. changing these will change hash
+    parameters: 
+      instructions:
+        > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+        > Review the contents for correctness, adding, modifying, or deleting as necessary.
+        > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+      rerun_key: 0
+      hard_rerun: n
+    descriptors:
+      runtype: no_method
+  CompareAndPublishDets:
+    parameters:
+      methodID: dbuddy-compare-publish
+      methodvers: v1-2
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      language: R
+      runtype: lib

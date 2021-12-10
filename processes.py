@@ -547,15 +547,17 @@ class FormatGT(INSTINCT_process):
             self._Task__hash = int(str(self._Task__hash)[1:(1+self.hash_length)])
 
     def run(self):
-        #import code
-        #code.interact(local=locals())
+        
         if self.descriptors["runtype"]=='no_method':
             GT = pd.read_csv(self.infile()[1])
 
             GT.to_csv(self.outfilegen(),index=False,compression='gzip')
         elif self.descriptors["runtype"]=='lib':
 
-            self.cmd_args=[self.outfilegen(),self.ports[0].parameters['file_groupID'],self.param_string]
+            #import code
+            #code.interact(local=locals())
+
+            self.cmd_args=[self.outfilegen(),self.ports[0].parameters['file_groupID'],get_param_names(self.parameters),self.param_string]
 
             self.run_cmd()
 

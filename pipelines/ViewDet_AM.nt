@@ -1,0 +1,14 @@
+pipe: ViewDETx
+params_drop: TrainModel_paramset
+loop_on: FormatFG
+ViewDETx:
+  process: RavenViewDETx
+  GetDETx:
+    pipe: AssignLabels.pipe
+    pipe_link: 
+      name: AL_fromCV.nt
+  GetFG:
+    #loop_on: FormatFG
+    pipe: FormatFG.pipe
+    FormatFG.pipe:
+      process: FormatFG

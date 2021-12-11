@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Rprof.out
+.RDataTmp
+.Rhistory
+.Rprofile
+.idea
+__pycache__/
+
+Projects/StephLM/*

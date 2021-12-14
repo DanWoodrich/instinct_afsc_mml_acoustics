@@ -2,7 +2,7 @@ MethodID<-"rd-simple-w-metadata-v1-2"
 
 #1.1: make it so any extra metadata is retained
 #1.2: include a filename arg
-stop("This method is severly bugged. Do not use")
+
 args="C:/Apps/INSTINCT/Cache/472139/10624/538084/545708 C:/Apps/INSTINCT/Cache/472139 C:/Apps/INSTINCT/Cache/472139/10624/538084/545708/725967 RAVENx.txt"
 
 args<-strsplit(args,split=" ")[[1]]
@@ -62,7 +62,7 @@ RaVGTFG$StartTime<-RaVGTFG$FileOffset
 RaVGTFG$EndTime<-RaVGTFG$StartTime+RaVGTFG$DeltaTime
 
 #at the end, do a check if any end times are > duration (from FG). If so, subtract them by FG duration. 
-RaVGTFG$EndTime[which(RaVGTFG$EndTime>RaVGTFG$Duration)]<-RaVGTFG$EndTime-RaVGTFG$Duration
+RaVGTFG$EndTime[which(RaVGTFG$EndTime>RaVGTFG$Duration)]<-RaVGTFG$EndTime[which(RaVGTFG$EndTime>RaVGTFG$Duration)]-RaVGTFG$Duration[which(RaVGTFG$EndTime>RaVGTFG$Duration)]
 
 #remove unnecessary non metadata columns. 
 

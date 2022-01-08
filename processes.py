@@ -595,7 +595,7 @@ class FormatFG(INSTINCT_process):
 
             temppath = self.outpath()+"/tempFG.csv.gz"
 
-            self.cmd_args=[temppath,self.parameters['file_groupID']]
+            self.cmd_args=[temppath,self.parameters['file_groupID'],get_param_names(self.parameters),self.param_string]
 
             self.run_cmd()
 

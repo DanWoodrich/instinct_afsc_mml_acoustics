@@ -1,9 +1,10 @@
-MethodID<-"rv-rawdata-v1-3"
+MethodID<-"rv-rawdata-v1-4"
 
 #Note, this method on randomly sampled data will not be compatible with Raven Pro if different sample rates are encountered! 
 #otherwise same method as rv-simple-w-metadata-v1-2
 #attempt a bugfix where negative effort was incorrectly assigned. 
-
+# v1-4 bugfix where there was a mismatch between frames constructed from start and end files- check end file frame to make sure
+#there aren't included files outside of FG effort. 
 
 #add argument for placeholder detections to be inserted to see every soundFile. Need it when formatting for GT, may not need it for browsing detections.
 #make formatToDets function to let this be general to either placeholder or not considered types. 
@@ -190,6 +191,9 @@ DetsFG$EndTime<-DetsFG$StartTime+DetsFG$DeltaTime
 colnames(FG)[which(colnames(FG)=="StartFile")]<-"EndFile"
 EFFP<-merge(Dets,FG,by="EndFile")
 EFFP<-EFFP[order(EFFP$StartFile,EFFP$StartTime),]
+
+#make sure it contains the same files. v1-4
+EFFP<-EFFP[which(EFFP$StartFile %in% FG$EndFile),]
 
 if(nrow(DetsFG)>=1){
   DetsFG$StartFile<-paste(dataPath,DetsFG$FullPath,DetsFG$StartFile,sep="")

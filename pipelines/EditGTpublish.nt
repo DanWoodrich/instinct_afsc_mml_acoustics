@@ -6,9 +6,28 @@ CompareAndPublishDets.pipe:
     pipe_link:
       name: EditGT.nt
   GetPriorData:
-    pipe: FormatGT.pipe
-    loop_on: FormatFG
-    FormatGT.pipe:
-      process: FormatGT
+  #changed this from FormatGT so that data that was left off due to lower effort isn't treated as a deletion. 
+    pipe: ViewFileToDETx
+    ViewFileToDETx:
+      process: RavenToDETx
+      GetViewFile:
+        pipe: ViewDETx
+        ViewDETx:
+          process: RavenViewDETx
+          GetDETx:
+            pipe: FormatGT.pipe
+            loop_on: FormatFG
+            FormatGT.pipe:
+              process: FormatGT
+              GetFG:
+                process: FormatFG
+          GetFG:
+            loop_on: FormatFG
+            pipe: FormatFG.pipe
+            FormatFG.pipe:
+              process: FormatFG
       GetFG:
-        process: FormatFG
+        loop_on: FormatFG
+        pipe: FormatFG.pipe
+        FormatFG.pipe:
+          process: FormatFG

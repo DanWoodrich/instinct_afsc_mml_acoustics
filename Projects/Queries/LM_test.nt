@@ -10,13 +10,17 @@ Job:
   FormatFG:
     #this process has 2 methods, which isn't offically supported. If you have a process with >1 method need to do more modification of process
     parameters:
-      decimate_data: n
+      decimate_data: y
       methodID: dbuddy-FG-from-query
       methodvers: v1-0
+      SignalCode: LM
+      Analysis_ID: 5
+      Type: DET
+      Comments: %2H%
       methodID2m: matlabdecimate
       methodvers2m: V1s0
-      #target_samp_rate: 4096
-      target_samp_rate: 512
+      target_samp_rate: 4096
+      #target_samp_rate: 512
       file_groupID:
        #original ground truth: (Analysis id 10)
         #- BS13_AU_PM02-a_files_38-122_lm.csv
@@ -35,10 +39,10 @@ Job:
         - test.csv
     arguments: 
       rerun_key: 0
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       runtype: lib
-      language: batch
+      language: R
       #seems to work with method and with no_method
       #runtype: no_method
       runtype2m: bin
@@ -47,12 +51,13 @@ Job:
     parameters:
       #specify any combination of restrictions on pull
       methodID: R-pull-dbuddy-anyparam
-      methodvers: v1-1
+      methodvers: v1-2
+      UseFG: n
       #any combination of the below
       SignalCode: LM
-      Analysis_ID: 5
+      #Analysis_ID: 5
       Type: DET
-      #label: y
+      Comments: %2H%
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. Recommend to walk up by 1 integer as you change
       rerun_key: 0
@@ -62,10 +67,10 @@ Job:
       runtype: lib
   RavenViewDETx:
     parameters: 
-      #methodID: rv-simple-w-metadata
-      #methodvers: v1-6
-      methodID: rv-rawdata
-      methodvers: v1-2
+      methodID: rv-simple-w-metadata
+      methodvers: v1-6
+      #methodID: rv-rawdata
+      #methodvers: v1-3
     arguments:
     #previously called RavenFill
     #this shuold really be a parameter, not an argument
@@ -92,7 +97,7 @@ Job:
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
       rerun_key: 0
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: no_method
   CompareAndPublishDets:

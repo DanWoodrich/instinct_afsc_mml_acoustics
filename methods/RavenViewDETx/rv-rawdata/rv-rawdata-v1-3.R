@@ -1,7 +1,8 @@
-MethodID<-"rv-rawdata-v1-2"
+MethodID<-"rv-rawdata-v1-3"
 
 #Note, this method on randomly sampled data will not be compatible with Raven Pro if different sample rates are encountered! 
 #otherwise same method as rv-simple-w-metadata-v1-2
+#attempt a bugfix where negative effort was incorrectly assigned. 
 
 #add argument for placeholder detections to be inserted to see every soundFile. Need it when formatting for GT, may not need it for browsing detections.
 #make formatToDets function to let this be general to either placeholder or not considered types. 
@@ -124,7 +125,7 @@ outNeg<-foreach(i=1:length(allFiles)) %do% {
   segVec<-c(0,segVec,segs$Duration[1])
   segVec<-segVec[which(!(duplicated(segVec)|duplicated(segVec,fromLast = TRUE)))]
   
-  if(length(segVec)>0){
+  if(length(segVec)>0&!all(segVec==0)){
     outs<-foreach(f=seq(1,length(segVec),2)) %do% {
       segsRow<-c(segVec[f],segVec[f+1],0,5000,segs$FileName[1],segs$FileName[1],NA,"Not Considered",NA)
       return(segsRow)

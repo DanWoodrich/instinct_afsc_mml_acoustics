@@ -53,11 +53,12 @@ Job:
       #specify any combination of restrictions on pull
       methodID: R-pull-dbuddy-anyparam
       methodvers: v1-2
+      #UseFG controls whether FG is one of the parameters used for the pull. 
       UseFG: n
       #any combination of the below
       SignalCode: LM
-      Analysis_ID: 5
-      Type: DET
+      #Analysis_ID: 5
+      #Type: DET
       #Comments: %scream%
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. Recommend to walk up by 1 integer as you change
@@ -69,7 +70,7 @@ Job:
   RavenViewDETx:
     parameters: 
       methodID: rv-simple-w-metadata
-      methodvers: v1-6
+      methodvers: v1-7
       #methodID: rv-rawdata
       #methodvers: v1-3
     arguments:

@@ -55,10 +55,10 @@ Job:
       methodvers: v1-2
       UseFG: n
       #any combination of the below
-      #SignalCode: LM
+      SignalCode: LM
       #Analysis_ID: 5
       #Type: DET
-      Comments: %scream%
+      #Comments: %scream%
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. Recommend to walk up by 1 integer as you change
       rerun_key: 0

@@ -1,0 +1,226 @@
+#this is a vers of the gunshot model specialized to DFO 
+#needs: 
+#old params (this has RW params)
+#up to date methods for raven conversion etc
+
+Global:
+  cache_root: C:/Apps/INSTINCT/Cache
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+Job:
+  EventDetector:
+    parameters:
+      methodID: contour-w-slope-r-source
+      methodvers: v1-13
+      t_samp_rate: 1024
+      window_length: 50
+      overlap: 40
+      img_thresh1: 80
+      img_thresh2: 80
+      isoblur_sigma1: 1.1
+      isoblur_sigma2: 2
+      hough_slope_min: -1
+      hough_slope_max: -Inf
+      noise_thresh: 0.9
+      noise_win_length: 2
+      desired_slope: Downsweep
+      high_freq: 500
+      low_freq: 50
+      pix_thresh: 100
+      combine_dets = y
+      combine_int = 0.5
+    arguments:
+      splits: 1
+      cpu: 99
+      file_chunk_size: 20
+    descriptors:
+      runtype: lib
+      language: R
+      wrapper: True
+  FeatureExtraction:
+    parameters:
+      methodID: feat-ext-hough-light-source
+      methodvers: v1-4
+      channel_normalize: y
+      img_thresh: 85
+      isoblur_sigma: 0.75
+      overlap: 50
+      spectrogram_func: specgram
+      t_samp_rate: 1024
+      tile_axis_size: 96
+      time_min_buffer: 1.2
+      window_length: 70
+      zero_padding: 0
+    arguments: 
+      splits: 1
+      cpu: 99
+    descriptors:
+      runtype: lib
+      language: R
+      wrapper: True
+  MergeFE_AL:
+    parameters:
+      methodID: merge-fe-al-simple
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval1*:
+    parameters:
+      methodID: pe1-simple
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval2:
+    parameters:
+      methodID: pe2-simple
+      methodvers: v1-6
+    descriptors:
+      runtype: lib
+      language: R
+  ApplyCutoff:
+    parameters:
+      cutoff: 0.95
+    descriptors:
+      runtype: no_method
+  SplitForPE:
+    descriptors:
+      runtype: no_method
+  AssignLabels:
+    parameters: 
+      methodID: labels-w-iou-simple
+      methodvers: v1-1
+      iou_thresh: 0.01
+      write_GT: n
+    descriptors:
+      runtype: lib
+      language: R
+  AL_write_GT: 
+      AssignLabels:
+        parameters: 
+          methodID: labels-w-iou-simple
+          methodvers: v1-1
+          iou_thresh: 0.15
+        descriptors:
+          runtype: lib
+          language: R
+  TrainModel_paramset:
+    TrainModel_RF*:
+      parameters:
+        methodID: train-rf-simple
+        methodvers: v1-1
+        balance_tpfp: y
+        fp_multiple: 1
+        mtry: 11
+        ntree: 500
+        #these cv_ params will affect hashing, although they do not have an influence on final training
+        cv_it: 60
+        cv_split: 0.75
+      arguments:
+        cpu: 99
+      descriptors:
+        runtype: lib
+        language: R
+    FormatFG:
+      parameters:
+        decimate_data: y
+        methodID: dbuddy-pull-FG
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        #target_samp_rate: 4096
+        target_samp_rate: 2048
+        file_groupID:
+          - AL16_AU_BS03_files_77-170.csv
+          - AW12_AU_BS03_files_1-250.csv
+          - AW12_AU_BS03_files_1464-1507.csv
+          - AW14_AU_BS03_files_1-71.csv
+          - AW14_AU_BS03_files_309-369.csv
+          - AW15_AU_BS02_files_33-103.csv
+          - AW15_AU_BS03_files_705-749.csv
+          - BS12_AU_PM02-a_files_1-46.csv
+          - BS12_AU_PM02-b_files_689-747.csv
+          - BS13_AU_PM04_files_137-224.csv
+          - BS14_AU_PM04_files_74-148.csv
+      descriptors:
+        runtype: lib
+        language: batch
+        runtype2m: bin
+        language2m: MATLAB
+    FormatGT:
+      parameters: 
+        methodID: dbuddy-pull-GT
+        methodvers: v1-2
+        signal_code: GS
+      descriptors:
+        language: batch
+        runtype: lib
+  FormatFG:
+      parameters:
+        decimate_data: y
+        methodID: dbuddy-pull-FG
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        #target_samp_rate: 4096
+        target_samp_rate: 2048
+        file_groupID:
+          - DFO_mixed_train_GSex.csv
+          - XB17_AM_ES01_reduce_GSex.csv
+          - XB18_AU_BB01_reduce_GSex.csv
+          - XB18_AM_OG01_reduce_GSex.csv
+          - XB19_AM_CS01_reduce_GSex.csv
+          - XB15_AU_LB01_reduce_GSex.csv
+          - XB12_AU_TI01_reduce_GSex.csv
+          - XB13_AU_LI01_reduce_GSex.csv
+          - DFO_neg_train_GSex.csv
+      descriptors:
+        runtype: lib
+        language: batch
+        runtype2m: bin
+        language2m: MATLAB
+  FormatGT:
+    parameters: 
+      methodID: dbuddy-pull-GT
+      methodvers: v1-2
+      signal_code: GS
+    descriptors:
+      language: batch
+      runtype: lib
+  RavenViewDETx:
+    parameters: 
+      methodID: rv-simple-w-metadata
+      methodvers: v1-7
+    arguments:
+    #previously called RavenFill
+    #this shuold really be a parameter, not an argument
+    #I should change this to y/n to be more consistent with other parameters
+      fg_fill: T
+    descriptors:
+      runtype: lib
+      language: R
+  RavenToDETx:
+    parameters: 
+      methodID: rd-simple-w-metadata
+      methodvers: v1-4
+    descriptors:
+      runtype: lib
+      language: R
+  EditRAVENx:
+    #this process always has an instructions parameter. changing these will change hash
+    parameters: 
+      instructions:
+        > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+        > Review the contents for correctness, adding, modifying, or deleting as necessary.
+        > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+      rerun_key: 1
+      hard_rerun: n
+    descriptors:
+      runtype: no_method

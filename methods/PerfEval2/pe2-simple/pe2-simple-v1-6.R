@@ -8,7 +8,7 @@ library(flux)
 #v1-6: remove specification of All/FG, have it only be routed from single row or combined rows. Add curvename, since will be distinguishing these by context of plots 
 #probably will edit this to be a title later, so more publication ready. Or, make a publication read vers of this later. 
 
-args<-"C:/Apps/INSTINCT_2/Cache/15825/722018/417226/714185/419040/832221/671136 C:/Apps/INSTINCT_2/Cache/15825/722018/417226/714185/419040/832221/671136/605862 C:/Apps/INSTINCT_2/Cache/260731/376459/848644"
+args<-"C:/Apps/INSTINCT/Cache/809545/410308/30699/562853 C:/Apps/INSTINCT/Cache/809545/410308/30699/562853/918553 C:/Apps/INSTINCT/Cache/743615/937472/124470/678362/150214/895258"
 
 args<-strsplit(args,split=" ")[[1]]
 

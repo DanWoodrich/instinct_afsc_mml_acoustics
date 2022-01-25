@@ -2,15 +2,18 @@
 #use IoU criteria: area of overlap over area of union 
 
 #set these variables in all containers:
-MethodID<-"labels-w-iou-simple-v1-1"
+MethodID<-"labels-w-iou-simple-v1-3"
 
 #v1-1
 #change how FG duration is calculated
 #clean up condition to test for IOU (still could do a lot of work here to optimize)
 #fix bug in determining if intersection is present.
-#
+#v1-2:
+#add a parameter to control whether GT is written to the data. 
+#v1-3: 
+#fix a bug where wasn't properly reordering FG to match other data. 
 
-args<-"C:/Apps/INSTINCT/Cache/634529 C:/Apps/INSTINCT/Cache/634529/375435 C:/Apps/INSTINCT/Cache/368058/842895/111653/459292/755689/658180/464092 C:/Apps/INSTINCT/Cache/634529/375435/289417 0.01 labels-w-iou-simple-v1-1"
+args<-"C:/Apps/INSTINCT/Cache/684057 C:/Apps/INSTINCT/Cache/684057/491587 C:/Apps/INSTINCT/Cache/684057/513213 C:/Apps/INSTINCT/Cache/684057/491587/187680 0.15 n labels-w-iou-simple-v1-3"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -32,6 +35,8 @@ GTpath <- args[2]
 DETpath <- args[3]
 resultPath <- args[4]
 IoUThresh<-args[5]
+WriteGT<-args[6]
+
 
 GTdata<-read.csv(paste(GTpath,"DETx.csv.gz",sep="/"))
 FGdata<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))
@@ -40,29 +45,42 @@ FGdata<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))
 
 #FGdata<-FGdata[which()]
 
-outDataAll<-read.csv(paste(DETpath,"DETx.csv.gz",sep="/"))
-
-#retain probs
-if("probs" %in% colnames(outDataAll)){
-  outDataAll<-outDataAll[,c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","probs")]
-  mergeProbsBack =TRUE
-}else{
-  mergeProbsBack=FALSE
-}
-
-#extract necessary info
-outData<-outDataAll[,c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile")]
+outData<-read.csv(paste(DETpath,"DETx.csv.gz",sep="/"))
 
 #Probabalistic<-FALSE
 #introduce this in most sensible way once we get to 
 
-#order datasets: 
-GTdata<-GTdata[order(GTdata$StartFile,GTdata$StartTime),]
-outData<-outData[order(outData$StartFile,outData$StartTime),]
+
+
+
+#order datasets: v1-3, do it by FG order
+
+
+FGdata$order<-1:nrow(FGdata)
+
+FGdata$StartFile = FGdata$FileName
+
+#just used for purposes of ordering: removes duplicated sfs
+if(any(duplicated(FGdata$StartFile))){ #1-3 stealth change
+  FGdataOrd = FGdata[-which(duplicated(FGdata$StartFile)),]
+  
+}else{
+  FGdataOrd=FGdata
+}
+
+outData<-merge(outData,FGdataOrd[,c("order","StartFile")],by="StartFile")
+GTdata<-merge(GTdata,FGdataOrd[,c("order","StartFile")],by="StartFile")
+
+GTdata<-GTdata[order(GTdata$order,GTdata$StartFile,GTdata$StartTime),]
+outData<-outData[order(outData$order,outData$StartFile,outData$StartTime),]
+
+GTdata$order=NULL
+outData$order=NULL
 
 FGdata$FileName<-as.character(FGdata$FileName)
 GTdata$StartFile<-as.character(GTdata$StartFile)
 GTdata$EndFile<-as.character(GTdata$EndFile)
+
 
 FGdata$cumsum<- c(0,cumsum(FGdata$Duration)[1:(nrow(FGdata)-1)])
 
@@ -193,10 +211,7 @@ outLong$iou<-NULL
 outLong$SignalCode<-'out'
 
 #add back in probs if present
-if(mergeProbsBack){
-  outDataAll<-outDataAll[order(outDataAll$StartFile,outDataAll$StartTime),]
-  outLong$probs<-outDataAll$probs
-  
+if("probs" %in% colnames(outLong)){
   if(nrow(GTlong)>0){
     GTlong$probs<-NA
   }else{
@@ -212,6 +227,14 @@ CombineTab<-rbind(GTlong[,cols],outLong[,cols])
 CombineTab<-CombineTab[order(CombineTab$StartFile,CombineTab$StartTime),]
 
 outName<-paste("DETx.csv.gz",sep="_")
+
+#v1-2:
+if(WriteGT=="n"){
+  CombineTab<-CombineTab[which(CombineTab$SignalCode=='out'),]
+  #remove GT rows
+  CombineTab$SignalCode<-NULL
+  #remove signal code column- assumed these are 'out' 
+}
 
 write.csv(CombineTab,gzfile(paste(resultPath,outName,sep="/")),row.names = FALSE)
 

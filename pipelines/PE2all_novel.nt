@@ -7,5 +7,6 @@ PerfEval2.pipe:
       name: EDperfEval.nt
   GetModel_w_probs:
     pipe: AssignLabels.pipe
+    loop_on: FormatFG
     pipe_link: 
       name: RF_apply_on_GT.nt

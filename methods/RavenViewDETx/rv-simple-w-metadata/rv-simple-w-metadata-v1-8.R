@@ -1,8 +1,10 @@
-MethodID<-"rv-simple-w-metadata-v1-7"
+MethodID<-"rv-simple-w-metadata-v1-8"
 
 #1-6: be more tolerant of extra detection data 
 #add argument for placeholder detections to be inserted to see every soundFile. Need it when formatting for GT, may not need it for browsing detections.
 #make formatToDets function to let this be general to either placeholder or not considered types. 
+
+#1-8 fix bug where EFFP was reordering differently than DetsFG (didn't use FG order)
 
 library(foreach)
 
@@ -166,7 +168,6 @@ DetsFG<-merge(Dets,FG,by="StartFile")
 #reorder to original order
 DetsFG<-DetsFG[order(DetsFG$order),]
 
-FG$order<-NULL
 DetsFG$order<-NULL
 
 #calculate delta time for each detection
@@ -194,13 +195,13 @@ DetsFG$EndTime<-DetsFG$StartTime+DetsFG$DeltaTime
 
 colnames(FG)[which(colnames(FG)=="StartFile")]<-"EndFile"
 EFFP<-merge(Dets,FG,by="EndFile")
-EFFP<-EFFP[order(EFFP$StartFile,EFFP$StartTime),]
+#EFFP<-EFFP[order(EFFP$StartFile,EFFP$StartTime),]
+EFFP<-EFFP[order(EFFP$order),]
 
 if(nrow(DetsFG)>=1){
   DetsFG$StartFile<-paste(dataPath,DetsFG$FullPath,DetsFG$StartFile,sep="")
   DetsFG$EndFile<-paste(dataPath,EFFP$FullPath,DetsFG$EndFile,sep="") 
 }
-
 
 #strike several metadata fields
 dropCols<-c("DiffTime","FullPath","Deployment","SiteID","cumsum","Duration","SegStart","SegDur")

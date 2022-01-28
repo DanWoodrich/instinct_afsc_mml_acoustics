@@ -153,6 +153,15 @@ Job:
           - BS12_AU_PM02-b_files_689-747_gs_hg.csv
           - BS13_AU_PM04_files_137-224_gs_hg.csv
           - BS14_AU_PM04_files_74-148_gs_hg.csv
+          #- DFO_mixed_train_GSex.csv
+          - XB17_AM_ES01_reduce_GSex.csv
+          - XB18_AU_BB01_reduce_GSex.csv
+          - XB18_AM_OG01_reduce_GSex.csv
+          - XB19_AM_CS01_reduce_GSex.csv
+          #- XB15_AU_LB01_reduce_GSex.csv
+          - XB12_AU_TI01_reduce_GSex.csv
+          - XB13_AU_LI01_reduce_GSex.csv
+          #- DFO_neg_train_GSex.csv
       descriptors:
         runtype: lib
         language: batch
@@ -176,15 +185,15 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 2048
         file_groupID:
-          - DFO_mixed_train_GSex.csv
-          - XB17_AM_ES01_reduce_GSex.csv
-          - XB18_AU_BB01_reduce_GSex.csv
-          - XB18_AM_OG01_reduce_GSex.csv
-          - XB19_AM_CS01_reduce_GSex.csv
+          #- DFO_mixed_train_GSex.csv
+          #- XB17_AM_ES01_reduce_GSex.csv
+          #- XB18_AU_BB01_reduce_GSex.csv
+          #- XB18_AM_OG01_reduce_GSex.csv
+          #- XB19_AM_CS01_reduce_GSex.csv
           - XB15_AU_LB01_reduce_GSex.csv
-          - XB12_AU_TI01_reduce_GSex.csv
-          - XB13_AU_LI01_reduce_GSex.csv
-          - DFO_neg_train_GSex.csv
+          #- XB12_AU_TI01_reduce_GSex.csv
+          #- XB13_AU_LI01_reduce_GSex.csv
+          #- DFO_neg_train_GSex.csv
       descriptors:
         runtype: lib
         language: batch

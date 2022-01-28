@@ -43,7 +43,7 @@ EDstage<-"1"
 crs<-99
 chunkSize<- 20
 
-paramArgsPre<-"C:/Apps/INSTINCT_2/ //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 C:/Apps/INSTINCT_2/Cache/534991/126264 C:/Apps/INSTINCT_2/Cache/534991/126264 FileGroupFormat1_2.csv.gz 1 99 20 method1 contour-w-slope-r-source-v1-9 Upsweep 260 3 0.25 85 50 1.2 2 60 0.9 2.5 90 40 1024 132 contour-w-slope-r-sourcev1-9 desired_slope high_freq hough_slope_max hough_slope_min img_thresh1 img_thresh2 isoblur_sigma1 isoblur_sigma2 low_freq noise_thresh noise_win_length overlap pix_thresh t_samp_rate window_length"
+paramArgsPre<-"C:/Apps/INSTINCT/ //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 C:/Apps/INSTINCT/Cache/743615/775918 C:/Apps/INSTINCT/Cache/743615/775918 EDoutCorrect.csv.gz 2 99 20 n method1 contour-w-slope-r-source-v1-13 y 0.5 Downsweep 500 -Inf -1 80 80 1.1 2 50 0.9 2 40 100 1024 50 contour-w-slope-r-source-v1-13 combine_dets combine_int desired_slope high_freq hough_slope_max hough_slope_min img_thresh1 img_thresh2 isoblur_sigma1 isoblur_sigma2 low_freq noise_thresh noise_win_length overlap pix_thresh t_samp_rate window_length"
 args<-strsplit(paramArgsPre,split=" ")[[1]]
 
 #To make this general to ED, need to pass method params instead of hard defining here. 
@@ -60,6 +60,13 @@ EDstage<-args[6]
 crs<- as.numeric(args[7])
 chunkSize<- as.numeric(args[8])
 
+verbose = args[9]
+
+args<-args[-9] #delete this to preserve behavior from other methods using this wrapper before change
+
+if(verbose!='y'){
+  verbose = 'n'
+}
 
 
 MethodID<-args[10]
@@ -145,7 +152,7 @@ detOut<-foreach(i=1:BigChunks) %do% {
   
   #probably should make packages loaded in dynamically
   
-  startLocalPar(crs,"FilezAssign","data","EventDetectoR","specgram","splitID","StartFile","EndFile","ParamArgs","targetSampRate","decimateData","resampINST","decDo","prime.factor","readWave2",nameSpaceFxns)
+  startLocalPar(crs,"FilezAssign","data","EventDetectoR","specgram","splitID","StartFile","EndFile","ParamArgs","targetSampRate","decimateData","resampINST","decDo","prime.factor","readWave2","verbose",nameSpaceFxns)
   
   Detections<-foreach(n=1:crs,.packages=c("tuneR","doParallel","signal",librariesToLoad)) %dopar% {
 
@@ -188,7 +195,7 @@ detOut<-foreach(i=1:BigChunks) %do% {
       #                       overlap=Overlap
       #)
       metadata=list(substr(dataMini$FileName[1],1,nchar(dataMini$FileName[1])-4),ProjectRoot)
-      outputs<-EventDetectoR(soundFile,spectrogram=NULL,dataMini,ParamArgs,verbose='n',metadata=metadata)
+      outputs<-EventDetectoR(soundFile,spectrogram=NULL,dataMini,ParamArgs,verbose=verbose,metadata=metadata)
       
       
       if(length(outputs)>0){
@@ -262,7 +269,7 @@ outName<-paste("DETx",splitID_splits,".csv.gz",sep="")
   #reassign crs based on crs which actually made it into file split (will be crs on each except possibly not on last BigChunk)
   #crs<-length(unique(FilezAssign))
   
-  startLocalPar(crs,"data","EventDetectoR","specgram","ParamArgs","targetSampRate","decimateData","resampINST","decDo","prime.factor","readWave2",nameSpaceFxns)
+  startLocalPar(crs,"data","EventDetectoR","specgram","ParamArgs","targetSampRate","decimateData","resampINST","decDo","prime.factor","readWave2","verbose",nameSpaceFxns)
   
 
   detOut<-foreach(n=unique(data$DiffTime),.packages=c("tuneR","doParallel","signal",librariesToLoad)) %dopar% {
@@ -294,7 +301,7 @@ outName<-paste("DETx",splitID_splits,".csv.gz",sep="")
     #)
     
     metadata=list(substr(dataMini$FileName[1],1,nchar(dataMini$FileName[1])-4),ProjectRoot)
-    outputs<-EventDetectoR(soundFile,spectrogram=NULL,dataMini,ParamArgs,verbose='n',metadata=metadata)
+    outputs<-EventDetectoR(soundFile,spectrogram=NULL,dataMini,ParamArgs,verbose=verbose,metadata=metadata)
     
     if(length(outputs)>0){
       Cums<-data.frame(cut(outputs[,1],breaks=c(0,cumsum(dataMini$SegDur)),labels=dataMini$cumsum),

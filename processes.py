@@ -84,12 +84,21 @@ class RunED(Split_process,SplitRun_process,INSTINCT_process):
     SplitInitial=SplitED
     
     def run(self):
+        
+        if 'verbose' in self.arguments:
+            if self.arguments['verbose']=='y':
+                verbose = 'y'
+            else:
+                verbose = 'n'
+        else:
+            verbose = 'n'
 
+            
         #import code
         #code.interact(local=locals())
         #param_names grandfathered in, should just have R parse dictionaries as a standard
         self.cmd_args=[PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),self.outpath(),self.outpath(),\
-                        os.path.basename(self.input().path),'1',self.arguments['cpu'],self.arguments['file_chunk_size'],\
+                        os.path.basename(self.input().path),'1',self.arguments['cpu'],self.arguments['file_chunk_size'],verbose,\
                        'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string,get_param_names(self.parameters)] #params
         
         self.run_cmd()
@@ -102,6 +111,7 @@ class EventDetector(Unify_process,INSTINCT_process):
     SplitRun = RunED
 
     def run(self):
+        
         EDdict = {'StartTime': 'float64', 'EndTime': 'float64','LowFreq': 'float64', 'HighFreq': 'float64', 'StartFile': 'category','EndFile': 'category','ProcessTag': 'category'}
         
         dataframes = [None] * int(self.arguments['splits'])
@@ -146,9 +156,17 @@ class EventDetector(Unify_process,INSTINCT_process):
             #save FG
             FG.to_csv(self.outpath() + '/EDoutCorrect.csv.gz',index=False,compression='gzip')
 
+            if 'verbose' in self.arguments:
+                if self.arguments['verbose']=='y':
+                    verbose = 'y'
+                else:
+                    verbose = 'n'
+            else:
+                verbose = 'n'
+
             #run second stage of EventDetector method
             self.cmd_args=[PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),self.outpath(),self.outpath(),\
-                        'EDoutCorrect.csv.gz','2',self.arguments['cpu'],self.arguments['file_chunk_size'],\
+                        'EDoutCorrect.csv.gz','2',self.arguments['cpu'],self.arguments['file_chunk_size'],verbose,\
                        'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string,get_param_names(self.parameters)]
 
             self.process_ID = self.__class__.__name__ #needs to be specified here since it's a wrapper, otherwise assumed as class name
@@ -244,8 +262,16 @@ class RunFE(Split_process,SplitRun_process,INSTINCT_process):
     
     def run(self):
 
+        if 'verbose' in self.arguments:
+            if self.arguments['verbose']=='y':
+                verbose = 'y'
+            else:
+                verbose = 'n'
+        else:
+            verbose = 'n'
+
         self.cmd_args= [self.ports[1].outpath(),os.path.dirname(self.input().path),PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,1),\
-                        self.outpath(),str(self.split_ID) + '_' + str(self.splits),str(self.arguments['cpu']),\
+                        self.outpath(),str(self.split_ID) + '_' + str(self.splits),str(self.arguments['cpu']),verbose,\
                         'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string,get_param_names(self.parameters)]
         
         self.run_cmd()

@@ -3,7 +3,7 @@ library(doParallel) #need
 library(tuneR) #need
 library(signal) #need
 
-args<-"C:/Apps/INSTINCT_2/ C:/Apps/INSTINCT_2/Cache/334534 C:/Apps/INSTINCT_2/Cache/334534/164483/355437/238382 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 C:/Apps/INSTINCT_2/Cache/334534/164483/355437/238382 2_2 99 method1 feat-ext-hough-light-source-v1-3 n 75 1.5 30 specgram 1024 24 0.5 50 0 feat-ext-hough-light-sourcev1-3 channel_normalize img_thresh isoblur_sigma overlap spectrogram_func t_samp_rate tile_axis_size time_min_buffer window_length zero_padding"
+args<-"C:/Apps/INSTINCT/ C:/Apps/INSTINCT/Cache/368058 C:/Apps/INSTINCT/Cache/368058/61314/741260 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 C:/Apps/INSTINCT/Cache/368058/61314/741260 1_1 99 n method1 feat-ext-hough-light-source-v1-4 y 85 0.75 50 specgram 1024 96 1.2 70 0 feat-ext-hough-light-source-v1-4 channel_normalize img_thresh isoblur_sigma overlap spectrogram_func t_samp_rate tile_axis_size time_min_buffer window_length zero_padding"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -38,6 +38,15 @@ data<-read.csv(paste(DETpath,ReadFile2,sep="/"))
 #otherwise, 
 
 crs<- as.integer(args[7])
+
+verbose = args[8]
+
+args<-args[-8] #delete this to preserve behavior from other methods using this wrapper before change
+
+if(verbose!='y'){
+  verbose = 'n'
+}
+
 
 MethodID<-args[9]
 
@@ -166,7 +175,7 @@ for(n in 1:crs){
 }
 #divide up effort into consecutive chunks 
 
-startLocalPar(crs,"crs","tmpPath","FG","targetSampRate","readWave2","decimateData","resampINST","decDo","prime.factor","ParamArgs","FeatureExtracteR",nameSpaceFxns)
+startLocalPar(crs,"crs","tmpPath","FG","targetSampRate","readWave2","decimateData","resampINST","decDo","prime.factor","ParamArgs","FeatureExtracteR","verbose",nameSpaceFxns)
 
 out2<-foreach(f=1:crs,.packages=c("tuneR","doParallel","seewave","signal",librariesToLoad)) %dopar% {
   
@@ -234,7 +243,7 @@ out2<-foreach(f=1:crs,.packages=c("tuneR","doParallel","seewave","signal",librar
     
     #could render spectrogram here 
     metadata=list(substr(StartNameL,1,nchar(StartNameL)-4),ProjectRoot)
-    featList<-FeatureExtracteR(wav,spectrogram=NULL,featList,args=ParamArgs,verbose='y',metadata=metadata)
+    featList<-FeatureExtracteR(wav,spectrogram=NULL,featList,args=ParamArgs,verbose=verbose,metadata=metadata)
     #endTimes<-c(endTimes,Sys.time())
     
     featList<-c(dataIn[r,"mapID"],featList[5:length(featList)]) #this is a test line to see if it fixes bug

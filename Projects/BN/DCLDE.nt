@@ -13,7 +13,7 @@ Job:
     parameters:
       methodID: contour-w-slope-r-source
       methodvers: v1-14
-      t_samp_rate: 2048
+      t_samp_rate: 4096
       #window_length: 85
       #overlap: 70
       window_length: 60
@@ -22,13 +22,13 @@ Job:
       img_thresh2: 80
       isoblur_sigma1: 1.3
       isoblur_sigma2: 1.3
-      hough_slope_min: 3
-      hough_slope_max: Inf
+      hough_slope_min: -2
+      hough_slope_max: 2
       noise_thresh: 0.90
       noise_win_length: 1
-      desired_slope: Stacked
-      high_freq: 1000
-      low_freq: 50
+      desired_slope: Upsweep
+      high_freq: 2048
+      low_freq: 500
       pix_thresh: 100
       combine_dets: y
       combine_int: 0.5
@@ -36,7 +36,7 @@ Job:
       splits: 1
       cpu: 99
       file_chunk_size: 20
-      verbose: n
+      verbose: y
       hard_rerun: n
     descriptors:
       runtype: lib
@@ -46,7 +46,7 @@ Job:
     parameters:
       methodID: feat-ext-hough-light-source
       methodvers: v1-4
-      channel_normalize: y
+      channel_normalize: n
       img_thresh: 85
       isoblur_sigma: 0.75
       overlap: 50
@@ -139,30 +139,20 @@ Job:
         methodvers: v1-0
         methodID2m: matlabdecimate
         methodvers2m: V1s0
-        #target_samp_rate: 4096
-        target_samp_rate: 2048
+        target_samp_rate: 4096
         file_groupID:
-          - AL16_AU_BS03_files_77-170_gs_hg.csv
-          - AW12_AU_BS03_files_1-250_gs_hg.csv
-          - AW12_AU_BS03_files_1464-1507_gs_hg.csv
-          - AW14_AU_BS03_files_1-71_gs_hg.csv
-          - AW14_AU_BS03_files_309-369_gs_hg.csv
-          - AW15_AU_BS02_files_33-103_gs_hg.csv
-          - AW15_AU_BS03_files_705-749_gs_hg.csv
-          - BS12_AU_PM02-a_files_1-46_gs_hg.csv
-          - BS12_AU_PM02-b_files_689-747_gs_hg.csv
-          - BS13_AU_PM04_files_137-224_gs_hg.csv
-          - BS14_AU_PM04_files_74-148_gs_hg.csv
-          - DFO_comb_gs_hg.csv
-          #- DFO_mixed_train_GSex.csv
-          #- XB17_AM_ES01_reduce_GSex.csv
-          #- XB18_AU_BB01_reduce_GSex.csv
-          #- XB18_AM_OG01_reduce_GSex.csv
-          #- XB19_AM_CS01_reduce_GSex.csv
-          #- XB15_AU_LB01_reduce_GSex.csv
-          #- XB12_AU_TI01_reduce_GSex.csv
-          #- XB13_AU_LI01_reduce_GSex.csv
-          #- DFO_neg_train_GSex.csv
+          - AL16_AU_CC02_files_All_bn_hg.csv
+          - AL17_AU_CC02_files_All_bn_hg.csv
+          - AW12_AU_CL01_files_1-384_bn_hg.csv
+          - AW12_AU_CL01_files_385-523_bn_hg.csv
+          - AW12_AU_KZ01_files_All_bn_hg.csv
+          - AW13_AU_CL01_files_1-123_bn_hg.csv
+          - AW13_AU_CL01_files_124-360_bn_hg.csv
+          - AW13_AU_PH01_files_All_bn_hg.csv
+          - AW13_AU_CL01_files_361-370_bn_hg.csv
+          - AW14_AU_NM01_files_All_bn_hg.csv
+          - AW14_AU_PH01_files_All_bn_hg.csv
+          - CZ11_AU_IC01-03_files_All_bn_hg.csv
       descriptors:
         runtype: lib
         language: batch
@@ -183,8 +173,7 @@ Job:
         methodvers: v1-0
         methodID2m: matlabdecimate
         methodvers2m: V1s0
-        #target_samp_rate: 4096
-        target_samp_rate: 2048
+        target_samp_rate: 4096
         file_groupID:
           #- DFO_mixed_train_GSex.csv
           #- XB17_AM_ES01_reduce_GSex.csv
@@ -195,6 +184,7 @@ Job:
           #- XB12_AU_TI01_reduce_GSex.csv
           #- XB13_AU_LI01_reduce_GSex.csv
           #- DFO_neg_train_GSex.csv
+          #- XB17_AU_LB01
       descriptors:
         runtype: lib
         language: batch
@@ -227,12 +217,16 @@ Job:
     descriptors:
       runtype: lib
       language: R
-  EditRAVENx:
+  ReviewRAVENx:
     #this process always has an instructions parameter. changing these will change hash
     parameters: 
       instructions:
         > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
-        > Review the contents for correctness, adding, modifying, or deleting as necessary.
+        > Review the outputs and populate labels column. Allowable labels are y/m/n (yes, maybe, or no).  
+        >
+        > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
+        > Instead, use the EditGTpublish pipeline. 
+        >
         > If you are rerunning this process, there may be a previously edited file you are free to override or retain
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
@@ -240,3 +234,14 @@ Job:
       hard_rerun: n
     descriptors:
       runtype: no_method
+  PublishDets:
+    parameters: 
+      methodID: dbuddy-publish
+      methodvers: v1-0
+      analysis_id: x
+      analyst: DFW
+      #this one needs to be filled in manually currently unfortunately. 
+      visible_hz: 2048
+      
+      
+      

@@ -519,6 +519,22 @@ class QueryData(INSTINCT_process):
         
         self.run_cmd()
 
+class PublishDets(INSTINCT_process):#
+
+    pipeshape = OneUpstream
+    upstreamdef = ["GetData"]
+
+    outfile = 'receipt.txt' #record of the database transaction
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
 class CompareAndPublishDets(INSTINCT_process):#
 
     pipeshape = TwoUpstream_noCon
@@ -686,3 +702,19 @@ class EditRAVENx(INSTINCT_userprocess):
 
     def get_info(self): #this injects some formatFG info into the manifest
         return self.ports[1].parameters['file_groupID']
+
+class ReviewRAVENx(INSTINCT_userprocess):
+    #pipeshape = OneUpstream
+    #upstreamdef = ['GetViewFile']
+    
+    outfile = 'RAVENx.txt'
+    userfile_append = "_edit"
+
+    def get_info(self): #this injects some formatFG info into the manifest
+        return self.ports[1].parameters['file_groupID']
+
+    #def file_modify(self,file):
+
+        #load in the file, add on label and Comments column. 
+        
+        

@@ -1,0 +1,3 @@
+pipe: FormatFG.pipe
+FormatFG.pipe:
+  process: FormatFG

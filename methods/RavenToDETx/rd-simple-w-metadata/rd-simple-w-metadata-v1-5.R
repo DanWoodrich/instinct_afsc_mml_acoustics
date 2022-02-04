@@ -1,4 +1,4 @@
-MethodID<-"rd-simple-w-metadata-v1-4"
+MethodID<-"rd-simple-w-metadata-v1-5"
 
 #1.1: make it so any extra metadata is retained
 #1.2: include a filename arg
@@ -30,7 +30,13 @@ RavGT<-RavGT[order(RavGT$Begin.Time..s.),]
 
 #get rid of not considered, and placeholder
 
-RavGT<-RavGT[which(RavGT$SignalCode!="Not Considered"&RavGT$SignalCode!="Placeholder"),]
+#v1-5 bugfix
+if('SignalCode' %in% colnames(RavGT)){
+  if(any(RavGT$SignalCode!="Not Considered"&RavGT$SignalCode!="Placeholder")){
+    RavGT<-RavGT[which(RavGT$SignalCode!="Not Considered"&RavGT$SignalCode!="Placeholder"),]
+  }
+}
+
 
 #changed this from backslash to forward slash, but not sure why it is coming out different...
 for(i in 1:nrow(RavGT)){

@@ -644,6 +644,9 @@ class FormatFG(INSTINCT_process):
             FG_dict = file_peek(temppath,fn_type = object,fp_type = object,st_type = object,dur_type = 'float64')
             FG = pd.read_csv(temppath, dtype=FG_dict)
 
+            #import code
+            #code.interact(local=dict(globals(), **locals()))
+
             os.remove(temppath)
             
         #supports additional metadata fields
@@ -686,6 +689,9 @@ class FormatFG(INSTINCT_process):
 
             self.run_cmd()
 
+            #import code
+            #code.interact(local=locals())
+            
             os.remove(ffpPath)
 
             FG.to_csv(self.outfilegen(),index=False,compression='gzip')
@@ -713,8 +719,16 @@ class ReviewRAVENx(INSTINCT_userprocess):
     def get_info(self): #this injects some formatFG info into the manifest
         return self.ports[1].parameters['file_groupID']
 
-    #def file_modify(self,file):
+    def file_modify(self,file):
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
 
+        rav_tab = pd.read_csv(self.outfilegen(),sep="\t")
+        rav_tab["label"] = ""
+        rav_tab["Comments"] = ""
+
+        rav_tab.to_csv(self.outfilegen(),index=False,sep="\t")
+        
         #load in the file, add on label and Comments column. 
         
         

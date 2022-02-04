@@ -1,23 +1,12 @@
-1. First, follow the configuration steps in DanWoodrich/INSTINCT/Instructions - Config.txt
-2. AFSC MML users: follow the configuration steps in DanWoodrich/dbuddy_client/README.md (if using dbuddy locally, follow the instructions in DanWoodrich/dbuddy/README.md . Ask Dan Woodrich if unsure) 
-3. Make sure R (>4.0.0) is installed 
-4. Add ~/R-x.x.x/bin and ~/dbuddy/bin to PATH (see more details on PATH in DanWoodrich/INSTINCT/Instructions - Config.txt) 
-5. Make sure you have loaded in submodules, or at least this specific submodule (see DanWoodrich/INSTINCT/Instructions - Config.txt , 1 & 2 under 'Optional')
-6. Make sure CONTRIBNAME variable in ~/INSTINCT/etc/INSTINCT.cfg is set to: CONTRIBNAME=instinct_afsc_mml_acoustics
-7. Open a command window, and type INSTINCT pull_contrib. Note this will override any files in ~/INSTINCT/lib/user folder if working between submodules or with local files
-8. In ~/INSTINCT/lib/user, run the R script Installe.R
-	a. Use the CMD terminal to run the R script, or R studio if installed already (don’t
-	download it only for this)
-	b. To run on CMD terminal, need to search for CMD in windows search bar, run it, navigate to
-	~/INSTINCT/lib/user (use an online tutorial for changing directories with CMD)
-	c. Once in the right directory, use Rscript Installe.R
+First, follow the configuration steps in DanWoodrich/INSTINCT/Instructions - Config.txt
 
-The following will require admin privileges:
-1. Install the matlab compiler library (2019a). https://www.mathworks.com/products/compiler/matlab-runtime.html
+Mandatory software dependencies: 
 
-Optional: if you want to make changes to this submodule:
-1. clone this repo to a new directory
-2. link the repo in INSTINCT/etc/INSTINCT.cfg as CONTRIBPATH
-3. update changes made in ~/INSTINCT/lib/user to submodule with push_user. Add and push changes in the linked repo. Make sure to regularly 'pull_contrib' before editing to make sure your code is up to date (note this will 
-override changes not already pushed to repo). 
-4. Users of this and other repos can pull your changes by updating submodule in INSTINCT and pulling changes with command 'INSTINCT pull_contrib'
+1. R (>3.6.0)
+2. matlab compiler library (2019a). https://www.mathworks.com/products/compiler/matlab-runtime.html (this requires admin priveleges)
+
+To config: 
+double click: "INSTINCT/bin/instinct_afsc_mml_acoustics_config" and follow prompts.
+
+To update: 
+double click: "INSTINCT/bin/instinct_afsc_mml_acoustics_update" and follow prompts.

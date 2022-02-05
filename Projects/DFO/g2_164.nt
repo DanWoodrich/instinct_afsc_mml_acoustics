@@ -187,7 +187,7 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 2048
         file_groupID:
-          #- XB18_AM_CS01
+          - XB15_AM_BL01
           #- DFO_mixed_train_GSex.csv
           #- XB17_AM_ES01_reduce_GSex.csv
           #- XB18_AU_BB01_reduce_GSex.csv
@@ -197,7 +197,12 @@ Job:
           #- XB12_AU_TI01_reduce_GSex.csv
           #- XB13_AU_LI01_reduce_GSex.csv
           #- DFO_neg_train_GSex.csv
-          - XB17_AU_LB01
+          - XB10_AU_LI01
+          - XB18_AM_PL01 
+          - XB18_AM_OG01
+          - XB17_AM_ES01
+          - XB14_AM_DK01
+          - XB18_AM_DS01
       arguments:
         hard_rerun: n
       descriptors:

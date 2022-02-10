@@ -1,7 +1,7 @@
 #this is a vers of the gunshot model specialized to DFO 
 
 Global:
-  cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
+  cache_root: C:/Apps/INSTINCT/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -179,14 +179,15 @@ Job:
   FormatFG:
       parameters:
         decimate_data: y
-        #methodID: dbuddy-pull-FG
-        methodID: dbuddy-pull-FG-ord
+        methodID: dbuddy-pull-FG
         methodvers: v1-0
         methodID2m: matlabdecimate
         methodvers2m: V1s0
         #target_samp_rate: 4096
         target_samp_rate: 2048
         file_groupID:
+          - XB12_AU_SS01
+          #- XB18_AM_CS01
           #- DFO_mixed_train_GSex.csv
           #- XB17_AM_ES01_reduce_GSex.csv
           #- XB18_AU_BB01_reduce_GSex.csv
@@ -196,15 +197,7 @@ Job:
           #- XB12_AU_TI01_reduce_GSex.csv
           #- XB13_AU_LI01_reduce_GSex.csv
           #- DFO_neg_train_GSex.csv
-          #done
-          #- XB15_AM_BL01
-          #- XB10_AU_LI01
-          #- XB18_AM_PL01
-          #- XB18_AM_OG01
-          #need hard rerun
-          - XB17_AM_ES01
-          #- XB14_AM_DK01
-          #- XB18_AM_DS01
+          #- XB17_AU_LB01
       arguments:
         hard_rerun: n
       descriptors:
@@ -236,7 +229,7 @@ Job:
   RavenToDETx:
     parameters: 
       methodID: rd-simple-w-metadata
-      methodvers: v1-5
+      methodvers: v1-4
     descriptors:
       runtype: lib
       language: R
@@ -244,12 +237,9 @@ Job:
     #this process always has an instructions parameter. changing these will change hash
     parameters: 
       instructions:
-        >
         > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
-        > Review the outputs and populate label column. Allowable labels are y/m/n (yes, maybe, or no).  
-        > Comments can be made and will be retained in the database. Adding, deleting, or modifying timestamps or frequency of
-        > detections is forbidden by protocol. 
-        > 
+        > Review the outputs and populate labels column. Allowable labels are y/m/n (yes, maybe, or no).  
+        >
         > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
         > Instead, use the EditGTpublish pipeline. 
         >
@@ -266,12 +256,8 @@ Job:
       methodvers: v1-0
       analysis_id: x
       analyst: DFW
-      signal_code: GS
       #this one needs to be filled in manually currently unfortunately. 
       visible_hz: 2048
-    descriptors:
-      runtype: lib
-      language: R
       
       
       

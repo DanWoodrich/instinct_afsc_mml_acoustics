@@ -683,7 +683,7 @@ class FormatFG(INSTINCT_process):
             self.parameters['methodvers']=self.parameters['methodvers2m']
             self.descriptors['runtype']=self.descriptors['runtype2m']
             self.descriptors['language']=self.descriptors['language2m']
-            
+
             self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
             #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
 

@@ -1,7 +1,7 @@
 #this is a vers of the gunshot model specialized to DFO 
 
 Global:
-  cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
+  cache_root: C:/Apps/INSTINCT/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -187,6 +187,7 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 2048
         file_groupID:
+          - XB18_AM_CS01
           #- DFO_mixed_train_GSex.csv
           #- XB17_AM_ES01_reduce_GSex.csv
           #- XB18_AU_BB01_reduce_GSex.csv
@@ -196,22 +197,14 @@ Job:
           #- XB12_AU_TI01_reduce_GSex.csv
           #- XB13_AU_LI01_reduce_GSex.csv
           #- DFO_neg_train_GSex.csv
-          #done
-          #- XB18_AM_CS01
-          #done
-          #- XB12_AU_SS01 
-          #broke on RF apply... says NA/NaN/Inf error
-          #- XB17_AU_LB01
-          #needs hard rerun:
+          - XB17_AU_LB01
+          - XB12_AU_SS01 
           - XB12_AU_BW01
-          #needs hard rerun
           - XB17_AM_OG01
-          #needs hard rerun
           - XB11_AU_TI01
-          #needs hard rerun
           - XB13_AU_LI01
       arguments:
-        hard_rerun: y
+        hard_rerun: n
       descriptors:
         runtype: lib
         language: batch

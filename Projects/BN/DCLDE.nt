@@ -12,31 +12,35 @@ Job:
   EventDetector:
     parameters:
       methodID: contour-w-slope-r-source
-      methodvers: v1-14
+      methodvers: v1-15
       t_samp_rate: 4096
-      #window_length: 85
-      #overlap: 70
-      window_length: 60
-      overlap: 50
+      window_length: 512
+      overlap: 75
+      #window_length: 60
+      #overlap: 50
       img_thresh1: 80
       img_thresh2: 80
       isoblur_sigma1: 1.3
       isoblur_sigma2: 1.3
-      hough_slope_min: -2
-      hough_slope_max: 2
-      noise_thresh: 0.90
-      noise_win_length: 1
+      hough_slope_min: -4
+      hough_slope_max: 4
+      matrix_denoise: column
+      #noise_thresh: 0.90
+      noise_thresh: 0.60
+      #since is column, below is in hz
+      noise_win_length: 20
       desired_slope: Upsweep
       high_freq: 2048
-      low_freq: 500
-      pix_thresh: 100
+      low_freq: 1100
+      #pix_thresh: 40
+      pix_thresh: 30
       combine_dets: y
       combine_int: 0.5
     arguments:
       splits: 1
       cpu: 99
       file_chunk_size: 20
-      verbose: y
+      verbose: n
       hard_rerun: n
     descriptors:
       runtype: lib
@@ -49,15 +53,19 @@ Job:
       channel_normalize: n
       img_thresh: 85
       isoblur_sigma: 0.75
-      overlap: 50
+      #overlap: 50
+      overlap: 75
       spectrogram_func: specgram
-      t_samp_rate: 1024
+      #t_samp_rate: 1024
+      t_samp_rate: 4096
       tile_axis_size: 96
-      time_min_buffer: 1.2
-      window_length: 70
+      time_min_buffer: 2.5
+      #window_length: 70
+      window_length: 512
       zero_padding: 0
     arguments: 
       splits: 1
+      verbose: y
       cpu: 99
     descriptors:
       runtype: lib
@@ -86,13 +94,14 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0.92
+      cutoff: 0.50
     descriptors:
       runtype: no_method
   SplitForPE:
     descriptors:
       runtype: no_method
   AssignLabels:
+    #this is the one used to train model
     parameters: 
       methodID: labels-w-iou-simple
       methodvers: v1-3
@@ -104,6 +113,7 @@ Job:
       runtype: lib
       language: R
   AL_write_GT: 
+      #this is the one used to evaluate performance
       AssignLabels:
         parameters: 
           methodID: labels-w-iou-simple
@@ -153,6 +163,8 @@ Job:
           - AW14_AU_NM01_files_All_bn_hg.csv
           - AW14_AU_PH01_files_All_bn_hg.csv
           - CZ11_AU_IC01-03_files_All_bn_hg.csv
+      arguments: 
+        hard_rerun: n
       descriptors:
         runtype: lib
         language: batch
@@ -162,7 +174,9 @@ Job:
       parameters: 
         methodID: dbuddy-pull-GT
         methodvers: v1-3
-        signal_code: GS
+        signal_code: BN
+      arguments: 
+        hard_rerun: n
       descriptors:
         language: batch
         runtype: lib
@@ -194,7 +208,7 @@ Job:
     parameters: 
       methodID: dbuddy-pull-GT
       methodvers: v1-3
-      signal_code: GS
+      signal_code: BN
     descriptors:
       language: batch
       runtype: lib

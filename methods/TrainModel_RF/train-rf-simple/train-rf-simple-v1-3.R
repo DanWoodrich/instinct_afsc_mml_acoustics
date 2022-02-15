@@ -51,7 +51,7 @@ set.seed(5)
 
 #load in params #don't care about CV and datasplit params for making single model. 
 
-args<-"C:/Apps/INSTINCT_2/Cache/163466/207015/853922/507502/DETx.csv.gz C:/Apps/INSTINCT_2/Cache/230497/216609/679505/567265/355230/DETx.csv.gz C:/Apps/INSTINCT_2/Cache/230497/614817/FileGroupFormat.csv.gz C:/Apps/INSTINCT_2/Cache/163466/207015/853922/507502/537660 NULL CV 99 y 60 0.75 1 11 500 train-rf-simple-v1-3"
+args<-"C:/Apps/INSTINCT/Cache/424390/641640/440033/228095/DETx.csv.gz C:/Apps/INSTINCT/Cache/424390/470084/384290/634272/340239/DETx.csv.gz C:/Apps/INSTINCT/Cache/876130/196356/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/424390/641640/440033/228095/421675 NULL CV 99 y 60 0.75 1 11 500 train-rf-simple-v1-3"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -174,13 +174,20 @@ probsAll<-foreach(i=1:cv_it,.packages = c("randomForest","doParallel")) %dopar% 
     pos<-sum(dataTrain$label=="TP")
     neg<-sum(dataTrain$label=="FP")
     
-    if(pos>neg){
-      stop("ERROR: more positives than negatives. Did you mean to do that?")
+    if(pos>neg){ #stealth change this on feb 11 21 to be a warning instead of stopping. 
+      print("WARNING: more positives than negatives. Did you mean to do that?")
+      
+      ratio<-neg/pos
+      pos<-splitdf(dataTrain[which(dataTrain$label=="TP"),],weight=ratio)[[1]]
+      dataTrain<-rbind(dataTrain[which(dataTrain$label=="FP"),],pos)
+      
+    }else{
+      ratio<-pos/neg
+      neg<-splitdf(dataTrain[which(dataTrain$label=="FP"),],weight=ratio)[[1]]
+      dataTrain<-rbind(dataTrain[which(dataTrain$label=="TP"),],neg)
     }
     
-    ratio<-pos/neg
-    neg<-splitdf(dataTrain[which(dataTrain$label=="FP"),],weight=ratio)[[1]]
-    dataTrain<-rbind(dataTrain[which(dataTrain$label=="TP"),],neg)
+    
   }
   
   dataTrain$label<-as.factor(dataTrain$label)

@@ -198,20 +198,18 @@ Job:
           #- DFO_neg_train_GSex.csv
           #done
           #- XB18_AM_CS01
-          #done
+          #- XB12_AU_BW01
           #- XB12_AU_SS01 
+          #- XB11_AU_TI01
+          #- XB13_AU_LI01
           #broke on RF apply... says NA/NaN/Inf error
           #- XB17_AU_LB01
-          #needs hard rerun:
-          - XB12_AU_BW01
           #needs hard rerun
-          - XB17_AM_OG01
+          #- XB17_AM_OG01
           #needs hard rerun
-          - XB11_AU_TI01
-          #needs hard rerun
-          - XB13_AU_LI01
+          - XB10_AU_LI01
       arguments:
-        hard_rerun: y
+        hard_rerun: n
       descriptors:
         runtype: lib
         language: batch

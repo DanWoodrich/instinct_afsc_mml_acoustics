@@ -1,0 +1,74 @@
+Global:
+  cache_root: C:/Apps/INSTINCT/Cache
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Working_Folders/temp PIFSC DCLDE
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+Job:
+  FormatFG:
+      parameters:
+        decimate_data: n
+        methodID: matlabdecimate
+        methodvers: V1s0
+        target_samp_rate: 4096
+        file_groupID:
+          - TA-XTRL01_01_files_All
+      descriptors:
+        runtype: bin
+        language: MATLAB
+  FormatGT:
+    parameters: 
+      signal_code: BN
+    descriptors:
+      runtype: no_method
+  RavenViewDETx:
+    parameters: 
+      #methodID: rv-simple-w-metadata
+      methodID: rv-rawdata
+      methodvers: v1-5
+    arguments:
+    #previously called RavenFill
+    #this shuold really be a parameter, not an argument
+    #I should change this to y/n to be more consistent with other parameters
+      fg_fill: F
+    descriptors:
+      runtype: lib
+      language: R
+  RavenToDETx:
+    parameters: 
+      methodID: rd-simple-w-metadata
+      methodvers: v1-2
+    descriptors:
+      runtype: lib
+      language: R
+  #making this its own level to show how it will automatically override top level for ReduceGTall job
+  ReduceByField:
+    parameters:
+      methodID: reduce-by-label-and-string
+      methodvers: v1-1
+      ByFileOrCycle: File
+      ColString: Type
+      UseLabel: y
+      Label: y
+      UseString: n
+      LabelStringInt_or_Union: Union
+      String: OBS
+      StringInt_or_Union: Union
+    descriptors:
+      runtype: lib
+      language: R
+  EditRAVENx:
+    #this process always has an instructions parameter. changing these will change hash
+    parameters: 
+      instructions:
+        > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+        > Review the contents for correctness, adding, modifying, or deleting as necessary.
+        > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+      rerun_key: 1
+      hard_rerun: n
+    descriptors:
+      runtype: no_method

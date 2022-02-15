@@ -302,7 +302,8 @@ class RavenViewDETx(INSTINCT_process):
         #code.interact(local=locals())
         self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),\
                        PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,1),\
-                       " ".join(self.arguments.values())," ".join(self.parameters.values())]
+                       " ".join(self.arguments.values()).strip(),self.param_string.strip(),\
+                       PARAMSET_GLOBALS['SF_raw']]
         
         
         self.run_cmd()

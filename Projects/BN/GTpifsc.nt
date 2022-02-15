@@ -2,22 +2,23 @@ Global:
   cache_root: C:/Apps/INSTINCT/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
-  SF_raw: //161.55.120.117/NMML_AcousticsData/Working_Folders/temp PIFSC DCLDE
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Working_Folders/temp_PIFSC_DCLDE
   SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
 Job:
   FormatFG:
       parameters:
-        decimate_data: n
-        methodID: matlabdecimate
-        methodvers: V1s0
+        decimate_data: y
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
         target_samp_rate: 4096
         file_groupID:
-          - TA-XTRL01_01_files_All
+          - TA-XTRL01_01_files_All.csv
       descriptors:
-        runtype: bin
-        language: MATLAB
+        runtype: no_method
+        runtype2m: bin
+        language2m: MATLAB
   FormatGT:
     parameters: 
       signal_code: BN
@@ -27,12 +28,10 @@ Job:
     parameters: 
       #methodID: rv-simple-w-metadata
       methodID: rv-rawdata
-      methodvers: v1-5
+      methodvers: v1-6
+      fg_fill: n
     arguments:
-    #previously called RavenFill
-    #this shuold really be a parameter, not an argument
-    #I should change this to y/n to be more consistent with other parameters
-      fg_fill: F
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R

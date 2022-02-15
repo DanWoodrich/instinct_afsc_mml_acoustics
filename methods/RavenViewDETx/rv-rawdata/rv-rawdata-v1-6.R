@@ -53,8 +53,8 @@ DETpath <- args[1]
 FGpath <-args[2]
 Resultpath <- args[3]
 #dataPath <- "//161.55.120.117/NMML_AcousticsData/Audio_Data/Waves" #this is hardcoded to just work on our NAS. If I were doing this right, it would be a 
-fillDat <- args[5]
-dataPath <- args[6]
+fillDat <- args[length(args)-2]
+dataPath = args[length(args)]
 
 #stop()
 
@@ -82,7 +82,7 @@ FGfull<-FG
 FG<-FG[which(!duplicated(FG$FileName)),]
 
 #if true, populate Dets for every file in FG which is not already present 
-if(fillDat=="T"){
+if(fillDat=="y"){
   if(any(!FGfull$FileName %in% allFiles)){
     files<-FGfull$FileName[!FGfull$FileName %in% allFiles]
     rows<-foreach(n=1:length(files)) %do% {

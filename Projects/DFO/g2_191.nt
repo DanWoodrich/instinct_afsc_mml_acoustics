@@ -1,7 +1,7 @@
 #this is a vers of the gunshot model specialized to DFO 
 
 Global:
-  cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
+  cache_root: C:/Apps/INSTINCT/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -202,12 +202,11 @@ Job:
           #- XB12_AU_SS01 
           #- XB11_AU_TI01
           #- XB13_AU_LI01
+          #- XB10_AU_LI01
           #broke on RF apply... says NA/NaN/Inf error
           #- XB17_AU_LB01
-          #needs hard rerun
+          #not working
           #- XB17_AM_OG01
-          #needs hard rerun
-          - XB10_AU_LI01
       arguments:
         hard_rerun: n
       descriptors:

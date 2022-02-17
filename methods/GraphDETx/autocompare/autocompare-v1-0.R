@@ -25,9 +25,13 @@ resultPath <- args[3]
 FGdata<-read.csv(FGpath)
 DETxData<-read.csv(DETxpath)
 
-#for detx data vreat a column which signifies the time in posixct
 
-DETxData$StartTimePOSIXct = as.POSIXct(substr(DETxData$StartFile,nchar(DETxData$StartFile)-16,nchar(DETxData$StartFile)-4),format="%y%m%d-%H%M%S") + DETxData$StartTime
+#tolerant to dash or slash
+midchar = substr(DETxData$StartFile[1],nchar(DETxData$StartFile[1])-10,nchar(DETxData$StartFile[1])-10)
+formatPOSIXct = paste("%y%m%d","%H%M%S",sep=midchar)
+
+#for detx data vreat a column which signifies the time in posixct
+DETxData$StartTimePOSIXct = as.POSIXct(substr(DETxData$StartFile,nchar(DETxData$StartFile)-16,nchar(DETxData$StartFile)-4),format=formatPOSIXct) + DETxData$StartTime
 
 DETxData$probs[which(is.na(DETxData$probs))] = sample(100,sum(is.na(DETxData$probs)),replace = TRUE)/100
 

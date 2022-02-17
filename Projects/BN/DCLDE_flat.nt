@@ -234,6 +234,13 @@ Job:
       analyst: DFW
       #this one needs to be filled in manually currently unfortunately. 
       visible_hz: 2048
+  GraphDETx:
+    parameters: 
+      methodID: autocompare
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
       
       
       

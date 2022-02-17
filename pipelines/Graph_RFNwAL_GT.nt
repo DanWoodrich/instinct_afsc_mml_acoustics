@@ -2,13 +2,19 @@ pipe: GraphDETx.pipe
 loop_on: FormatFG
 GraphDETx.pipe:
   process: GraphDETx
-  GetDETx1:
+  GetDETx:
     pipe: AssignLabels.pipe
-    pipe_link: 
-      name: RFN_w_AL.nt
-  GetDETx2:
-    pipe: FormatGT.pipe
-      process: FormatGT
+    params_drop: AL_write_GT
+    AssignLabels.pipe:
+      process: AssignLabels
+      GetDETx: 
+        pipe: TrainModel_RF_apply.pipe
+        pipe_link: 
+          name: Apply_Model_RF_1.nt
+      GetGT: 
+        process: FormatGT
+      GetFG:
+        process: FormatFG
   GetFG:
     #loop_on: FormatFG
     pipe: FormatFG.pipe

@@ -2,7 +2,7 @@ Global:
   cache_root: C:/Apps/INSTINCT/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
-  SF_raw: //161.55.120.117/NMML_AcousticsData/Working_Folders/temp_PIFSC_DCLDE
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
   SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
@@ -14,7 +14,9 @@ Job:
         methodvers2m: V1s0
         target_samp_rate: 4096
         file_groupID:
-          - TA-XTRL01_01_files_All.csv
+          - XT17_TA_RL01-01_files_All.csv
+      arguments: 
+        hard_rerun: n
       descriptors:
         runtype: no_method
         runtype2m: bin
@@ -26,12 +28,14 @@ Job:
       runtype: no_method
   RavenViewDETx:
     parameters: 
-      #methodID: rv-simple-w-metadata
-      methodID: rv-rawdata
-      methodvers: v1-6
-      fg_fill: n
+      #methodID: rv-rawdata
+      #methodvers: v1-6
+      #fg_fill: n
+      methodID: rv-simple-w-metadata
+      methodvers: v1-8
     arguments:
-      hard_rerun: n
+      fg_fill: F
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: R

@@ -94,7 +94,7 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0.50
+      cutoff: 0.75
     descriptors:
       runtype: no_method
   SplitForPE:
@@ -145,8 +145,6 @@ Job:
     FormatFG:
       parameters:
         decimate_data: y
-        methodID: dbuddy-pull-FG
-        methodvers: v1-0
         methodID2m: matlabdecimate
         methodvers2m: V1s0
         target_samp_rate: 4096
@@ -166,20 +164,14 @@ Job:
       arguments: 
         hard_rerun: n
       descriptors:
-        runtype: lib
-        language: batch
+        runtype: no_method
         runtype2m: bin
         language2m: MATLAB
     FormatGT:
       parameters: 
-        methodID: dbuddy-pull-GT
-        methodvers: v1-3
         signal_code: BN
-      arguments: 
-        hard_rerun: n
       descriptors:
-        language: batch
-        runtype: lib
+        runtype: no_method
   FormatFG:
       parameters:
         decimate_data: y
@@ -197,6 +189,8 @@ Job:
   FormatGT:
     parameters: 
       signal_code: BN
+    arguments: 
+      hard_rerun: n
     descriptors:
       runtype: no_method
   RavenViewDETx:
@@ -204,10 +198,7 @@ Job:
       methodID: rv-simple-w-metadata
       methodvers: v1-8
     arguments:
-    #previously called RavenFill
-    #this shuold really be a parameter, not an argument
-    #I should change this to y/n to be more consistent with other parameters
-      fg_fill: T
+      fg_fill: F
     descriptors:
       runtype: lib
       language: R

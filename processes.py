@@ -143,7 +143,10 @@ class EventDetector(Unify_process,INSTINCT_process):
 
             FG_cols = ['FileName','FullPath','StartTime','Duration','DiffTime','Deployment','SegStart','SegDur']
 
-            FG_dict = {'FileName': 'string','FullPath': 'category', 'StartTime': 'string','Duration': 'int','Deployment':'string','SegStart':'int','SegDur':'int','DiffTime':'int'}
+            FG_dict = {'FileName': 'string','FullPath': 'category', 'StartTime': 'string','Duration': 'float','Deployment':'string','SegStart':'float','SegDur':'float','DiffTime':'int'}
+            #import code
+            #code.interact(local=locals())
+
             FG = pd.read_csv(self.ports[0].outpath() +'/FileGroupFormat.csv.gz', dtype=FG_dict, usecols=FG_cols)
 
             FG = FG[FG.DiffTime.isin(EDfin['ProcessTag2'].astype('int32'))&FG.FileName.isin(EDfin['StartFile'])] #subset based on both of these: if a long difftime, will only
@@ -687,11 +690,9 @@ class FormatFG(INSTINCT_process):
 
             self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
             #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
-
+            
             self.run_cmd()
 
-            #import code
-            #code.interact(local=locals())
             
             os.remove(ffpPath)
 

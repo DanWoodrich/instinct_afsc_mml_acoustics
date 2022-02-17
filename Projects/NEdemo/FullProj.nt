@@ -176,12 +176,12 @@ Job:
           #- AW14_AU_BS02_files_All.csv
           #- AW12_AU_BS03_files_All.csv
           - NOPP6_EST_20090328_files_All.csv
-          - NOPP6_EST_20090329_files_All.csv
-          - NOPP6_EST_20090330_files_All.csv
-          - NOPP6_EST_20090331_files_All.csv
-          - NOPP6_EST_20090401_files_All.csv
-          - NOPP6_EST_20090402_files_All.csv
-          - NOPP6_EST_20090403_files_All.csv
+          #- NOPP6_EST_20090329_files_All.csv
+          #- NOPP6_EST_20090330_files_All.csv
+          #- NOPP6_EST_20090331_files_All.csv
+          #- NOPP6_EST_20090401_files_All.csv
+          #- NOPP6_EST_20090402_files_All.csv
+          #- NOPP6_EST_20090403_files_All.csv
       descriptors:
         runtype: no_method
         runtype2m: bin

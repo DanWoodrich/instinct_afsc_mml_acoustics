@@ -1,0 +1,16 @@
+pipe: AssignLabels.pipe
+params_drop: AL_write_GT
+AssignLabels.pipe:
+  process: AssignLabels
+  GetDETx: 
+    pipe: ApplyCutoff.pipe
+    ApplyCutoff.pipe: 
+      process: ApplyCutoff
+      GetDETx:
+        pipe: TrainModel_RF_apply.pipe
+        pipe_link: 
+          name: Apply_Model_RF_1.nt
+  GetGT: 
+    process: FormatGT
+  GetFG:
+    process: FormatFG

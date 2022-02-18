@@ -10,7 +10,7 @@ args<-commandArgs(trailingOnly = TRUE)
 
 EditDataPath <-args[1]
 resultPath <- args[2]
-#transferpath<-args[4]
+analyst<-args[4]
 only_validate = args[5]
 
 EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
@@ -24,7 +24,15 @@ EditData$VisibleHz = args[6]
 
 EditData$Type = "DET"
 
+EditData$LastAnalyst =analyst #this is JLC for this one, but take it from parameters anyways. 
+
 EditData$Comments[is.na(EditData$Comments)]<-""
+
+#if sperm is detected, change label type to OBS, and signal code to SP
+
+EditData[which(EditData$label=="s"),"SignalCode"] ="SP"
+EditData[which(EditData$label=="s"),"Type"] ="OBS"
+EditData[which(EditData$label=="s"),"label"]="y"
 
 #do some quality checks. Right now, restrict labels to y/m/n
 allowedlabels = c("y","m","n")

@@ -21,17 +21,34 @@ args<-commandArgs(trailingOnly = TRUE)
 FGpath <- args[1]
 DETxpath <- args[2]
 resultPath <- args[3]
+timecalc <-args[4]
 
 FGdata<-read.csv(FGpath)
 DETxData<-read.csv(DETxpath)
 
 
 #tolerant to dash or slash
-midchar = substr(DETxData$StartFile[1],nchar(DETxData$StartFile[1])-10,nchar(DETxData$StartFile[1])-10)
-formatPOSIXct = paste("%y%m%d","%H%M%S",sep=midchar)
 
-#for detx data vreat a column which signifies the time in posixct
-DETxData$StartTimePOSIXct = as.POSIXct(substr(DETxData$StartFile,nchar(DETxData$StartFile)-16,nchar(DETxData$StartFile)-4),format=formatPOSIXct) + DETxData$StartTime
+if(timecalc!="FG"){
+  midchar = substr(DETxData$StartFile[1],nchar(DETxData$StartFile[1])-10,nchar(DETxData$StartFile[1])-10)
+  formatPOSIXct = paste("%y%m%d","%H%M%S",sep=midchar)
+  
+  #for detx data vreat a column which signifies the time in posixct
+  DETxData$StartTimePOSIXct = as.POSIXct(substr(DETxData$StartFile,nchar(DETxData$StartFile)-16,nchar(DETxData$StartFile)-4),format=formatPOSIXct) + DETxData$StartTime
+  
+}else{
+  
+  colnames(FGdata)[1]= "StartFile"
+  
+  FGdata$cumdur = cumsum(FGdata$SegDur)
+  
+  DETxData=merge(DETxData,FGdata,by="StartFile")
+  
+  DETxData$StartTimePOSIXct = DETxData$cumdur+DETxData$StartTime.x
+  
+  DETxData$StartTimePOSIXct = DETxData$StartTimePOSIXct/3600
+  
+}
 
 DETxData$probs[which(is.na(DETxData$probs))] = sample(100,sum(is.na(DETxData$probs)),replace = TRUE)/100
 
@@ -44,5 +61,3 @@ p + facet_grid(rows = vars(SignalCode))
 
 ggsave(resultPath)
 
-
-stop()

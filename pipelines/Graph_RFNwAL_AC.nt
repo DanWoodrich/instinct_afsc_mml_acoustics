@@ -1,0 +1,13 @@
+pipe: GraphDETx.pipe
+loop_on: FormatFG
+GraphDETx.pipe:
+  process: GraphDETx
+  GetDETx:
+    pipe: AssignLabels.pipe
+    pipe_link:
+      name: RFN_w_AL.nt
+  GetFG:
+    #loop_on: FormatFG
+    pipe: FormatFG.pipe
+    FormatFG.pipe:
+      process: FormatFG

@@ -94,7 +94,7 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0.75
+      cutoff: 0.50
     descriptors:
       runtype: no_method
   SplitForPE:
@@ -199,6 +199,7 @@ Job:
       methodvers: v1-8
     arguments:
       fg_fill: F
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: R
@@ -238,6 +239,10 @@ Job:
     parameters: 
       methodID: autocompare
       methodvers: v1-0
+      #FG or abs
+      timecalc: abs
+    arguments: 
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R

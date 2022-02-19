@@ -72,13 +72,17 @@ Job:
   PerfEval2:
     parameters:
       methodID: pe2-simple
-      methodvers: v1-6
+      methodvers: v1-7
+      #best results from 1-2
+      cexmod: 1.6
+    arguments: 
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0.01
+      cutoff: 0.5
     descriptors:
       runtype: no_method
   SplitForPE:
@@ -140,13 +144,6 @@ Job:
             - AW14_AU_BS03_files_1-160.csv
             - AW14_AU_BS02_files_All.csv
             - AW12_AU_BS03_files_All.csv
-            #- NOPP6_EST_20090328_files_All.csv
-            #- NOPP6_EST_20090329_files_All.csv
-            #- NOPP6_EST_20090330_files_All.csv
-            #- NOPP6_EST_20090331_files_All.csv
-            #- NOPP6_EST_20090401_files_All.csv
-            #- NOPP6_EST_20090402_files_All.csv
-            #- NOPP6_EST_20090403_files_All.csv
       descriptors:
         runtype: no_method
         runtype2m: bin
@@ -175,13 +172,16 @@ Job:
           #- AW14_AU_BS03_files_1-160.csv
           #- AW14_AU_BS02_files_All.csv
           #- AW12_AU_BS03_files_All.csv
-          - NOPP6_EST_20090328_files_All.csv
+          #- NOPP6_EST_20090328_files_All.csv
           #- NOPP6_EST_20090329_files_All.csv
           #- NOPP6_EST_20090330_files_All.csv
           #- NOPP6_EST_20090331_files_All.csv
           #- NOPP6_EST_20090401_files_All.csv
           #- NOPP6_EST_20090402_files_All.csv
-          #- NOPP6_EST_20090403_files_All.csv
+          - NOPP6_EST_20090403_files_All.csv
+      arguments: 
+        rerun_key: 1
+        hard_rerun: y
       descriptors:
         runtype: no_method
         runtype2m: bin
@@ -230,6 +230,7 @@ Job:
     parameters: 
       methodID: autocompare
       methodvers: v1-0
+      timecalc: FG
     descriptors:
       runtype: lib
       language: R

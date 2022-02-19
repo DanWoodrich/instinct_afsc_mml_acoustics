@@ -52,6 +52,8 @@ if(timecalc!="FG"){
 
 DETxData$probs[which(is.na(DETxData$probs))] = sample(100,sum(is.na(DETxData$probs)),replace = TRUE)/100
 
+#DETxData$Time = DETxData$StartTimePOSIXct
+
 #facet based on SignalCode, Color based on label, y axis = probability, x axis = time. 
 
 p <- ggplot(DETxData, aes(StartTimePOSIXct, probs,colour = label)) + geom_point()

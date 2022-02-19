@@ -406,7 +406,7 @@ class PerfEval2(INSTINCT_process):
 
     def run(self):
         
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.ports[1].outpath()]
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.ports[1].outpath(),self.param_string]
         
         self.run_cmd()
 

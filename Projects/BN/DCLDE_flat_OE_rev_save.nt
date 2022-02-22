@@ -1,0 +1,253 @@
+#New BN model 
+
+Global:
+  cache_root: C:/Apps/INSTINCT/Cache
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+Job:
+  EventDetector:
+    parameters:
+      methodID: contour-w-slope-r-source
+      methodvers: v1-15
+      t_samp_rate: 4096
+      window_length: 512
+      overlap: 75
+      #window_length: 60
+      #overlap: 50
+      img_thresh1: 80
+      img_thresh2: 80
+      isoblur_sigma1: 1.3
+      isoblur_sigma2: 1.3
+      hough_slope_min: -4
+      hough_slope_max: 4
+      matrix_denoise: column
+      #noise_thresh: 0.90
+      noise_thresh: 0.60
+      #since is column, below is in hz
+      noise_win_length: 20
+      desired_slope: Upsweep
+      high_freq: 2048
+      low_freq: 1100
+      #pix_thresh: 40
+      pix_thresh: 30
+      combine_dets: y
+      combine_int: 0.5
+    arguments:
+      splits: 1
+      cpu: 99
+      file_chunk_size: 20
+      verbose: n
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+      wrapper: True
+  FeatureExtraction:
+    parameters:
+      methodID: feat-ext-hough-light-source
+      methodvers: v1-4
+      channel_normalize: n
+      img_thresh: 85
+      isoblur_sigma: 0.75
+      #overlap: 50
+      overlap: 75
+      spectrogram_func: specgram
+      #t_samp_rate: 1024
+      t_samp_rate: 4096
+      tile_axis_size: 96
+      time_min_buffer: 2.5
+      #window_length: 70
+      window_length: 512
+      zero_padding: 0
+    arguments: 
+      splits: 1
+      verbose: y
+      cpu: 99
+    descriptors:
+      runtype: lib
+      language: R
+      wrapper: True
+  MergeFE_AL:
+    parameters:
+      methodID: merge-fe-al-simple
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval1*:
+    parameters:
+      methodID: pe1-simple
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval2:
+    parameters:
+      methodID: pe2-simple
+      methodvers: v1-6
+    descriptors:
+      runtype: lib
+      language: R
+  ApplyCutoff:
+    parameters:
+      #cutoff: 0.50
+      cutoff: 0.80
+    descriptors:
+      runtype: no_method
+  SplitForPE:
+    descriptors:
+      runtype: no_method
+  AssignLabels:
+    #this is the one used to train model
+    parameters: 
+      methodID: labels-w-iou-simple
+      methodvers: v1-3
+      iou_thresh: 0.01
+      write_GT: n
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  AL_write_GT: 
+      #this is the one used to evaluate performance
+      AssignLabels:
+        parameters: 
+          methodID: labels-w-iou-simple
+          methodvers: v1-3
+          iou_thresh: 0.01
+          write_GT: y
+        arguments: 
+          hard_rerun: n
+        descriptors:
+          runtype: lib
+          language: R
+  TrainModel_paramset:
+    TrainModel_RF*:
+      parameters:
+        methodID: train-rf-simple
+        methodvers: v1-3
+        balance_tpfp: y
+        fp_multiple: 1
+        mtry: 11
+        ntree: 500
+        #these cv_ params will affect hashing, although they do not have an influence on final training
+        cv_it: 60
+        cv_split: 0.75
+      arguments:
+        cpu: 99
+      descriptors:
+        runtype: lib
+        language: R
+    FormatFG:
+      parameters:
+        decimate_data: y
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        target_samp_rate: 4096
+        file_groupID:
+          - AL16_AU_CC02_files_All_bn_hg.csv
+          - AL17_AU_CC02_files_All_bn_hg.csv
+          - AW12_AU_CL01_files_1-384_bn_hg.csv
+          - AW12_AU_CL01_files_385-523_bn_hg.csv
+          - AW12_AU_KZ01_files_All_bn_hg.csv
+          - AW13_AU_CL01_files_1-123_bn_hg.csv
+          - AW13_AU_CL01_files_124-360_bn_hg.csv
+          - AW13_AU_PH01_files_All_bn_hg.csv
+          - AW13_AU_CL01_files_361-370_bn_hg.csv
+          - AW14_AU_NM01_files_All_bn_hg.csv
+          - AW14_AU_PH01_files_All_bn_hg.csv
+          - CZ11_AU_IC01-03_files_All_bn_hg.csv
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        runtype: no_method
+        runtype2m: bin
+        language2m: MATLAB
+    FormatGT:
+      parameters: 
+        signal_code: BN
+      descriptors:
+        runtype: no_method
+  FormatFG:
+      parameters:
+        decimate_data: y
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        target_samp_rate: 4096
+        file_groupID:
+          #- XT17_TA_RL01-01_files_All.csv
+          - XT17_TA_OE01-01_files_All.csv
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        runtype: no_method
+        runtype2m: bin
+        language2m: MATLAB
+  FormatGT:
+    parameters: 
+      signal_code: BN
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: no_method
+  RavenViewDETx:
+    parameters: 
+      methodID: rv-simple-w-metadata
+      methodvers: v1-8
+    arguments:
+      fg_fill: F
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  RavenToDETx:
+    parameters: 
+      methodID: rd-simple-w-metadata
+      methodvers: v1-4
+    descriptors:
+      runtype: lib
+      language: R
+  ReviewRAVENx:
+    #this process always has an instructions parameter. changing these will change hash
+    parameters: 
+      instructions:
+        > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+        > Review the outputs and populate labels column. Allowable labels are y/m/n (yes, maybe, or no).  
+        >
+        > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
+        > Instead, use the EditGTpublish pipeline. 
+        >
+        > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+      rerun_key: 1
+      hard_rerun: n
+    descriptors:
+      runtype: no_method
+  PublishDets:
+    parameters: 
+      methodID: dbuddy-publish
+      methodvers: v1-0
+      analysis_id: x
+      analyst: DFW
+      #this one needs to be filled in manually currently unfortunately. 
+      visible_hz: 2048
+  GraphDETx:
+    parameters: 
+      methodID: autocompare
+      methodvers: v1-0
+      #FG or abs
+      timecalc: abs
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+      
+      
+      

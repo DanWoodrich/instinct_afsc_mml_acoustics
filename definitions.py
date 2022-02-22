@@ -1,6 +1,7 @@
 jobs = {
 "MPE":["PE2all","PE2_FG","ED_AM_perfEval"],
 "TT":["PE2_FG_novel","PE2all","PerfEval_MPE_TT","PE2_FG","PE2all_novel"],
+"TT":["PE2_FG_novel","PE2all","PerfEval_MPE_TT","PE2_FG","PE2all_novel","Graph_RFNwAL_AC","ViewRFN"],
 "NewJob":["ViewGT","ViewED"]
 }
 

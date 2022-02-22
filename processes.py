@@ -534,7 +534,7 @@ class GraphDETx(INSTINCT_process):
 
     def run(self):
 
-        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outfilegen(),self.ports[1].parameters['file_groupID'],self.param_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 

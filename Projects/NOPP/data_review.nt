@@ -1,0 +1,135 @@
+#this is the params file for training a model for HB phrase detection. 
+
+Global:
+  #cache_root: C:/Apps/INSTINCT/Cache
+  cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+Job:
+  AssignLabels:
+    parameters: 
+      methodID: labels-w-iou-simple
+      methodvers: v1-3
+      iou_thresh: 0.01
+      write_GT: n
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  TrainModel_paramset:
+    FormatFG:
+      parameters:
+        decimate_data: y
+        methodID: dbuddy-pull-FG
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        #target_samp_rate: 4096
+        target_samp_rate: 2048
+        file_groupID:
+          - HB_s_ns_sample1.csv
+          - round1_pull1.csv
+          - round1_pull1_reduce.csv
+      descriptors:
+        runtype: lib
+        language: batch
+        runtype2m: bin
+        language2m: MATLAB
+    FormatGT:
+      parameters: 
+        methodID: dbuddy-pull-GT
+        methodvers: v1-3
+        signal_code: GS
+      descriptors:
+        language: batch
+        runtype: lib
+  FormatFG:
+      parameters:
+        decimate_data: y
+        methodID: dbuddy-pull-FG
+        #methodID: dbuddy-pull-FG-ord
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        #target_samp_rate: 4096
+        target_samp_rate: 2048
+        file_groupID:
+          - HB_s_ns_sample1.csv
+          #- round1_pull1.csv
+          #- round1_pull1_reduce.csv
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: batch
+        runtype2m: bin
+        language2m: MATLAB
+  FormatGT:
+    parameters: 
+      methodID: R-pull-dbuddy-anyparam
+      methodvers: v1-2
+      UseFG: y
+    descriptors:
+      language: batch
+      runtype: lib
+  RavenViewDETx:
+    parameters: 
+      methodID: rv-simple-w-metadata
+      methodvers: v1-8
+    arguments:
+    #previously called RavenFill
+    #this shuold really be a parameter, not an argument
+    #I should change this to y/n to be more consistent with other parameters
+      fg_fill: F
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  RavenToDETx:
+    parameters: 
+      methodID: rd-simple-w-metadata
+      methodvers: v1-5
+    descriptors:
+      runtype: lib
+      language: R
+  ReviewRAVENx:
+    #this process always has an instructions parameter. changing these will change hash
+    parameters: 
+      instructions:
+        > 
+        > INSTRUCTIONS: 
+        >
+        > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+        > Review the outputs and populate label column. Allowable labels are y/m/n (yes, maybe, or no).  
+        > Comments can be made and will be retained in the database. Adding, deleting, or modifying timestamps or frequency of
+        > detections is forbidden by protocol. 
+        > 
+        > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
+        > Instead, use the EditGTpublish pipeline. 
+        >
+        > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+      rerun_key: 1
+      hard_rerun: n
+    descriptors:
+      runtype: no_method
+  PublishDets:
+    parameters: 
+      methodID: dbuddy-publish-g2-review
+      methodvers: v1-0
+      analysis_id: x
+      analyst: JLC
+      signal_code: GS
+      #this one needs to be filled in manually currently unfortunately. 
+      visible_hz: 2048
+      #only validate means that data have been checked, and no formatting errors are detected. 
+      only_validate: y
+    descriptors:
+      runtype: lib
+      language: R

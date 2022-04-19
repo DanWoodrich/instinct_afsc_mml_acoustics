@@ -49,34 +49,55 @@ Job:
         language: batch
         runtype: lib
   FormatFG:
-      parameters:
-        decimate_data: y
-        methodID: dbuddy-pull-FG
-        #methodID: dbuddy-pull-FG-ord
-        methodvers: v1-0
-        methodID2m: matlabdecimate
-        methodvers2m: V1s0
-        #target_samp_rate: 4096
-        target_samp_rate: 2048
-        file_groupID:
-          - HB_s_ns_sample1.csv
-          #- round1_pull1.csv
-          #- round1_pull1_reduce.csv
-      arguments:
-        hard_rerun: n
-      descriptors:
-        runtype: lib
-        language: batch
-        runtype2m: bin
-        language2m: MATLAB
+    parameters:
+      decimate_data: y
+      methodID: dbuddy-pull-FG
+      #methodID: dbuddy-pull-FG-ord
+      methodvers: v1-0
+      methodID2m: matlabdecimate
+      methodvers2m: V1s0
+      #target_samp_rate: 4096
+      target_samp_rate: 2048
+      file_groupID:
+        - HB_s_ns_sample1.csv
+        #- round1_pull1.csv
+        #- round1_pull1_reduce.csv
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: batch
+      runtype2m: bin
+      language2m: MATLAB
+  GenBigSpec:
+    parameters:
+      methodID: spec_con_bright
+      methodvers: v1-0      
+      window_length: 
+      overlap: 
+      contrast_start: 20
+      contrast_end: 60
+      contrast_levels: 4
+      brightness_start: 1
+      brightness_end: 4
+      brightness_levels: 4
+  MakeModelTrain_Tiles:
+    parameters:
+      #15 is going to be the large tile, which will get cropped in the model to a 15s window. 
+      #both in seconds
+      tile_size: 15
+      step: 1
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam
       methodvers: v1-2
       UseFG: y
+      Analysis_ID: 9
+    arguments: 
+      hard_rerun: y
     descriptors:
-      language: batch
       runtype: lib
+      language: R
   RavenViewDETx:
     parameters: 
       methodID: rv-simple-w-metadata
@@ -97,7 +118,7 @@ Job:
     descriptors:
       runtype: lib
       language: R
-  ReviewRAVENx:
+  EditRAVENx:
     #this process always has an instructions parameter. changing these will change hash
     parameters: 
       instructions:
@@ -115,21 +136,16 @@ Job:
         > If you are rerunning this process, there may be a previously edited file you are free to override or retain
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
-      rerun_key: 1
+      #rerun_key: 0
       hard_rerun: n
     descriptors:
       runtype: no_method
-  PublishDets:
-    parameters: 
-      methodID: dbuddy-publish-g2-review
-      methodvers: v1-0
-      analysis_id: x
-      analyst: JLC
-      signal_code: GS
-      #this one needs to be filled in manually currently unfortunately. 
-      visible_hz: 2048
-      #only validate means that data have been checked, and no formatting errors are detected. 
-      only_validate: y
+  CompareAndPublishDets:
+    parameters:
+      methodID: dbuddy-compare-publish
+      methodvers: v1-2
+    arguments: 
+      hard_rerun: n
     descriptors:
-      runtype: lib
       language: R
+      runtype: lib

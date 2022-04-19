@@ -2,7 +2,7 @@ MethodID<-"dbuddy-compare-publish-v1-2"
 
 #v1-2: change to work with dbuddy behavior of automatically copying files from local path when doing DML. 
 
-args="C:/Apps/INSTINCT/Cache/809545/548038/950334/563707/279418 C:/Apps/INSTINCT/Cache/809545/548038 C:/Apps/INSTINCT/Cache/809545/548038/950334/563707/279418/227655  dbuddy-compare-publish-v1-0"
+args="//161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/593613/175201/195478/115394/813213 //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/593613/175201/195478/818076 //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/593613/175201/195478/115394/813213/270449  dbuddy-compare-publish-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
 

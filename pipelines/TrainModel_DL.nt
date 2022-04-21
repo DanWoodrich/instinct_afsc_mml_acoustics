@@ -1,0 +1,21 @@
+pipe: TrainModel_dl.pipe
+TrainModel_dl.pipe:
+  process: TrainModel_dl
+  GetDETx_w_AL:
+    pipe: AssignLabels.pipe
+    loop_on: FormatFG
+    AssignLabels.pipe:
+      process: AssignLabels
+      GetDETx:
+        process: MakeModel_bins
+      GetFG:
+        process: FormatFG
+      GetGT: 
+        process: FormatGT
+  GetSpec:
+    pipe: GenBigSpec.pipe
+    loop_on: FormatFG
+    GenBigSpec.pipe: 
+      process: GenBigSpec
+      GetFG:
+        process: FormatFG

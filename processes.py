@@ -747,6 +747,51 @@ class ReviewRAVENx(INSTINCT_userprocess):
 
         rav_tab.to_csv(self.outfilegen(),index=False,sep="\t")
         
-        #load in the file, add on label and Comments column. 
+        #load in the file, add on label and Comments column.
+
+
+class GenBigSpec(INSTINCT_process):#
+
+    pipeshape = OneUpstream
+    upstreamdef = ["GetFG"]
+
+    outfile = 'receipt.txt' 
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),self.param_string]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
         
-        
+class MakeModel_bins(INSTINCT_process):#
+
+    #pipeshape = OneUpstream
+    #upstreamdef = ["GetFG"]
+
+    outfile = 'DETx.csv.gz' 
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
+class TrainModel_dl(INSTINCT_process):
+
+    pipeshape = TwoUpstream_noCon
+
+    upstreamdef = ["GetSpec","GetDETx_w_AL"]
+
+    outfile = 'summary.png'
+
+    def run(self):
+
+        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
+
+        self.run_cmd()

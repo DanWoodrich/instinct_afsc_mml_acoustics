@@ -1,8 +1,8 @@
 #this is the params file for training a model for HB phrase detection. 
 
 Global:
-  #cache_root: C:/Apps/INSTINCT/Cache
-  cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
+  cache_root: C:/Apps/INSTINCT/Cache
+  #cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
   #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
   #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -12,42 +12,31 @@ Global:
 Job:
   AssignLabels:
     parameters: 
-      methodID: labels-w-iou-simple
-      methodvers: v1-3
-      iou_thresh: 0.01
+      methodID: labels-w-gtovlp-time-bins
+      methodvers: v1-1
+      #iou thresh needs to consider the large bin vs small bin difference- make sure it is higher the more different these are
+      GTovlp_thresh: 0.40
+      only_time: y
       write_GT: n
     arguments: 
       hard_rerun: n
     descriptors:
       runtype: lib
       language: R
-  TrainModel_paramset:
-    FormatFG:
-      parameters:
-        decimate_data: y
-        methodID: dbuddy-pull-FG
-        methodvers: v1-0
-        methodID2m: matlabdecimate
-        methodvers2m: V1s0
-        #target_samp_rate: 4096
-        target_samp_rate: 2048
-        file_groupID:
-          - HB_s_ns_sample1.csv
-          - round1_pull1.csv
-          - round1_pull1_reduce.csv
-      descriptors:
-        runtype: lib
-        language: batch
-        runtype2m: bin
-        language2m: MATLAB
-    FormatGT:
+  impose_GT:
+    #this is for when visualizing AL in Raven with ViewDLbins
+    AssignLabels:
       parameters: 
-        methodID: dbuddy-pull-GT
-        methodvers: v1-3
-        signal_code: GS
+        methodID: labels-w-gtovlp-time-bins
+        methodvers: v1-1
+        gt_ovlp_thresh: 0.40
+        only_time: y
+        write_GT: y
+      arguments: 
+        hard_rerun: n
       descriptors:
-        language: batch
         runtype: lib
+        language: R
   FormatFG:
     parameters:
       decimate_data: y
@@ -59,9 +48,9 @@ Job:
       #target_samp_rate: 4096
       target_samp_rate: 2048
       file_groupID:
-        - HB_s_ns_sample1.csv
+        #- HB_s_ns_sample1.csv
         #- round1_pull1.csv
-        #- round1_pull1_reduce.csv
+        - round1_pull1_reduce.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -72,29 +61,54 @@ Job:
   GenBigSpec:
     parameters:
       methodID: spec_con_bright
-      methodvers: v1-0      
-      window_length: 
-      overlap: 
-      contrast_start: 20
-      contrast_end: 60
-      contrast_levels: 4
-      brightness_start: 1
-      brightness_end: 4
-      brightness_levels: 4
-  MakeModelTrain_Tiles:
+      methodvers: v1-0
+      window_length: 512
+      contrast_start: 1
+      contrast_end: 3
+      contrast_levels: 3
+      brightness_start: -1
+      brightness_end: 3
+      brightness_levels: 3
+      #should be the same as below for the math to work out. can find solution later if this is too ugly. Global variable passed to params probably makes the most sense. 
+      small_window: 14
+      large_window: 15
+    descriptors:
+      runtype: lib
+      language: R
+  MakeModel_bins:
     parameters:
-      #15 is going to be the large tile, which will get cropped in the model to a 15s window. 
+      methodID: make-bins-simple
+      methodvers: v1-0
+      #15 is going to be the large bin, which will get cropped in the model to a 15s window. 
       #both in seconds
-      tile_size: 15
+      large_window: 15
+      #large_window should be same value as in GenBigSpec
       step: 1
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  TrainModel_dl:
+    parameters:
+      methodID: train-simple-dl
+      methodvers: v1-0
+      train_val_split: 0.80
+      #will recieve large window length and replicas from inputs
+      #small_window: 14
+      #add some hyperparameters?
+    descriptors:
+      runtype: lib
+      language: Python
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam
       methodvers: v1-2
       UseFG: y
-      Analysis_ID: 9
+      Analysis_ID: 17
+      SignalCode: HB.s.p.2
     arguments: 
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R
@@ -106,8 +120,8 @@ Job:
     #previously called RavenFill
     #this shuold really be a parameter, not an argument
     #I should change this to y/n to be more consistent with other parameters
-      fg_fill: F
-      hard_rerun: n
+      fg_fill: T
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: R

@@ -1,7 +1,7 @@
 #MethodID="train-simple-dl-v1-0"
 
 import pandas as pd
-import tensorflow as tf
+#import tensorflow as tf
 import sys
 import numpy as np
 import random
@@ -10,20 +10,26 @@ from matplotlib.image import imread
 
 #######import params###########
 
-#args="C:/Apps/INSTINCT/Cache/394448/527039/receipt.txt C:/Apps/INSTINCT/Cache/394448/628717/901278/DETx.csv.gz C:/Apps/INSTINCT/Cache/394448/628717/901278/960971/summary.png 0.80 train-simple-dl-v1-0"
-#args=args.split()
+args="C:/Apps/INSTINCT/Cache/394448/527039/receipt.txt C:/Apps/INSTINCT/Cache/394448/628717/947435/DETx.csv.gz C:/Apps/INSTINCT/Cache/394448/628717/947435/909093/summary.png 0.80 train-simple-dl-v1-0"
+args=args.split()
 
-args=sys.argv
+#args=sys.argv
+    
+specpath=args[0]
+datapath=args[1]
+resultpath=args[2]
 
-specpath=args[1]
-datapath=args[2]
-resultpath=args[3]
-train_val_split = float(args[4])
+train_val_split = float(args[3])
 #small_window= args[4] #I might not even need to pass this one- I can get the crop width based on the height of the spectrogram images
 
 print("hello world!")
 
+
+
+
 metadata = pd.read_csv(datapath,compression='gzip')
+
+
 
 
 
@@ -38,7 +44,18 @@ for i in range(len(metadata.DiffTime.unique())):
 
     meta_dt = metadata.loc[metadata['DiffTime'] == dt]
 
-    meta_dt["Assignment"] = " " #use this later
+    #by default, assign all bins to train or val, depending on the train_val_split parameter
+
+    meta_dt["Assignment"] = " "
+
+    meta_dt = meta_dt.sample(frac=1).reset_index(drop=True)
+
+    cutoff = int(len(meta_dt)*train_val_split)
+
+    meta_dt.loc[:cutoff,"Assignment"] = "Train"
+    meta_dt.loc[cutoff:,"Assignment"] = "Validation"
+
+    #now do grouped random sort of the GTids. 
     
     GTids = meta_dt.GTid.unique()
 
@@ -49,24 +66,15 @@ for i in range(len(metadata.DiffTime.unique())):
     train_ids = GTids[:int(train_val_split * len(GTids))]
     val_ids = GTids[len(train_ids):]
 
-    tv = np.concatenate((train_ids, val_ids))
+    meta_dt.loc[meta_dt.GTid.isin(train_ids), 'Assignment'] = "Train"
+    meta_dt.loc[meta_dt.GTid.isin(val_ids), 'Assignment'] = "Validation"
 
-    meta_dt_ids = meta_dt[meta_dt['GTid'].notnull()]
+    #meta_dt.to_csv("C:/Apps/INSTINCT/lib/user/methods/TrainModel_DL/train-simple-dl/test.csv")
 
     import code
     code.interact(local=dict(globals(), **locals()))
 
-    meta_dt_ids = meta_dt_ids.set_index('GTid')
-    meta_dt_ids.loc[tv]
-
-    #pick up here tomorrow! Trying to sort the data by the combination of train/val ids, then paste an equal length corresponding array of assignment onto this frame.
-    #for the other one (nan frame), randomize, then assign with array of proportion.
-
-
-    #now, seperate the df into two tables- one with ids and one with not.
-    #
-
-
+    #alright, each bin has been assigned to train or val. Now, create record writer function so I can write the train and val datasets. 
 
     
 #loop through images

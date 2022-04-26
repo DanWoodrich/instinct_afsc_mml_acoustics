@@ -53,8 +53,10 @@ DETpath <- args[1]
 FGpath <-args[2]
 Resultpath <- args[3]
 #dataPath <- "//161.55.120.117/NMML_AcousticsData/Audio_Data/Waves" #this is hardcoded to just work on our NAS. If I were doing this right, it would be a 
-fillDat <- args[length(args)-2]
+fillDat <- args[length(args)-4]
 dataPath = args[length(args)]
+
+dataPath = paste(dataPath,"Waves",sep="/")
 
 #stop()
 

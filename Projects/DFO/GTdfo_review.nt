@@ -29,7 +29,7 @@ Job:
         #- DFO_neg_train_GSex.csv
     arguments: 
       rerun_key: 0
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: batch
@@ -96,7 +96,7 @@ Job:
     arguments: 
       #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
       rerun_key: 0
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: no_method
   CompareAndPublishDets:

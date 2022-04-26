@@ -100,6 +100,8 @@ Job:
     descriptors:
       runtype: lib
       language: Python
+      venv: Conda
+      venv_name: tf-nopp-hb
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam

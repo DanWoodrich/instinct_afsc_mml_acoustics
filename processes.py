@@ -784,14 +784,15 @@ class MakeModel_bins(INSTINCT_process):#
 
 class TrainModel_dl(INSTINCT_process):
 
-    pipeshape = TwoUpstream_noCon
+    pipeshape = ThreeUpstream_noCon
 
-    upstreamdef = ["GetSpec","GetDETx_w_AL"]
+    upstreamdef = ["GetFG","GetSpec","GetDETx_w_AL"]
 
     outfile = 'summary.png'
 
     def run(self):
-
-        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
+        #import code
+        #code.interact(local=locals())
+        self.cmd_args=[self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()

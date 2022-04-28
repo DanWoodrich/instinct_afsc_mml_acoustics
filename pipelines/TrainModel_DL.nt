@@ -19,3 +19,7 @@ TrainModel_dl.pipe:
       process: GenBigSpec
       GetFG:
         process: FormatFG
+  GetFG:
+    pipe: FormatFG.pipe
+    FormatFG.pipe:
+      process: FormatFG

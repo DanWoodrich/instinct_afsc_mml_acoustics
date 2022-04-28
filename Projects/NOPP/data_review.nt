@@ -65,10 +65,10 @@ Job:
       window_length: 512
       contrast_start: 1
       contrast_end: 3
-      contrast_levels: 3
+      contrast_levels: 2
       brightness_start: -1
       brightness_end: 3
-      brightness_levels: 3
+      brightness_levels: 2
       #should be the same as below for the math to work out. can find solution later if this is too ugly. Global variable passed to params probably makes the most sense. 
       small_window: 14
       large_window: 15
@@ -101,7 +101,7 @@ Job:
       runtype: lib
       language: Python
       venv: Conda
-      venv_name: tf-nopp-hb
+      venv_name: tf-gpu2
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam

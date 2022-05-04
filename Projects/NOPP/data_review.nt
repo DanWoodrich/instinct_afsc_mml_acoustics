@@ -92,7 +92,7 @@ Job:
   TrainModel_dl:
     parameters:
       methodID: train-simple-dl
-      methodvers: v1-0
+      methodvers: v1-1
       train_val_split: 0.80
       #will recieve large window length and replicas from inputs
       #small_window: 14

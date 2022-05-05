@@ -137,9 +137,14 @@ for(i in 1:length(bigfiles)){
     for(p in 1:brightness_levels){
   
     spec_img<- gen_spec_image(sounddata,windowLength,overlap,contrast_vec[n],brightness_vec[p])
+	
+	#go up to next nearest integer and find difference. 
+	newWin = windowLength*smallWindow/largeWindow
+	
+	perc_diff = ceiling(newWin) / newWin
     
     #plot(as.cimg(spec_img[1:windowLength,1:128,,]))
-    spec_img =resize(spec_img,size_y = round(windowLength*(smallWindow/largeWindow))) #make height
+    spec_img =resize(spec_img,size_x = round(perc_diff*xbins),size_y = ceiling(newWin)) #make height
     #sized to small window so that when it is cropped in network it won't randomize on the vertical
     #plot(as.cimg(spec_img[1:windowLength,1:windowLength,,]))
     
@@ -147,7 +152,7 @@ for(i in 1:length(bigfiles)){
     
     filename = paste(resultpath,"/replica_",replica_counter,"/bigfile",bigfiles[i],".png",sep="")
     
-    img_print(spec_img,xbins,dim(spec_img)[2],filename) #inputHeight
+    img_print(spec_img,round(perc_diff*xbins),dim(spec_img)[2],filename) #inputHeight
     
     #im <- load.image(filename)
     #plot(as.cimg(im[1:windowLength,1:windowLength,,]))

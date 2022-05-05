@@ -72,6 +72,8 @@ Job:
       #should be the same as below for the math to work out. can find solution later if this is too ugly. Global variable passed to params probably makes the most sense. 
       small_window: 14
       large_window: 15
+    arguments:
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R

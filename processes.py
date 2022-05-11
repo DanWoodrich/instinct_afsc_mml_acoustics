@@ -788,11 +788,24 @@ class TrainModel_dl(INSTINCT_process):
 
     upstreamdef = ["GetFG","GetSpec","GetDETx_w_AL"]
 
-    outfile = 'summary.png'
+    outfile = 'model.keras'
 
     def run(self):
         #import code
         #code.interact(local=locals())
-        self.cmd_args=[self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
+class ModelEval_NN(INSTINCT_process):
+
+    pipeshape = OneUpstream
+    upstreamdef = ["GetModel"]
+
+    outfile = 'summary.png'
+    
+    def run(self):
+
+        self.cmd_args=[self.ports[0].outpath(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()

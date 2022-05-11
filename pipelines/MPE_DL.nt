@@ -1,0 +1,7 @@
+pipe: ModelEval_NN.pipe
+ModelEval_NN.pipe:
+  process: ModelEval_NN
+  GetModel:
+    pipe: TrainModel_dl.pipe
+    pipe_link: 
+      name: TrainModel_DL.nt

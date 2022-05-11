@@ -1,4 +1,5 @@
 #this is the params file for training a model for HB phrase detection. 
+#second version of the model
 
 Global:
   cache_root: C:/Apps/INSTINCT/Cache
@@ -23,20 +24,6 @@ Job:
     descriptors:
       runtype: lib
       language: R
-  impose_GT:
-    #this is for when visualizing AL in Raven with ViewDLbins
-    AssignLabels:
-      parameters: 
-        methodID: labels-w-gtovlp-time-bins
-        methodvers: v1-1
-        gt_ovlp_thresh: 0.40
-        only_time: y
-        write_GT: y
-      arguments: 
-        hard_rerun: n
-      descriptors:
-        runtype: lib
-        language: R
   ModelEval_NN:
     parameters:
       methodID: simple-eval
@@ -69,32 +56,13 @@ Job:
       language2m: MATLAB
   GenBigSpec:
     parameters:
-      methodID: spec_con_bright
+      methodID: con_bright_no_rep
       methodvers: v1-0
-      window_length: 512
-      contrast_start: 1
-      contrast_end: 3
-      contrast_levels: 2
-      brightness_start: -1
-      brightness_end: 3
-      brightness_levels: 2
-      #should be the same as below for the math to work out. can find solution later if this is too ugly. Global variable passed to params probably makes the most sense. 
-      small_window: 14
-      large_window: 15
-    arguments:
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: R
-  MakeModel_bins:
-    parameters:
-      methodID: make-bins-simple
-      methodvers: v1-0
-      #15 is going to be the large bin, which will get cropped in the model to a 15s window. 
-      #both in seconds
-      large_window: 15
-      #large_window should be same value as in GenBigSpec
-      step: 1
+	  brightness_mod: -1
+      contrast_mod: 0
+      img_height: 600
+	  pix_per_sec: 40
+	  window_length: 512
     arguments:
       hard_rerun: n
     descriptors:

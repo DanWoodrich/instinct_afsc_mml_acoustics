@@ -12,12 +12,11 @@ import sys
 import numpy as np
 import random
 #from matplotlib.image import imread
-import glob
 import os
-from PIL import Image
+
 
 import keras
-
+from keras.callbacks import CSVLogger
 #import sklearn
 
 #######import params###########
@@ -31,8 +30,11 @@ FGpath = args[1]
 SPECPATH=args[2]
 datapath=args[3]
 resultpath=args[4]
+EPOCH = int(args[5])
+model_name = args[6]
 model_input_size = 224 #this shuold be a parameter
-train_val_split = float(args[5])
+#should be a parameter
+train_val_split = float(args[7])
 #small_window= args[4] #I might not even need to pass this one- I can get the crop width based on the height of the spectrogram images
 
 print("hello world!")
@@ -170,6 +172,10 @@ def MakeDataset(dataset,steplen,wl_len,mis,isTrain=True,getAllLabs = False,batch
     else:
         subsetval = 0 #tf.constant([1])
 
+    #shuffle order of sound files
+    dataset = dataset.shuffle(500)
+    
+
     dataset = dataset.map(lambda x,y,z: (parse_fxn(x,y,mis,steplen,wl_len),y,z)).unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
 
     if not getAllLabs:
@@ -181,7 +187,9 @@ def MakeDataset(dataset,steplen,wl_len,mis,isTrain=True,getAllLabs = False,batch
 
     #might need another map function here to increase dimension size from grayscale to rgb for resnet model. 
     
-    dataset = dataset.shuffle(15000) #big number because why not? 
+    dataset = dataset.shuffle(1000) #big number because why not?
+
+    dataset = dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x/255),y)) #divide color vals by 255... may or may not need to...
         
     dataset= dataset.batch(batchsize)
     
@@ -232,16 +240,10 @@ full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3))
 #test_iter = iter(MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,isTrain=False,batchsize = 1000))
 #all_iter = iter(MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,getAllLabs=True,batchsize = 1000))
 
-import code
-code.interact(local=dict(globals(), **locals()))
+#import code
+#code.interact(local=dict(globals(), **locals()))
 
 print(model_input_size)
-
-#Code from Matt
-def fake_image(img):
-  # This is a trick to get Keras applications, which expects RGB images, to work
-  # with the single-channel spectrograms produced by log_mel_spec.
-  return tf.tile(tf.expand_dims(img, -1), [1, 1, 1, 3])
 
 def KerasApplicationsModel(constructor=tf.keras.applications.resnet_v2.ResNet50V2):
   return tf.keras.Sequential([
@@ -251,11 +253,40 @@ def KerasApplicationsModel(constructor=tf.keras.applications.resnet_v2.ResNet50V
     constructor(include_top=False, weights=None, pooling="max"),
     tf.keras.layers.ReLU(),
     tf.keras.layers.Dense(128, activation="relu"),
-    tf.keras.layers.Dense(2),
+    tf.keras.layers.Dense(1),
     tf.keras.layers.Activation("sigmoid"),
   ])
 
-model = KerasApplicationsModel(tf.keras.applications.ResNet50V2)
+#Matt Harvey proposed smaller CNN. 
+def SmallCNNModel():
+  return tf.keras.Sequential([
+    tf.keras.Input(shape=(model_input_size, wl_mod, 3)),
+    tf.keras.layers.RandomCrop(height = model_input_size, width = model_input_size),
+    tf.keras.layers.Conv2D(16, 7, use_bias=False, activation="relu"),
+    tf.keras.layers.MaxPooling2D(2, 2),
+    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"),
+    tf.keras.layers.MaxPooling2D(2, 2),
+    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
+    tf.keras.layers.MaxPooling2D(2, 2),
+    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
+    tf.keras.layers.GlobalMaxPool2D(),
+    tf.keras.layers.Dense(128, activation="relu"),
+    tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(1),
+    tf.keras.layers.Activation("sigmoid"),
+  ])
+
+if model_name == "ResNet50":
+    model = KerasApplicationsModel(tf.keras.applications.resnet_v2.ResNet50V2)
+elif model_name =="SmallCNN":
+    model = SmallCNNModel()
+else:
+    raise MyValidationError("Model not found")
+
+#model = KerasApplicationsModel(tf.keras.applications.resnet_v2.ResNet50V2)
+
+#import code
+#code.interact(local=dict(globals(), **locals()))
 
 model.compile(
     optimizer="adam",
@@ -263,7 +294,7 @@ model.compile(
     # proper assumption for species detection. For spoken digits, it's more
     # proper to use categorical_cross_entropy and softmax, but this example
     # won't.
-    loss="binary_crossentropy",
+    loss="binary_crossentropy", #binary_crossentropy
     metrics=[
         "accuracy",
         tf.keras.metrics.AUC(name="rocauc"),
@@ -273,17 +304,39 @@ model.compile(
     ],
 )
 
-train_dataset = MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,isTrain=True,batchsize = 1000)
-test_dataset = MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,isTrain=False,batchsize = 1000)
+#import code
+#code.interact(local=dict(globals(), **locals()))
+
+#might think about a try catch here- on GPU OOM error, iteratively decrease batch size to maximize it. 
+
+train_dataset = MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,isTrain=True,batchsize = 256)
+test_dataset = MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,isTrain=False,batchsize = 256)
+
+logpath = resultpath + "/model_history_log.csv"
+
+if os.path.isfile(logpath):
+    os.remove(logpath)
+    
+csv_logger = CSVLogger(logpath, append=True)
 
 try:
   model.fit(
       train_dataset,
       validation_data=test_dataset,
-      epochs=10,
+      epochs=EPOCH,
+      callbacks=[csv_logger]
   )
 except KeyboardInterrupt:
   pass
+
+#import code
+#code.interact(local=dict(globals(), **locals()))
+
+#two outputs:
+
+#np.save(resultpath + "/history.npy",model.history)
+model.save(resultpath + "/model.keras")
+
 
 #working well. Now, we can move on to training. 
 

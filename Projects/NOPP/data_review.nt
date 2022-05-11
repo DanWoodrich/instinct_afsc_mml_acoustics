@@ -105,7 +105,7 @@ Job:
       methodID: train-simple-dl
       methodvers: v1-1
       train_val_split: 0.80
-      epoch: 15
+      epoch: 50
       model_name: ResNet50
       #will recieve large window length and replicas from inputs
       #small_window: 14

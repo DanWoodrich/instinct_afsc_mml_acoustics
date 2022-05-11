@@ -29,7 +29,7 @@ model = pd.read_csv(model_path + "/model_history_log.csv")
 #import code
 #code.interact(local=dict(globals(), **locals()))
 
-fig, axs = plt.subplots(3)
+fig, axs = plt.subplots(4)
 fig.suptitle('Model evalution metrics')
 #fig.xlabel("Epoch")
 axs[0].plot(model.epoch, model.loss, marker="x")
@@ -42,9 +42,15 @@ axs[1].set(ylabel="Accuracy")
 
 axs[2].plot(model.epoch, model.rocauc, marker="x")
 axs[2].plot(model.epoch, model.val_rocauc, marker="x")
+axs[2].set(ylabel="ROCAUC")
+
+axs[3].plot(model.epoch, model.ap, marker="x")
+axs[3].plot(model.epoch, model.val_ap, marker="x")
+axs[3].set(ylabel="ROCAUC")
+
 
 #axs[2].xlabel("Epoch")
-axs[2].set(ylabel="ROCAUC")
+
 
 for ax in axs.flat:
     ax.set(xlabel='Epoch')

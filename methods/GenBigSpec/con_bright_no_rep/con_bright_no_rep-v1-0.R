@@ -4,8 +4,8 @@ library(tuneR)
 library(signal)
 library(imager)
 
-#spectrogram generation. 
-gen_spec_image <-function(x,wl,ovlp,contrast,brightness){
+#spectrogram generation. #sounddata,windowLength,overlap,contrast_mod,brightness_mod,crop_freq,crop_freq_start,crop_freq_size
+gen_spec_image <-function(x,wl,ovlp,contrast,brightness,do_crop,crop_start,crop_size){
   
   spectrogram = specgram(x = x@left,
            Fs = x@samp.rate,
@@ -13,16 +13,28 @@ gen_spec_image <-function(x,wl,ovlp,contrast,brightness){
            overlap=ovlp
   )
   
+  #before doing any normalizing etc, apply frequency cropp
+  if(do_crop=="y"){
+    
+    bins = dim(spectrogram$S)[1]
+    
+    freq_per_bin = (x@samp.rate/2)/bins
+    
+    bin_start = ceiling(crop_freq_start/freq_per_bin)
+    
+    bin_end = ceiling((crop_freq_start+crop_freq_size)/freq_per_bin)
+    
+    spectrogram$S = spectrogram$S[bin_start:bin_end,]
+    spectrogram$f = spectrogram$f[bin_start:bin_end]
+    
+  }
+  
+  
   spectrogram$S = log(abs(spectrogram$S))
   
   #rescale to # of sd
   specmean = mean(spectrogram$S)
   spec_sd = sd(spectrogram$S)
-  
-  while((min(spectrogram$S)+(spec_sd*contrast))>specmean|(max(spectrogram$S)-(spec_sd*contrast))<specmean){
-    contrast = contrast - 0.5
-    print("Warning: high contrast reduced for safe plotting.")
-  }
   
   spectrogram$S[which(spectrogram$S<(min(spectrogram$S)+(spec_sd*contrast)))]=min(spectrogram$S)+(spec_sd*contrast)
   spectrogram$S[which(spectrogram$S>(max(spectrogram$S)-(spec_sd*contrast)))]=max(spectrogram$S)-(spec_sd*contrast)
@@ -66,7 +78,7 @@ img_print <-function(object,xbins,pix_height,path){
 
 #needs PARAMSET_GLOBALS['SF_foc'] in process
 
-args="C:/Apps/INSTINCT/Cache/394448 C:/Apps/INSTINCT/Cache/394448/test //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 2 2 2 -2 2 2 1 15 14 256 dbuddy-compare-publish-v1-2"
+args="C:/Apps/INSTINCT/Cache/394448 C:/Apps/INSTINCT/Cache/394448/921636 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 -1 0 y 450 50 600 40 512 con_bright_no_rep-v1-0"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -80,9 +92,12 @@ resultpath = args[2]
 SFroot = args[3]
 brightness_mod = as.numeric(args[4])
 contrast_mod = as.numeric(args[5])
-img_height = as.numeric(args[6])
-pix_per_sec = as.numeric(args[7])
-windowLength = as.numeric(args[8])
+crop_freq = args[6]
+crop_freq_size = as.numeric(args[7])
+crop_freq_start = as.numeric(args[8])
+img_height = as.numeric(args[9])
+pix_per_sec = as.numeric(args[10])
+windowLength = as.numeric(args[11])
 
 #for each difftime, load in the sound data. 
 
@@ -113,13 +128,13 @@ for(i in 1:length(bigfiles)){
   
   overlap = windowLength/xbins + windowLength- (length(sounddata@left)/xbins)  
   
-  spec_img<- gen_spec_image(sounddata,windowLength,overlap,contrast_vec[n],brightness_vec[p])
+  spec_img<- gen_spec_image(sounddata,windowLength,overlap,contrast_mod,brightness_mod,crop_freq,crop_start,crop_size)
 
-  spec_img =resize(spec_img,size_x = img_height,size_y = xbins) #make height
+  spec_img =resize(spec_img,size_x = xbins,size_y = img_height) #make height
 
   filename = paste(resultpath,"/bigfiles/bigfile",bigfiles[i],".png",sep="")
 
-  img_print(spec_img,round(perc_diff*xbins),dim(spec_img)[2],filename) #inputHeight
+  img_print(spec_img,xbins,img_height,filename) #inputHeight
   
 }
 

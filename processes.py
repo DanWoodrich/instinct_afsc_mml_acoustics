@@ -8,6 +8,7 @@ import pandas as pd
 import os
 
 from pipe_shapes import *
+from .pipe_shapes import *
 
 #custom modification of process to hash files (I use this for FormatFG and FormatGT) 
  #############
@@ -786,14 +787,28 @@ class TrainModel_dl(INSTINCT_process):
 
     pipeshape = ThreeUpstream_noCon
 
-    upstreamdef = ["GetFG","GetSpec","GetDETx_w_AL"]
+    upstreamdef = ["GetFG","GetSpec","GetLabels"]
+
+    outfile = 'model.keras'
+
+    def run(self):
+        
+        self.cmd_args=[self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
+class TrainModel_dl2(INSTINCT_process):
+
+    pipeshape = dl2_special
+
+    upstreamdef = ["GetFG","GetSpec","GetGT","GetLabels","GetSplits"]
 
     outfile = 'model.keras'
 
     def run(self):
         #import code
-        #code.interact(local=locals())
-        self.cmd_args=[self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+        #code.interact(local=dict(globals(), **locals()))
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -807,5 +822,34 @@ class ModelEval_NN(INSTINCT_process):
     def run(self):
 
         self.cmd_args=[self.ports[0].outpath(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
+class LabelTensor(INSTINCT_process):
+
+    pipeshape =ThreeUpstream_bothUpTo1
+    upstreamdef = ["GetFG","GetImg","GetGT"]
+
+    outfile = 'receipt.txt'
+
+    def run(self):
+    
+        #import code
+        #code.interact(local=locals())
+        
+        self.cmd_args=[self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
+        
+        self.run_cmd()
+
+class SplitTensor(INSTINCT_process):
+
+    pipeshape = TwoUpstream
+    upstreamdef = ["GetFG","GetImg"]
+
+    outfile = 'receipt.txt'
+    
+    def run(self):
+
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outfilegen(),self.param_string]
 
         self.run_cmd()

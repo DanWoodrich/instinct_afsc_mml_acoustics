@@ -58,13 +58,38 @@ Job:
     parameters:
       methodID: con_bright_no_rep
       methodvers: v1-0
-	  brightness_mod: -1
+      brightness_mod: -1
       contrast_mod: 0
+      crop_freq: y
+      crop_freq_size: 450
+      crop_freq_start: 50
       img_height: 600
-	  pix_per_sec: 40
-	  window_length: 512
+      pix_per_sec: 40
+      window_length: 512
     arguments:
       hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  LabelTensor:
+    parameters:
+      methodID: tens-simple-label
+      methodvers: v1-0
+    descriptors:
+      runtype: lib
+      language: R
+  SplitTensor:
+    parameters:
+      methodID: tens-simple-split
+      methodvers: v1-0
+      seed_val: 1
+      split_protocol: by_file 
+      test_split: y
+      train_test_split: 0.80
+      #of the test in previous, what is the split between train and val
+      train_val_split: 0.75
+      #or per_file. by-file smoother, per_file more label effecient
+      use_seed: y
     descriptors:
       runtype: lib
       language: R

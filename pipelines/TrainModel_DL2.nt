@@ -1,0 +1,14 @@
+pipe: TrainModel_dl2.pipe
+#this one I made a custom pipe shape for to make it less convoluted. Lots of dependency tie ins. 
+TrainModel_dl2.pipe:
+  process: TrainModel_dl2
+  GetFG: 
+    process: FormatFG
+  GetGT: 
+    process: FormatGT
+  GetSpec: 
+    process: GenBigSpec
+  GetLabels: 
+    process: LabelTensor
+  GetSplits: 
+    process: SplitTensor

@@ -1,6 +1,7 @@
 MethodID<-"query-random-v1-1"
 #1.1: make cycle a general instinct_fxn.
 #1.2: make a catch for different formatted data. Make sure (later) that the old formatting was right on any data, ever..?
+#1.4: update for latest design of instinct
 
 library(foreach)
 
@@ -42,11 +43,11 @@ dataFormat<- function(x){
 
 #cant do it this way unfortunately, with the internal quotes. maybe can find a better way eventually..
 #args="C:/Apps/INSTINCT/Cache//aeb8f9 //161.55.120.117/NMML_AcousticsData/Audio_Data NewHB_FG2.csv //nmfs/akc-nmml/CAEP/Acoustics/ANALYSIS/HumpbackYeses_2.csv None 15 1 query-random-v1-1"
-args="C:/Temp //161.55.120.117/NMML_AcousticsData/Audio_Data AFSC_pull2.csv //nmfs/akc-nmml/CAEP/Acoustics/ANALYSIS/allhb_oct15_to_mar16.csv C:/Temp/round1_pull1.csv 250 1 query-random-v1-1"
+args="C:/Temp //161.55.120.117/NMML_AcousticsData/Audio_Data AFSC_pull2.csv //nmfs/akc-nmml/CAEP/Acoustics/ANALYSIS/allhb_oct15_to_mar16.csv C:/Temp/round1_pull1.csv 250 1 none query-random-v1-1"
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+#args<-commandArgs(trailingOnly = TRUE)
 
 resultPath<- args[1]
 
@@ -56,11 +57,12 @@ datapath <- args[4]
 Exclude <-args[5] #vector of FG to exclude from sample 
 Pulls<- as.numeric(args[6])
 RandSeed<- as.numeric(args[7])
+ReorderBy <- args[8]# "None" #"None", "time", or "site"
 
 #make random pulls consistent depending on seed set
 set.seed(RandSeed)
 
-source(paste("C:/Apps/INSTINCT/lib/supporting/instinct_fxns.R",sep="")) 
+source(paste("C:/Apps/INSTINCT/lib/user/R_misc.R",sep="")) 
 
 #datapath<-"//nmfs/akc-nmml/CAEP/Acoustics/ANALYSIS/RWupcallYeses4Dan.csv" #change to local folder
 #datapath<-"//nmfs/akc-nmml/CAEP/Acoustics/ANALYSIS/RWgunshots4Dan.csv"   #change to local folder 
@@ -83,7 +85,8 @@ if(Exclude!="None"){
   for(n in 1:length(Exclude)){
     
     #load in FG
-    FG<-read.csv(paste(resultPath,"/",Exclude[n],sep=""))
+    #FG<-read.csv(paste(resultPath,"/",Exclude[n],sep=""))
+    FG<-read.csv(Exclude[n])
     
     matches <-paste(getFileName(data$Wavefile),data$StartSecInWav,data$EndSecInWav) %in% paste(FG$FileName,FG$SegStart,FG$SegStart+FG$SegDur)
     if(any(matches)){
@@ -97,9 +100,15 @@ if(Exclude!="None"){
 
 data<-addCycle(data,"MooringDeployID","StartDateTime","StartFieldTimeUTC","EndFieldTimeUTC")
 
+#v1-2:
 #randomly sample n seeds: 
+#cyclesPull<-sample(data$Cycle,Pulls)
 
-cyclesPull<-sample(data$Cycle,Pulls)
+#above undersampled, given that the cycles were not pulled from the unique cycles, but rather the whole pool. 
+#corrected in v1-4. Is there any way of knowing the true amount of cycles from round1_pull1.csv? Yes- need to just use the add cycle on FG and the total # of cycle will determine 
+#number of pulls. Anyways...
+
+cyclesPull<-sample(unique(data$Cycle),Pulls)
 
 index<-which(data$Cycle %in% cyclesPull)
 
@@ -110,6 +119,30 @@ orders<-cbind(unique(datasub$Cycle),1:length(unique(datasub$Cycle)))
 datasub$Cycle<-match(datasub$Cycle, orders[,1])
 
 datasub<-datasub[order(datasub$Cycle,datasub$StartDateTime),]
+
+#optional reorder (1-4)
+
+if(ReorderBy!="none"){
+  
+  noDup = datasub[which(!duplicated(datasub$Cycle)),]
+  
+  if(ReorderBy=="time"){
+    
+    noDup   = noDup[order(noDup$StartFieldTimeUTC,noDup$MooringSite),]
+    
+    cycle_ord = noDup$Cycle
+    
+  }else if(ReorderBy=="site"){
+    
+    noDup   = noDup[order(noDup$MooringSite,noDup$StartFieldTimeUTC),]
+    
+    cycle_ord = noDup$Cycle
+    
+  }
+  
+  datasub <- datasub[order(match(datasub$Cycle,cycle_ord)),]
+  
+}
 
 
 #now convert it to FG format
@@ -132,9 +165,13 @@ month<-substr(sfdt,3,4)
 
 
 #assemble fg: 
-out<-data.frame(sf,paste("/",datasub$MooringDeployID,"/",month,"_",year,"/",sep=""),sfdt,0,datasub$MooringDeployID,datasub$StartSecInWav,datasub$EndSecInWav-datasub$StartSecInWav,datasub$MooringSite)
+#v1-4: retain cycle 
 
-colnames(out)<-c("FileName","FullPath","StartTime","Duration","Deployment","SegStart","SegDur","SiteID")
+out<-data.frame(sf,paste("/",datasub$MooringDeployID,"/",month,"_",year,"/",sep=""),sfdt,0,datasub$MooringDeployID,datasub$StartSecInWav,datasub$EndSecInWav-datasub$StartSecInWav,datasub$MooringSite,datasub$Cycle)
+
+colnames(out)<-c("FileName","FullPath","StartTime","Duration","Deployment","SegStart","SegDur","SiteID","PullID")
+
+
 
 pathsave<-""
 #find the file durations

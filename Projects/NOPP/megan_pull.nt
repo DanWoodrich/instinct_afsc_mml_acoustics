@@ -1,5 +1,4 @@
 #this is the params file for training a model for HB phrase detection. 
-#second version of the model
 
 Global:
   cache_root: C:/Apps/INSTINCT/Cache
@@ -24,6 +23,20 @@ Job:
     descriptors:
       runtype: lib
       language: R
+  impose_GT:
+    #this is for when visualizing AL in Raven with ViewDLbins
+    AssignLabels:
+      parameters: 
+        methodID: labels-w-gtovlp-time-bins
+        methodvers: v1-1
+        gt_ovlp_thresh: 0.40
+        only_time: y
+        write_GT: y
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
   ModelEval_NN:
     parameters:
       methodID: simple-eval
@@ -34,62 +47,47 @@ Job:
       runtype: lib
       language: Python
   FormatFG:
-    parameters:
-      decimate_data: y
-      methodID: dbuddy-pull-FG
-      #methodID: dbuddy-pull-FG-ord
-      methodvers: v1-0
-      methodID2m: matlabdecimate
-      methodvers2m: V1s0
-      #target_samp_rate: 4096
-      target_samp_rate: 2048
-      file_groupID:
-        #- HB_s_ns_sample1.csv
-        #- round1_pull1.csv
-        - round1_pull1_reduce.csv
-    arguments:
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: batch
-      runtype2m: bin
-      language2m: MATLAB
+      parameters:
+        decimate_data: y
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        target_samp_rate: 2048
+        file_groupID:
+          - AFSC_pull2.csv
+      descriptors:
+        runtype: no_method
+        runtype2m: bin
+        language2m: MATLAB
   GenBigSpec:
     parameters:
-      methodID: con_bright_no_rep
+      methodID: spec_con_bright
       methodvers: v1-0
-      brightness_mod: -1
-      contrast_mod: 0
-      crop_freq: y
-      crop_freq_size: 450
-      crop_freq_start: 50
-      img_height: 600
-      pix_per_sec: 40
       window_length: 512
+      contrast_start: 1
+      contrast_end: 3
+      contrast_levels: 2
+      brightness_start: -1
+      brightness_end: 3
+      brightness_levels: 2
+      #should be the same as below for the math to work out. can find solution later if this is too ugly. Global variable passed to params probably makes the most sense. 
+      small_window: 14
+      large_window: 15
     arguments:
       hard_rerun: n
     descriptors:
       runtype: lib
       language: R
-  LabelTensor:
+  MakeModel_bins:
     parameters:
-      methodID: tens-simple-label
+      methodID: make-bins-simple
       methodvers: v1-0
-    descriptors:
-      runtype: lib
-      language: R
-  SplitTensor:
-    parameters:
-      methodID: tens-simple-split
-      methodvers: v1-0
-      seed_val: 1
-      split_protocol: by_file 
-      test_split: y
-      train_test_split: 0.80
-      #of the test in previous, what is the split between train and val
-      train_val_split: 0.75
-      #or per_file. by-file smoother, per_file more label effecient
-      use_seed: y
+      #15 is going to be the large bin, which will get cropped in the model to a 15s window. 
+      #both in seconds
+      large_window: 15
+      #large_window should be same value as in GenBigSpec
+      step: 1
+    arguments:
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R
@@ -112,17 +110,9 @@ Job:
       venv_name: tf-gpu2
   FormatGT:
     parameters: 
-      methodID: R-pull-dbuddy-anyparam
-      methodvers: v1-3
-      UseFG: y
-      Analysis_ID: 17
-      #multiple can be specified with "," (no space) 
-      SignalCode: HB.s.p.2,HB.s.p.2
-    arguments: 
-      hard_rerun: n
+      signal_code: HB
     descriptors:
-      runtype: lib
-      language: R
+      runtype: no_method
   RavenViewDETx:
     parameters: 
       methodID: rv-simple-w-metadata
@@ -132,7 +122,7 @@ Job:
     #this shuold really be a parameter, not an argument
     #I should change this to y/n to be more consistent with other parameters
       fg_fill: T
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R

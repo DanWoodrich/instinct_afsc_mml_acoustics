@@ -1,5 +1,4 @@
 pipe: ViewDETx
-#doesn't have to use the .pipe notation as seen here
 ViewDETx:
   process: RavenViewDETx
   GetDETx:

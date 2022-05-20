@@ -11,7 +11,6 @@ TrainModel_RF_apply.pipe:
         process: FormatFG
   GetModel_obj:
     pipe: TrainModel_RF_obj.pipe
-    #think this is correct- before it didn't seem like AL was behaving properly. Reset AL to top level. b4 just TrainModel_paramset
     params_drop: Job-TrainModel_paramset
     pipe_link: 
       name: TrainModel_obj.nt

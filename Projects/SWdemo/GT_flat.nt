@@ -14,13 +14,13 @@ Job:
         methodvers2m: V1s0
         target_samp_rate: 8192
         file_groupID:
-          #- AL16_AU_CC02_files_All_bn_hg.csv
+          - AW13_AU_CL01_files_124-360_bn_hg.csv
           - AL17_AU_CC02_files_All_bn_hg.csv
           #- AW12_AU_CL01_files_1-384_bn_hg.csv
           #- AW12_AU_CL01_files_385-523_bn_hg.csv
           #- AW12_AU_KZ01_files_All_bn_hg.csv
           #- AW13_AU_CL01_files_1-123_bn_hg.csv
-          - AW13_AU_CL01_files_124-360_bn_hg.csv
+          #- AL16_AU_CC02_files_All_bn_hg.csv
           #- AW13_AU_PH01_files_All_bn_hg.csv
           #- AW13_AU_CL01_files_361-370_bn_hg.csv
           #- AW14_AU_NM01_files_All_bn_hg.csv

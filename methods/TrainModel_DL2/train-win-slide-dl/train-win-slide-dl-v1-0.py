@@ -33,12 +33,16 @@ label_path=args[3]
 split_path=args[4]
 resultpath=args[5]
 EPOCH = int(args[6])
-lab_reduce_fact = float(args[7])
-model_name = args[8]
-spec_img_height = args[9]
-spec_pix_per_sec = args[10]
-win_height = args[11]
-win_length = args[12]
+GT_depth = args[7].count(",")+1
+lab_reduce_fact = int(args[8])
+model_name = args[9]
+spec_img_height = int(args[10])
+spec_pix_per_sec = args[11]
+win_height = int(args[12])
+win_length = int(args[13])
+
+tp_prop = 0.1
+fp_prop = 0.9 #doesn't have to = 1... especially not when not i_neg
 
 FG = pd.read_csv(FGpath,compression='gzip')
 
@@ -51,111 +55,146 @@ split_files =[]
 for n in range(len(bigfile)):
 
     bigfiles.append(spec_path + '/bigfiles/bigfile' + str(n+1) + '.png')
-    lab_files.append(label_path + '/labeltensors/labeltensor' + str(n+1) + '.csv')
+    lab_files.append(label_path + '/labeltensors/labeltensor' + str(n+1) + '.csv.gz')
     split_files.append(split_path + '/splittensors/splittensor' + str(n+1) + '.csv')
 
 dataset1 = tf.data.Dataset.from_tensor_slices(bigfiles)
 dataset2 = tf.data.Dataset.from_tensor_slices(lab_files)
 dataset3 = tf.data.Dataset.from_tensor_slices(split_files)
 
+#dataset just maps bigfiles, to label_tensor, to split tensor
 full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3))
 
+def MakeDataset(dataset,split=None,batchsize=20):
 
+    dataset = dataset.shuffle(20) #how to figure out best shuffle batch size? 
 
-#dataset just maps bigfiles, to label_tensor, to split tensor
+    #ingest_data
+    dataset = dataset.map(lambda x,y,z: ingest(x,y,z)).unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
 
-def drop_assn(x,y,z):
+    #accumulate label
+    dataset = dataset.map(lambda x,y,z: (x,accumulate_lab(y),z))
 
-    return x,z
+    #filter
+    dataset = dataset.filter(lambda x,y,z: tf.reduce_all(y[:,2:3]==0)) #take records where all labels do not have ambiguity . 
+    dataset = dataset.filter(lambda x,y,z: tf.shape(tf.unique(tf.reshape(z,[-1])))[0]>1) #Take record where split assigment is unambiguous
 
-def TestMD(dataset):
+    #reduce to single assignment
+    dataset = dataset.map(lambda x,y,z: (x,y,z[0,0]))
 
-    dataset = dataset.map(lambda x,y,z: (parse_fxn(x,y),z)) #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
+    #reduce based on split assignment
+    if(split!=None):
+        dataset = dataset.filter(lambda x,y,z: z[0] == split) #1 = train, 2 = val, 3 = test
 
-    #dataset = dataset.batch(10)
-                          
-    return dataset
-
-def MakeDataset(dataset,steplen,wl_len,mis,isTrain=True,getAllLabs = False,batchsize = 20):
-
-    #Will produce either train or test set. 
-    if isTrain:
-        subsetval = 1 #tf.constant([0])
-    else:
-        subsetval = 0 #tf.constant([1])
-
-    #shuffle order of sound files
-    dataset = dataset.shuffle(500)
+    #drop assignment
+    dataset = dataset.map(lambda x,y,z: (x,y))
     
+    #labels to one-hot
+    dataset = dataset.map(lambda x,y: (x,y[:,0])) #only take 1st column, flip to horizontal
 
-    dataset = dataset.map(lambda x,y,z: (parse_fxn(x,y,mis,steplen,wl_len),y,z)).unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
-
-    if not getAllLabs:
-        
-        dataset = dataset.filter(lambda x,y,z: y == subsetval)
-        #drop assignment feature
-        dataset = dataset.map(lambda x,y,z: drop_assn(x,y,z))
-
-
-    #might need another map function here to increase dimension size from grayscale to rgb for resnet model. 
-    
-    dataset = dataset.shuffle(1000) #big number because why not?
+    dataset = dataset.shuffle(150) #big number because why not?
 
     dataset = dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x/255),y)) #divide color vals by 255... may or may not need to...
         
-    dataset= dataset.batch(batchsize)
-    
-    #I need to better understand how map, unbatch, filter, and batch play together... do this in my test environment next!
+    dataset = dataset.batch(batchsize)
+
     dataset = dataset.prefetch(1)
-    
+                          
     return dataset
 
-def parse_fxn(x,y):
+def accumulate_lab(y):
+
+    #the manipulation looks right, but doesn't seem to be correctly accumulating- check the source data and the transformations. 
+
+    out_tens = tf.reshape(y,[2,-1])
+
+    width = out_tens.get_shape().as_list()[1]
+
+    out_tens = tf.math.bincount(out_tens,axis=-1,minlength=3) #always populates 0,1,2 - tp,fp,uk
+
+    out_tens = out_tens/width #makes it the proportion
+
+    out_tens = tf.math.greater_equal(out_tens,[tp_prop,fp_prop,0])
+
+    out_tens = tf.where(out_tens, 1, 0)
+
+    out_tens = tf.argmax(out_tens,axis=-1) #this makes the integer order matter- prioritizes in order of correct label for tp, then fp, then uk
+
+    out_tens = tf.one_hot(out_tens,3)
+
+    return(out_tens)
+
+def ingest(x,y,z):
+
+    #if this approach appears to work, make into a general function (lot of copy and paste here)
+
+    wh_lab =int(win_height/lab_reduce_fact)
+    wl_lab = int(win_length/lab_reduce_fact)
+
+    #this should give a random offset, each epoch!
+    offset = tf.random.uniform(shape=[],maxval=(wl_lab-1),dtype=tf.int32) #offset is on the resolution of label
 
     image = tf.io.read_file(x)
     image = tf.image.decode_png(image, channels=1)
+
+    #resample by offset    
+    image = image[:,(offset*lab_reduce_fact):,:]
+
+    image = tf.reshape(tf.image.extract_patches(
+            images=tf.expand_dims(image, 0),
+            sizes=[1, win_height, win_length, 1],
+           strides=[1, win_height, win_length, 1],
+            rates=[1, 1, 1, 1],
+            padding='VALID'), (-1, win_height, win_length, 1))
 
     #import code
     #code.interact(local=dict(globals(), **locals()))
 
     lab = tf.io.read_file(y)
-    lab = tf.strings.split(lab, sep="\r\n", maxsplit=-1, name=None)[:-1]
+    lab = tf.io.decode_compressed(lab,compression_type='GZIP')
+    lab = tf.strings.split(lab, sep="\n", maxsplit=-1, name=None)[:-1]
     lab = tf.strings.to_number(lab,out_type=tf.int32,name=None)
 
     #now, try to reshape as 3d array!
-    lab = tf.reshape(lab,[,,,])
-    
-    #lab = tf.TextLineReader(skip_header_lines=1)
-    #lablines = lab.split('\n')[1:-1]
-    #lab = tf.io.decode_csv(lab,record_defaults=[tf.constant([],dtype=tf.int32)])
+    lab = tf.expand_dims(lab,-1)
+    lab = tf.expand_dims(lab,-1)
+    lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
 
-    #splt = tf.io.read_file(y)
-    #splt = tf.io.decode_csv(splt,record_defaults=[tf.constant([],dtype=tf.int32)])
-    
-    #splt = tf.io.decode_csv(z,record_defaults=[tf.constant([],dtype=tf.int32)])
+    lab = lab[:,offset:,:]
+    #need to do: splice the width by
 
-    #result = tf.reshape(tf.image.extract_patches(
-    #        images=tf.expand_dims(image, 0),
-    #        sizes=[1, mis, wl_len, 1],
-    #       strides=[1, mis, step, 1],
-    #        rates=[1, 1, 1, 1],
-    #        padding='VALID'), (endloop, mis, wl_len, 1))
+    lab = tf.reshape(tf.image.extract_patches(
+            images=tf.expand_dims(lab, 0),
+            sizes=[1, wh_lab, wl_lab, 1],
+           strides=[1, wh_lab, wl_lab, 1],
+            rates=[1, 1, 1, 1],
+            padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
 
-    #result = tf.tile(
+    splt = tf.io.read_file(z)
+    splt = tf.strings.split(splt, sep="\r\n", maxsplit=-1, name=None)[:-1]
+    splt = tf.strings.to_number(splt,out_type=tf.int32,name=None)
 
-    #result = tf.reshape(result,[-1,mis,wl_len,3])
+    splt = tf.expand_dims(splt,-1)
+    splt = tf.expand_dims(splt,-1)
+    splt = tf.reshape(splt,[1,-1,1])
+
+    splt = splt[:,(offset*lab_reduce_fact):,:]
+
+    splt = tf.reshape(tf.image.extract_patches(
+            images=tf.expand_dims(splt, 0),
+            sizes=[1, 1, win_length, 1],
+           strides=[1, 1, win_length, 1],
+            rates=[1, 1, 1, 1],
+            padding='VALID'), [-1, 1, win_length, 1])
         
-    return image,lab#,splt
+    return image,lab,splt
 
-
-
-#test = TestMD(full_dataset)
-
-
-
-test2 = iter(TestMD(full_dataset))
+test2 = iter(MakeDataset(full_dataset))
+test3 = iter(MakeDataset(full_dataset,1))
 
 next(test2)
+next(test3)
+
 import code
 code.interact(local=dict(globals(), **locals()))
 

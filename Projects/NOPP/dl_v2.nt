@@ -16,6 +16,7 @@ Global:
     tilepix_h: 600
     pix_ps_spec: 40
     lab_reduceby: 4
+    signal_codes: HB.s.p.2,HB.s.p.4
 Job:
   AssignLabels:
     parameters: 
@@ -118,6 +119,7 @@ Job:
       methodID: train-win-slide-dl
       methodvers: v1-0
       epoch: 50
+      gt_depth: [signal_codes]
       lab_reduce_factor: [lab_reduceby]
       model_name: ResNet50
       spec_img_height: [tilepix_h]
@@ -138,7 +140,7 @@ Job:
       UseFG: y
       Analysis_ID: 17
       #multiple can be specified with "," (no space) 
-      SignalCode: HB.s.p.2,HB.s.p.4
+      SignalCode: [signal_codes]
     arguments: 
       hard_rerun: n
     descriptors:

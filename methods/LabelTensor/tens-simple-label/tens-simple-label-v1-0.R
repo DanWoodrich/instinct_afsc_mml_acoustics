@@ -109,7 +109,7 @@ for(i in 1:length(bigfiles)){
 
   #create template matrix
   
-  lab_array <- array(rep(0, total_pixels), dim=c(dim_x, dim_y, GT_depth))
+  lab_array <- array(rep(1, total_pixels), dim=c(dim_x, dim_y, GT_depth)) #1 is now 'fp'
   
   GT$depth = match(GT$SignalCode,GT_unq)
   
@@ -118,7 +118,7 @@ for(i in 1:length(bigfiles)){
   for(j in 1:length(GT_unq)){
     for(k in 1:nrow(GT)){
       
-      lab_array[GT[k,"LowPix"]:GT[k,"HighPix"],GT[k,"StartPix"]:GT[k,"EndPix"],GT[k,"depth"]] = 1
+      lab_array[GT[k,"LowPix"]:GT[k,"HighPix"],GT[k,"StartPix"]:GT[k,"EndPix"],GT[k,"depth"]] = 0 #0 is now 'tp'
     }
     
   }
@@ -147,7 +147,7 @@ for(i in 1:length(bigfiles)){
   
  #write.csv(c(lab_array),lab_path,row.names = FALSE) 
   
-  write.table(c(lab_array), paste(resultpath,"/labeltensors/labeltensor",i,".csv",sep=""),sep=",", quote = FALSE,col.names=FALSE,row.names = FALSE,eol = "\n")
+  write.table(c(lab_array), gzfile(paste(resultpath,"/labeltensors/labeltensor",i,".csv.gz",sep="")),sep=",",quote = FALSE,col.names=FALSE,row.names = FALSE)
   
   
 }

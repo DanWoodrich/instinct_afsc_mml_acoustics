@@ -8,8 +8,6 @@ args<-strsplit(args,split=" ")[[1]]
 
 args<-commandArgs(trailingOnly = TRUE)
 
-stop()
-
 outpath <-args[1]
 FG <- args[2]
 
@@ -17,6 +15,7 @@ numparams = floor((length(args)-2)/2)
 
 #length
 
+command1 = paste("dbuddy pull direct",outpath)
 
 
 if(numparams!=0){
@@ -24,12 +23,27 @@ if(numparams!=0){
   paramnames = c(args[3:(3+numparams-1)])
   paramvals = c(args[(3+numparams):(3+numparams+numparams-1)])
   
-  if(paramvals[which(paramnames=="UseFG")]=="n"){
-    command = paste("dbuddy pull detections",outpath,sep=" ")
+  if(paramvals[which(paramnames=="UseFG")]=="y"){
+    
+    command = paste("SELECT DISTINCT detections.* FROM filegroups JOIN bins_filegroups ON filegroups.Name = bins_filegroups.FG_name JOIN bins ON bins.id = bins_filegroups.bins_id JOIN detections ON bins.FileName = detections.StartFile WHERE ")
+    
+    #if .csv is present, remove it from string
+    if(grepl(".csv",FG)){
+      FG = substr(FG,1,nchar(FG)-4)
+    }
+    
+    command = paste(command,"filegroups.Name=","'",FG,"'",sep="") 
+    
+    if(length(paramvals)>1){
+      #if there are more arguments add an and 
+      command = paste(command," AND",sep="")
+    }
+    
   }else{
-    command = paste("dbuddy pull detections",outpath,"--FileGroup",FG,sep=" ")
+    
+    command = "SELECT * FROM detections WHERE"
+    
   }
-  
 
   paramvals = paramvals[-which(paramnames=="UseFG")]
   paramnames = paramnames[-which(paramnames=="UseFG")]
@@ -43,20 +57,48 @@ if(numparams!=0){
   
   for(i in 1:(numparams-1)){
     
-    if(multi_true[i]){
+    if(paramnames[i]=="Comments"){
       
-      val= 
+      val= paste("detections.Comments LIKE '",paramvals[i],"'",sep="")
+      
+    }else if(paramnames[i] == 'Analysis_ID'){
+      val = paste("detections.Analysis_ID =",paramvals[i],sep="")
+    }else if(multi_true[i]){
+      string = strsplit(paramvals[i],",")[[1]]
+      string = paste(string,collapse="','")
+      val= paste("detections.",paramnames[i]," in ('",string,"')",sep="")
     }else{
-      val=
+      val=paste("detections.",paramnames[i],"='",paramvals[i],"'",sep="")
     }
     
-    command = paste(command," --",paramnames[i]," ",paramvals[i],sep="")
+    command = paste(command,val)
+    
+    if(i!=(numparams-1)){
+      command = paste(command,"AND")
+    }
+
   }
+  
+  command = paste(command,";",sep="")
   
 }
 
+paste(command1," \"",command,"\"",sep="")
+
 print(command)
 
-system(command)
+#
+
+fileConn<-file("command_temp.bat")
+writeLines(paste(command1," \"",command,"\"",sep=""), fileConn)
+close(fileConn)
+
+#shell.exec("command_temp.bat")
+system("command_temp.bat")
+
+file.remove("command_temp.bat")
+
+
+
 
 

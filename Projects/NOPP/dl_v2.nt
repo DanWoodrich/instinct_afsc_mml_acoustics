@@ -10,6 +10,12 @@ Global:
   SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
+  parameters:
+    freq_start: 50
+    freq_size: 450
+    tilepix_h: 600
+    pix_ps_spec: 40
+    lab_reduceby: 4
 Job:
   AssignLabels:
     parameters: 
@@ -61,10 +67,10 @@ Job:
       brightness_mod: -1
       contrast_mod: 0
       crop_freq: y
-      crop_freq_size: 450
-      crop_freq_start: 50
-      img_height: 600
-      pix_per_sec: 40
+      crop_freq_size: [freq_size]
+      crop_freq_start: [freq_start]
+      img_height: [tilepix_h]
+      pix_per_sec: [pix_ps_spec]
       window_length: 512
     arguments:
       hard_rerun: n
@@ -75,6 +81,16 @@ Job:
     parameters:
       methodID: tens-simple-label
       methodvers: v1-0
+      #1 if only on time, 2 if time/frequency
+      dimensions: 2
+      #reduce_factor is the factor by which to divide spec dimensions (lower resolution than spec) 
+      reduce_factor: [lab_reduceby]
+      freq_size: [freq_size]
+      freq_start: [freq_start]
+      spec_img_height: [tilepix_h]
+      spec_pix_per_sec: [pix_ps_spec]
+    arguments:
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R
@@ -83,33 +99,38 @@ Job:
       methodID: tens-simple-split
       methodvers: v1-0
       seed_val: 1
-      split_protocol: by_file 
-      test_split: y
+      #by_file or within_file
+      split_protocol: within_file
+      test_split: n
       train_test_split: 0.80
       #of the test in previous, what is the split between train and val
       train_val_split: 0.75
       #or per_file. by-file smoother, per_file more label effecient
       use_seed: y
+      spec_pix_per_sec: [pix_ps_spec]
+    arguments:
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R
-  TrainModel_dl:
+  TrainModel_dl2:
     parameters:
-      methodID: train-simple-dl
-      methodvers: v1-1
-      train_val_split: 0.80
+      methodID: train-win-slide-dl
+      methodvers: v1-0
       epoch: 50
+      lab_reduce_factor: [lab_reduceby]
       model_name: ResNet50
-      #will recieve large window length and replicas from inputs
-      #small_window: 14
-      #add some hyperparameters?
+      spec_img_height: [tilepix_h]
+      spec_pix_per_sec: [pix_ps_spec]
+      win_height: 600
+      win_length: 600
     arguments: 
       hard_rerun: n
     descriptors:
       runtype: lib
       language: Python
-      venv: Conda
-      venv_name: tf-gpu2
+      #venv: Conda
+      #venv_name: tf-gpu2
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam
@@ -117,7 +138,7 @@ Job:
       UseFG: y
       Analysis_ID: 17
       #multiple can be specified with "," (no space) 
-      SignalCode: HB.s.p.2,HB.s.p.2
+      SignalCode: HB.s.p.2,HB.s.p.4
     arguments: 
       hard_rerun: n
     descriptors:

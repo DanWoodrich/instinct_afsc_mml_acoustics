@@ -6,6 +6,9 @@ Global:
   SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
+  #parameters:
+  #  test1: 15
+  #  test2: apple
 Job:
   FormatFG:
       parameters:
@@ -13,9 +16,10 @@ Job:
         methodID2m: matlabdecimate
         methodvers2m: V1s0
         target_samp_rate: 8192
+        #test_param1: [test1]
         file_groupID:
           - AW13_AU_CL01_files_124-360_bn_hg.csv
-          - AL17_AU_CC02_files_All_bn_hg.csv
+          #- AL17_AU_CC02_files_All_bn_hg.csv
           #- AW12_AU_CL01_files_1-384_bn_hg.csv
           #- AW12_AU_CL01_files_385-523_bn_hg.csv
           #- AW12_AU_KZ01_files_All_bn_hg.csv
@@ -40,11 +44,15 @@ Job:
       methodID: rv-simple-w-metadata
       methodvers: v1-5
       #methodID: rv-rawdata
+      #test out global parameters:
+      #test_param: 25
     arguments:
     #previously called RavenFill
     #this shuold really be a parameter, not an argument. Change
     #I should change this to y/n to be more consistent with other parameters
       fg_fill: T
+      hard_rerun: n
+      trim_tree: n
     descriptors:
       runtype: lib
       language: R

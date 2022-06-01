@@ -808,7 +808,7 @@ class TrainModel_dl2(INSTINCT_process):
     def run(self):
         #import code
         #code.interact(local=dict(globals(), **locals()))
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -850,6 +850,6 @@ class SplitTensor(INSTINCT_process):
     
     def run(self):
 
-        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outfilegen(),self.param_string]
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
 
         self.run_cmd()

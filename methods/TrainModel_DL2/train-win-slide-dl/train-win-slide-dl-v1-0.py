@@ -16,8 +16,8 @@ import os
 import pathlib
 
 
-#import keras
-#from keras.callbacks import CSVLogger
+from tensorflow import keras 
+from tensorflow.keras.callbacks import CSVLogger
 #import sklearn
 
 #######import params###########
@@ -32,7 +32,7 @@ spec_path=args[2]
 label_path=args[3]
 split_path=args[4]
 resultpath=args[5]
-EPOCH = int(args[6])
+epochs = int(args[6])
 GT_depth = args[7].count(",")+1
 lab_reduce_fact = int(args[8])
 model_name = args[9]
@@ -56,7 +56,7 @@ for n in range(len(bigfile)):
 
     bigfiles.append(spec_path + '/bigfiles/bigfile' + str(n+1) + '.png')
     lab_files.append(label_path + '/labeltensors/labeltensor' + str(n+1) + '.csv.gz')
-    split_files.append(split_path + '/splittensors/splittensor' + str(n+1) + '.csv')
+    split_files.append(split_path + '/splittensors/splittensor' + str(n+1) + '.csv.gz')
 
 dataset1 = tf.data.Dataset.from_tensor_slices(bigfiles)
 dataset2 = tf.data.Dataset.from_tensor_slices(lab_files)
@@ -94,8 +94,13 @@ def MakeDataset(dataset,split=None,batchsize=20):
 
     dataset = dataset.shuffle(150) #big number because why not?
 
-    dataset = dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x/255),y)) #divide color vals by 255... may or may not need to...
-        
+    #convert to 0/1 (not needed for all models)
+    #if model_name != "EffecientNet";
+    #    dataset = dataset.map(lambda x,y: (x/255,y))
+
+    #convert features to expected image dims
+    dataset = dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x),y))
+    
     dataset = dataset.batch(batchsize)
 
     dataset = dataset.prefetch(1)
@@ -108,7 +113,8 @@ def accumulate_lab(y):
 
     out_tens = tf.reshape(y,[2,-1])
 
-    width = out_tens.get_shape().as_list()[1]
+    #width = out_tens.get_shape().as_list()[1] #this is a problem line, evidentally
+    width = tf.shape(out_tens)[1]
 
     out_tens = tf.math.bincount(out_tens,axis=-1,minlength=3) #always populates 0,1,2 - tp,fp,uk
 
@@ -171,7 +177,8 @@ def ingest(x,y,z):
             padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
 
     splt = tf.io.read_file(z)
-    splt = tf.strings.split(splt, sep="\r\n", maxsplit=-1, name=None)[:-1]
+    splt = tf.io.decode_compressed(splt,compression_type='GZIP')
+    splt = tf.strings.split(splt, sep="\n", maxsplit=-1, name=None)[:-1]
     splt = tf.strings.to_number(splt,out_type=tf.int32,name=None)
 
     splt = tf.expand_dims(splt,-1)
@@ -189,54 +196,105 @@ def ingest(x,y,z):
         
     return image,lab,splt
 
-test2 = iter(MakeDataset(full_dataset))
-test3 = iter(MakeDataset(full_dataset,1))
+#dataset class testing
 
-next(test2)
-next(test3)
+#test2 = iter(MakeDataset(full_dataset))
+#test3 = iter(MakeDataset(full_dataset,1))
 
-import code
-code.interact(local=dict(globals(), **locals()))
+#next(test2)
+#next(test3)
 
-def KerasApplicationsModel(constructor=tf.keras.applications.resnet_v2.ResNet50V2):
-  return tf.keras.Sequential([
-    tf.keras.Input(shape=(model_input_size, wl_mod, 3)),
-    tf.keras.layers.RandomCrop(height = model_input_size, width = model_input_size),
-    #tf.keras.layers.Lambda(fake_image, name="fake_image"),
-    constructor(include_top=False, weights=None, pooling="max"),
-    tf.keras.layers.ReLU(),
-    tf.keras.layers.Dense(128, activation="relu"),
-    tf.keras.layers.Dense(1),
-    tf.keras.layers.Activation("sigmoid"),
-  ])
+#import code
+#code.interact(local=dict(globals(), **locals()))
 
-#Matt Harvey proposed smaller CNN. 
-def SmallCNNModel():
-  return tf.keras.Sequential([
-    tf.keras.Input(shape=(model_input_size, wl_mod, 3)),
-    tf.keras.layers.RandomCrop(height = model_input_size, width = model_input_size),
-    tf.keras.layers.Conv2D(16, 7, use_bias=False, activation="relu"),
-    tf.keras.layers.MaxPooling2D(2, 2),
-    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"),
-    tf.keras.layers.MaxPooling2D(2, 2),
-    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
-    tf.keras.layers.MaxPooling2D(2, 2),
-    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
-    tf.keras.layers.GlobalMaxPool2D(),
-    tf.keras.layers.Dense(128, activation="relu"),
-    tf.keras.layers.Dropout(0.5),
-    tf.keras.layers.Dense(1),
-    tf.keras.layers.Activation("sigmoid"),
-  ])
+#select keras model constructorbased on given name
 
-if model_name == "ResNet50":
-    model = KerasApplicationsModel(tf.keras.applications.resnet_v2.ResNet50V2)
-elif model_name =="SmallCNN":
-    model = SmallCNNModel()
+#for effecientnet, determine correct model name based on the inputs.
+if model_name == "ResNet50V2":
+    model_con=tf.keras.applications.resnet_v2.ResNet50V2
+    assert win_height == 224
+elif model_name == "ResNet50":
+    model_con=tf.keras.applications.resnet_v2.ResNet50
+    assert win_height == 224
+elif model_name == "EffecientNet":
+
+    #for this, calculate particular one based on model input size. 
+    if win_height >= 600:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB7
+    elif win_height >= 528:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB6
+    elif win_height >= 456:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB5
+    elif win_height >= 380:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB4
+    elif win_height >= 300:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB3
+    elif win_height >= 260:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB2
+    elif win_height >= 240:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB1
+    elif win_height >= 224:
+        model_con=tf.keras.applications.resnet_v2.EfficientNetB0
+    else:
+        raise MyValidationError("input size too small for EffecientNet")  
 else:
     raise MyValidationError("Model not found")
 
-#model = KerasApplicationsModel(tf.keras.applications.resnet_v2.ResNet50V2)
+#select correct loss function for multi or single class:
+
+if GT_depth >1:
+    loss_fxn = "categorical_crossentropy"
+else:
+    loss_fxn = "binary_crossentropy"
+
+def KerasModel(constructor=model_con):
+  return tf.keras.Sequential([
+    tf.keras.Input(shape=(win_height, win_length, 3)),
+    tf.keras.layers.RandomCrop(height = win_height, width = win_length), #in case it is differently sized
+    tf.keras.layers.RandomBrightness(factor=0.2),  #parameteritize this, if it works!
+    tf.keras.layers.RandomContrast(factor=[0, 255]), #parameterize this, if it works!
+    constructor(include_top=False, weights=None, pooling="max"),
+    tf.keras.layers.ReLU(),
+    tf.keras.layers.Dense(128, activation="relu"),
+    tf.keras.layers.Dense(GT_depth),
+    tf.keras.layers.Activation("sigmoid"),
+  ])
+
+
+#def KerasApplicationsModel(constructor=tf.keras.applications.resnet_v2.ResNet50V2):
+#  return tf.keras.Sequential([
+#    tf.keras.Input(shape=(model_input_size, wl_mod, 3)),
+#    tf.keras.layers.RandomCrop(height = model_input_size, width = model_input_size),
+    #tf.keras.layers.Lambda(fake_image, name="fake_image"),
+#    constructor(include_top=False, weights=None, pooling="max"),
+#    tf.keras.layers.ReLU(),
+#    tf.keras.layers.Dense(128, activation="relu"),
+#    tf.keras.layers.Dense(1),
+#    tf.keras.layers.Activation("sigmoid"),
+#  ])
+
+#Matt Harvey proposed smaller CNN. 
+#def SmallCNNModel():
+#  return tf.keras.Sequential([
+#    tf.keras.Input(shape=(model_input_size, win_length, 3)),
+#    tf.keras.layers.RandomCrop(height = model_input_size, width = model_input_size),
+#    tf.keras.layers.Conv2D(16, 7, use_bias=False, activation="relu"),
+#    tf.keras.layers.MaxPooling2D(2, 2),
+#    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"),
+#    tf.keras.layers.MaxPooling2D(2, 2),
+#    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
+#    tf.keras.layers.MaxPooling2D(2, 2),
+#    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
+#    tf.keras.layers.GlobalMaxPool2D(),
+#    tf.keras.layers.Dense(128, activation="relu"),
+#    tf.keras.layers.Dropout(0.5),
+#    tf.keras.layers.Dense(1),
+#    tf.keras.layers.Activation("sigmoid"),
+#  ])
+
+
+
+model = KerasModel(model_con)
 
 #import code
 #code.interact(local=dict(globals(), **locals()))
@@ -247,7 +305,7 @@ model.compile(
     # proper assumption for species detection. For spoken digits, it's more
     # proper to use categorical_cross_entropy and softmax, but this example
     # won't.
-    loss="binary_crossentropy", #binary_crossentropy
+    loss=loss_fxn,
     metrics=[
         "accuracy",
         tf.keras.metrics.AUC(name="rocauc"),
@@ -262,9 +320,8 @@ model.compile(
 
 #might think about a try catch here- on GPU OOM error, iteratively decrease batch size to maximize it.
 
-
-train_dataset = MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,isTrain=True,batchsize = 256)
-test_dataset = MakeDataset(full_dataset,step_mod,wl_mod,model_input_size,isTrain=False,batchsize = 256)
+train_dataset = MakeDataset(full_dataset,split=1)
+val_dataset = MakeDataset(full_dataset,split=2)
 
 logpath = resultpath + "/model_history_log.csv"
 
@@ -276,8 +333,8 @@ csv_logger = CSVLogger(logpath, append=True)
 try:
   model.fit(
       train_dataset,
-      validation_data=test_dataset,
-      epochs=EPOCH,
+      validation_data=val_dataset,
+      epochs=epochs,
       callbacks=[csv_logger]
   )
 except KeyboardInterrupt:

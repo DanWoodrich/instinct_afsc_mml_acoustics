@@ -13,8 +13,8 @@ Global:
   parameters:
     freq_start: 50
     freq_size: 450
-    tilepix_h: 600
-    pix_ps_spec: 40
+    tilepix_h: 224
+    pix_ps_spec: 16
     lab_reduceby: 4
     signal_codes: HB.s.p.2,HB.s.p.4
 Job:
@@ -118,14 +118,14 @@ Job:
     parameters:
       methodID: train-win-slide-dl
       methodvers: v1-0
-      epoch: 50
+      epoch: 5
       gt_depth: [signal_codes]
       lab_reduce_factor: [lab_reduceby]
-      model_name: ResNet50
+      model_name: ResNet50V2
       spec_img_height: [tilepix_h]
       spec_pix_per_sec: [pix_ps_spec]
-      win_height: 600
-      win_length: 600
+      win_height: 224
+      win_length: 224
     arguments: 
       hard_rerun: n
     descriptors:

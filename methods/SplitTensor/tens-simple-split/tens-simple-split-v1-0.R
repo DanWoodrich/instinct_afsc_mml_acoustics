@@ -66,7 +66,7 @@ for(i in 1:length(bigfiles)){
   
   split = rep(order, times = c(train_pix, val_pix,test_pix)[order])
   
-  write.table(split, paste(resultpath,"/splittensors/splittensor",i,".csv",sep=""), quote = FALSE,sep=",",  col.names=FALSE,row.names = FALSE,eol = "\n")
+  write.table(split, gzfile(paste(resultpath,"/splittensors/splittensor",i,".csv.gz",sep="")),sep=",",quote = FALSE,col.names=FALSE,row.names = FALSE)
   
   }else{
     print("case not yet defined")

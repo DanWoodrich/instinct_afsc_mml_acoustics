@@ -3,12 +3,59 @@ pipe: TrainModel_dl2.pipe
 TrainModel_dl2.pipe:
   process: TrainModel_dl2
   GetFG: 
-    process: FormatFG
-  GetGT: 
-    process: FormatGT
+    pipe: FormatFG.pipe
+    loop_on: FormatFG
+    FormatFG.pipe:
+      process: FormatFG
   GetSpec: 
-    process: GenBigSpec
+    pipe: GenBigSpec.pipe
+    GenBigSpec.pipe:
+      process: GenBigSpec
+      GetFG:
+        pipe: FormatFG.pipe
+        loop_on: FormatFG
+        FormatFG.pipe:
+          process: FormatFG
   GetLabels: 
-    process: LabelTensor
+    pipe: LabelTensor.pipe
+    LabelTensor.pipe:
+      process: LabelTensor
+      GetFG:
+        pipe: FormatFG.pipe
+        FormatFG.pipe:
+          process: FormatFG
+      GetGT:
+        pipe: FormatGT.pipe
+        loop_on: FormatFG
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG:
+            pipe: FormatFG.pipe
+            FormatFG.pipe:
+              process: FormatFG
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            pipe: FormatFG.pipe
+            loop_on: FormatFG
+            FormatFG.pipe:
+              process: FormatFG
   GetSplits: 
-    process: SplitTensor
+    pipe: SplitTensor.pipe
+    SplitTensor.pipe:
+      process: SplitTensor
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            pipe: FormatFG.pipe
+            loop_on: FormatFG
+            FormatFG.pipe:
+              process: FormatFG
+      GetFG:
+        pipe: FormatFG.pipe
+        FormatFG.pipe:
+          process: FormatFG

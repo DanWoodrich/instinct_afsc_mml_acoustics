@@ -26,8 +26,8 @@ result_path = args[2]
 
 model = pd.read_csv(model_path + "/model_history_log.csv")
 
-#import code
-#code.interact(local=dict(globals(), **locals()))
+import code
+code.interact(local=dict(globals(), **locals()))
 
 fig, axs = plt.subplots(4)
 fig.suptitle('Model evalution metrics')

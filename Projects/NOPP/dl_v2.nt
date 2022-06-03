@@ -13,24 +13,13 @@ Global:
   parameters:
     freq_start: 50
     freq_size: 450
-    tilepix_h: 224
-    pix_ps_spec: 16
+    tilepix_h: 300
+    pix_ps_spec: 15
     lab_reduceby: 4
     signal_codes: HB.s.p.2,HB.s.p.4
+    tt_split: 0.80
+    tv_split: 0.75
 Job:
-  AssignLabels:
-    parameters: 
-      methodID: labels-w-gtovlp-time-bins
-      methodvers: v1-1
-      #iou thresh needs to consider the large bin vs small bin difference- make sure it is higher the more different these are
-      GTovlp_thresh: 0.40
-      only_time: y
-      write_GT: n
-    arguments: 
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: R
   ModelEval_NN:
     parameters:
       methodID: simple-eval
@@ -64,7 +53,7 @@ Job:
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep
-      methodvers: v1-0
+      methodvers: v1-1
       brightness_mod: -1
       contrast_mod: 0
       crop_freq: y
@@ -81,7 +70,7 @@ Job:
   LabelTensor:
     parameters:
       methodID: tens-simple-label
-      methodvers: v1-0
+      methodvers: v1-1
       #1 if only on time, 2 if time/frequency
       dimensions: 2
       #reduce_factor is the factor by which to divide spec dimensions (lower resolution than spec) 
@@ -103,9 +92,9 @@ Job:
       #by_file or within_file
       split_protocol: within_file
       test_split: n
-      train_test_split: 0.80
+      train_test_split: [tt_split]
       #of the test in previous, what is the split between train and val
-      train_val_split: 0.75
+      train_val_split: [tv_split]
       #or per_file. by-file smoother, per_file more label effecient
       use_seed: y
       spec_pix_per_sec: [pix_ps_spec]
@@ -118,21 +107,24 @@ Job:
     parameters:
       methodID: train-win-slide-dl
       methodvers: v1-0
-      epoch: 5
+      batch_size: 15
+      epoch: 125
       gt_depth: [signal_codes]
       lab_reduce_factor: [lab_reduceby]
-      model_name: ResNet50V2
+      model_name: EffecientNet
       spec_img_height: [tilepix_h]
       spec_pix_per_sec: [pix_ps_spec]
-      win_height: 224
-      win_length: 224
+      train_test_split: [tt_split]
+      train_val_split: [tv_split]
+      win_height: 300
+      win_length: 300
     arguments: 
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: Python
-      #venv: Conda
-      #venv_name: tf-gpu2
+      venv: Conda
+      venv_name: tf-gpu2
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam

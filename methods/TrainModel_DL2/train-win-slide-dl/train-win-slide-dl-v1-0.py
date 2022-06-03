@@ -16,13 +16,19 @@ import os
 import pathlib
 
 
-from tensorflow import keras 
+#from tensorflow import keras
+from tensorflow import keras
 from tensorflow.keras.callbacks import CSVLogger
+
 #import sklearn
+print(tf.version.VERSION)
+
+#import code
+#code.interact(local=dict(globals(), **locals()))
 
 #######import params###########
 
-#args="first C:/Apps/INSTINCT/Cache/394448/527039 C:/Apps/INSTINCT/Cache/394448/628717/947435/DETx.csv.gz C:/Apps/INSTINCT/Cache/394448/628717/947435/909093/summary.png 0.80 train-simple-dl-v1-0"
+#args="C:/Apps/INSTINCT/Cache/394448/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/394448/516798 C:/Apps/INSTINCT/Cache/394448/756783/391491 C:/Apps/INSTINCT/Cache/394448/516798/399814 C:/Apps/INSTINCT/Cache/394448/516798/399814/249442 15 125 HB.s.p.2,HB.s.p.4 4 EffecientNet 300 15 300 300 train-win-slide-dl-v1-0"
 #args=args.split()
 
 args=sys.argv
@@ -32,14 +38,17 @@ spec_path=args[2]
 label_path=args[3]
 split_path=args[4]
 resultpath=args[5]
-epochs = int(args[6])
-GT_depth = args[7].count(",")+1
-lab_reduce_fact = int(args[8])
-model_name = args[9]
-spec_img_height = int(args[10])
-spec_pix_per_sec = args[11]
-win_height = int(args[12])
-win_length = int(args[13])
+batch_size = int(args[6])
+epochs = int(args[7])
+GT_depth = args[8].count(",")+1
+lab_reduce_fact = int(args[9])
+model_name = args[10]
+spec_img_height = int(args[11])
+spec_pix_per_sec = int(args[12])
+train_test_split = float(args[13]) #used to calculate steps in epoch
+train_val_split = float(args[14])
+win_height = int(args[15])
+win_length = int(args[16])
 
 tp_prop = 0.1
 fp_prop = 0.9 #doesn't have to = 1... especially not when not i_neg
@@ -65,9 +74,20 @@ dataset3 = tf.data.Dataset.from_tensor_slices(split_files)
 #dataset just maps bigfiles, to label_tensor, to split tensor
 full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3))
 
+#calculate expected steps for training:
+totalsecs= sum(FG.SegDur)
+stepsecs= win_length/spec_pix_per_sec
+est_steps = int((totalsecs//stepsecs)* train_test_split * train_val_split)
+repetions = 5   #hardcoded, may be useful as a param later
+keep_per = 0.75 #hardcoded, may be useful as a param later
+tot_steps = int(round(est_steps*repetions)*keep_per)
+##########this whole section, and the later calculations from it, are currently not making much sense to me. 
+
 def MakeDataset(dataset,split=None,batchsize=20):
 
-    dataset = dataset.shuffle(20) #how to figure out best shuffle batch size? 
+    dataset = dataset.shuffle(len(bigfile)) #shuffle the whole thing
+
+#    dataset = dataset.repeat(3) #testing, not sure how this works
 
     #ingest_data
     dataset = dataset.map(lambda x,y,z: ingest(x,y,z)).unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
@@ -101,7 +121,7 @@ def MakeDataset(dataset,split=None,batchsize=20):
     #convert features to expected image dims
     dataset = dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x),y))
     
-    dataset = dataset.batch(batchsize)
+    dataset = dataset.batch(batchsize,drop_remainder=True)
 
     dataset = dataset.prefetch(1)
                           
@@ -116,13 +136,15 @@ def accumulate_lab(y):
     #width = out_tens.get_shape().as_list()[1] #this is a problem line, evidentally
     width = tf.shape(out_tens)[1]
 
-    out_tens = tf.math.bincount(out_tens,axis=-1,minlength=3) #always populates 0,1,2 - tp,fp,uk
+    out_tens = tf.math.bincount(out_tens,axis=-1,minlength=3) #always populates 0,1,2 - uk,fp,tp
 
     out_tens = out_tens/width #makes it the proportion
 
-    out_tens = tf.math.greater_equal(out_tens,[tp_prop,fp_prop,0])
+    out_tens = tf.math.greater_equal(out_tens,[0,fp_prop,tp_prop])
 
     out_tens = tf.where(out_tens, 1, 0)
+
+    out_tens = tf.reverse(out_tens,axis=[1]) #flip so that order is 2,1,0 (tp,fp,uk)
 
     out_tens = tf.argmax(out_tens,axis=-1) #this makes the integer order matter- prioritizes in order of correct label for tp, then fp, then uk
 
@@ -198,14 +220,15 @@ def ingest(x,y,z):
 
 #dataset class testing
 
+
 #test2 = iter(MakeDataset(full_dataset))
 #test3 = iter(MakeDataset(full_dataset,1))
 
 #next(test2)
 #next(test3)
-
 #import code
 #code.interact(local=dict(globals(), **locals()))
+
 
 #select keras model constructorbased on given name
 
@@ -214,27 +237,27 @@ if model_name == "ResNet50V2":
     model_con=tf.keras.applications.resnet_v2.ResNet50V2
     assert win_height == 224
 elif model_name == "ResNet50":
-    model_con=tf.keras.applications.resnet_v2.ResNet50
+    model_con=tf.keras.applications.resnet50.ResNet50
     assert win_height == 224
 elif model_name == "EffecientNet":
 
     #for this, calculate particular one based on model input size. 
     if win_height >= 600:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB7
+        model_con=tf.keras.applications.efficientnet.EfficientNetB7
     elif win_height >= 528:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB6
+        model_con=tf.keras.applications.efficientnet.EfficientNetB6
     elif win_height >= 456:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB5
+        model_con=tf.keras.applications.efficientnet.EfficientNetB5
     elif win_height >= 380:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB4
+        model_con=tf.keras.applications.efficientnet.EfficientNetB4
     elif win_height >= 300:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB3
+        model_con=tf.keras.applications.efficientnet.EfficientNetB3
     elif win_height >= 260:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB2
+        model_con=tf.keras.applications.efficientnet.EfficientNetB2
     elif win_height >= 240:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB1
+        model_con=tf.keras.applications.efficientnet.EfficientNetB1
     elif win_height >= 224:
-        model_con=tf.keras.applications.resnet_v2.EfficientNetB0
+        model_con=tf.keras.applications.efficientnet.EfficientNetB0
     else:
         raise MyValidationError("input size too small for EffecientNet")  
 else:
@@ -244,15 +267,17 @@ else:
 
 if GT_depth >1:
     loss_fxn = "categorical_crossentropy"
+    loss_metric ="categorical_accuracy"
 else:
     loss_fxn = "binary_crossentropy"
+    loss_metric = "accuracy"
 
 def KerasModel(constructor=model_con):
   return tf.keras.Sequential([
     tf.keras.Input(shape=(win_height, win_length, 3)),
     tf.keras.layers.RandomCrop(height = win_height, width = win_length), #in case it is differently sized
-    tf.keras.layers.RandomBrightness(factor=0.2),  #parameteritize this, if it works!
-    tf.keras.layers.RandomContrast(factor=[0, 255]), #parameterize this, if it works!
+    #tf.keras.layers.RandomBrightness(factor=0.2), #uh oh! not in my version of tensorflow (in latest...)
+    #tf.keras.layers.RandomContrast(factor=[0, 255]), #parameterize this, if it works!
     constructor(include_top=False, weights=None, pooling="max"),
     tf.keras.layers.ReLU(),
     tf.keras.layers.Dense(128, activation="relu"),
@@ -307,7 +332,7 @@ model.compile(
     # won't.
     loss=loss_fxn,
     metrics=[
-        "accuracy",
+        loss_metric,
         tf.keras.metrics.AUC(name="rocauc"),
         tf.keras.metrics.AUC(curve="pr", name="ap"),
         tf.keras.metrics.Precision(),
@@ -320,8 +345,8 @@ model.compile(
 
 #might think about a try catch here- on GPU OOM error, iteratively decrease batch size to maximize it.
 
-train_dataset = MakeDataset(full_dataset,split=1)
-val_dataset = MakeDataset(full_dataset,split=2)
+train_dataset = MakeDataset(full_dataset,split=1,batchsize=batch_size)
+val_dataset = MakeDataset(full_dataset,split=2,batchsize=batch_size)
 
 logpath = resultpath + "/model_history_log.csv"
 
@@ -334,6 +359,8 @@ try:
   model.fit(
       train_dataset,
       validation_data=val_dataset,
+      #steps_per_epoch = 300, #int(tot_steps//batch_size), #prevent model training from running out of data which it doesn't like
+      #validation_steps=225,
       epochs=epochs,
       callbacks=[csv_logger]
   )

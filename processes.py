@@ -799,9 +799,10 @@ class TrainModel_dl(INSTINCT_process):
 
 class TrainModel_dl2(INSTINCT_process):
 
-    pipeshape = dl2_special
-
-    upstreamdef = ["GetFG","GetSpec","GetGT","GetLabels","GetSplits"]
+    #pipeshape = dl2_special
+    pipeshape = FourUpstream_noCon
+    
+    upstreamdef = ["GetFG","GetSpec","GetLabels","GetSplits"]
 
     outfile = 'model.keras'
 

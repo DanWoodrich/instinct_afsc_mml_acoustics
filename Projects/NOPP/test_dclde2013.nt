@@ -12,7 +12,7 @@ Global:
   Wrapper: False
   parameters:
     freq_start: 40
-    freq_size: 340
+    freq_size: 300
     tilepix_h: 300
     pix_ps_spec: 75
     lab_reduceby: 3
@@ -41,14 +41,14 @@ Job:
       target_samp_rate: 1024
       file_groupID:
         - NOPP6_EST_20090328_files_All.csv
-        - NOPP6_EST_20090329_files_All.csv
-        - NOPP6_EST_20090330_files_All.csv
-        - NOPP6_EST_20090331_files_All.csv
-        - NOPP6_EST_20090401_files_All.csv
-        - NOPP6_EST_20090402_files_All.csv
-        - NOPP6_EST_20090403_files_All.csv
+        #- NOPP6_EST_20090329_files_All.csv
+        #- NOPP6_EST_20090330_files_All.csv
+        #- NOPP6_EST_20090331_files_All.csv
+        #- NOPP6_EST_20090401_files_All.csv
+        #- NOPP6_EST_20090402_files_All.csv
+        #- NOPP6_EST_20090403_files_All.csv
     arguments:
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: batch

@@ -190,68 +190,67 @@ def ingest(x,y,z,offset): #try out a predetermined offset
     offsetbatches_img = []
     offsetbatches_lab = []
     offsetbatches_splt = []
+
+    image = tf.io.read_file(x)
+    image = tf.image.decode_png(image, channels=1)
+
+    lab = tf.io.read_file(y)
+    lab = tf.io.decode_compressed(lab,compression_type='GZIP')
+
+    lab = tf.strings.split(lab, sep="\n", maxsplit=-1, name=None)[:-1]
+    lab = tf.strings.to_number(lab,out_type=tf.int32,name=None)
+
+    #now, try to reshape as 3d array!
+    lab = tf.expand_dims(lab,-1)
+    lab = tf.expand_dims(lab,-1)
+    lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
+
+    splt = tf.io.read_file(z)
+    splt = tf.io.decode_compressed(splt,compression_type='GZIP')
+    splt = tf.strings.split(splt, sep="\n", maxsplit=-1, name=None)[:-1]
+    splt = tf.strings.to_number(splt,out_type=tf.int32,name=None)
+
+    splt = tf.expand_dims(splt,-1)
+    splt = tf.expand_dims(splt,-1)
+    splt = tf.reshape(splt,[1,-1,1])
     
     for i in range(len(offset)):
-    
-        image = tf.io.read_file(x)
-        image = tf.image.decode_png(image, channels=1)
 
         #resample by offset    
-        image = image[:,(offset[i]*lab_reduce_fact):,:]
+        image2 = image[:,(offset[i]*lab_reduce_fact):,:]
 
-        image = tf.reshape(tf.image.extract_patches(
-                images=tf.expand_dims(image, 0),
+        image2 = tf.reshape(tf.image.extract_patches(
+                images=tf.expand_dims(image2, 0),
                 sizes=[1, win_height, win_length, 1],
                strides=[1, win_height, win_length, 1],
                 rates=[1, 1, 1, 1],
                 padding='VALID'), (-1, win_height, win_length, 1))
 
-        offsetbatches_img.append(image)
+        offsetbatches_img.append(image2)
 
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
+        #
+        lab2 = lab[:,offset[i]:,:]
 
-        lab = tf.io.read_file(y)
-        lab = tf.io.decode_compressed(lab,compression_type='GZIP')
-        lab = tf.strings.split(lab, sep="\n", maxsplit=-1, name=None)[:-1]
-        lab = tf.strings.to_number(lab,out_type=tf.int32,name=None)
-
-        #now, try to reshape as 3d array!
-        lab = tf.expand_dims(lab,-1)
-        lab = tf.expand_dims(lab,-1)
-        lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
-
-        lab = lab[:,offset[i]:,:]
-        #need to do: splice the width by
-
-        lab = tf.reshape(tf.image.extract_patches(
-                images=tf.expand_dims(lab, 0),
+        lab2 = tf.reshape(tf.image.extract_patches(
+                images=tf.expand_dims(lab2, 0),
                 sizes=[1, wh_lab, wl_lab, 1],
                strides=[1, wh_lab, wl_lab, 1],
                 rates=[1, 1, 1, 1],
                 padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
 
-        offsetbatches_lab.append(lab)
+        offsetbatches_lab.append(lab2)
 
-        splt = tf.io.read_file(z)
-        splt = tf.io.decode_compressed(splt,compression_type='GZIP')
-        splt = tf.strings.split(splt, sep="\n", maxsplit=-1, name=None)[:-1]
-        splt = tf.strings.to_number(splt,out_type=tf.int32,name=None)
+        #
+        splt2 = splt[:,(offset[i]*lab_reduce_fact):,:]
 
-        splt = tf.expand_dims(splt,-1)
-        splt = tf.expand_dims(splt,-1)
-        splt = tf.reshape(splt,[1,-1,1])
-
-        splt = splt[:,(offset[i]*lab_reduce_fact):,:]
-
-        splt = tf.reshape(tf.image.extract_patches(
-                images=tf.expand_dims(splt, 0),
+        splt2 = tf.reshape(tf.image.extract_patches(
+                images=tf.expand_dims(splt2, 0),
                 sizes=[1, 1, win_length, 1],
                strides=[1, 1, win_length, 1],
                 rates=[1, 1, 1, 1],
                 padding='VALID'), [-1, 1, win_length, 1])
 
-        offsetbatches_splt.append(splt)
+        offsetbatches_splt.append(splt2)
 
     image = tf.concat(offsetbatches_img,axis=0)
     lab = tf.concat(offsetbatches_lab,axis=0)

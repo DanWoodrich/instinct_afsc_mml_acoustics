@@ -79,7 +79,7 @@ img_print <-function(object,xbins,pix_height,path){
 
 #needs PARAMSET_GLOBALS['SF_foc'] in process
 
-args="C:/Apps/INSTINCT/Cache/394448 C:/Apps/INSTINCT/Cache/394448/921636 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 -1 0 y 450 50 600 40 512 con_bright_no_rep-v1-0"
+args="C:/Apps/INSTINCT/Cache/843873/665107 C:/Apps/INSTINCT/Cache/843873/665107/545866 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 -1 0 y 300 40 300 75 512 con_bright_no_rep-v1-1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -130,7 +130,7 @@ for(i in 1:length(bigfiles)){
   
   overlap = windowLength/xbins + windowLength- (length(sounddata@left)/xbins)  
   
-  spec_img<- gen_spec_image(sounddata,windowLength,overlap,contrast_mod,brightness_mod,crop_freq,crop_start,crop_size)
+  spec_img<- gen_spec_image(sounddata,windowLength,overlap,contrast_mod,brightness_mod,crop_freq,crop_freq_start,crop_freq_size)
 
   spec_img =resize(spec_img,size_x = xbins,size_y = img_height) #make height
 

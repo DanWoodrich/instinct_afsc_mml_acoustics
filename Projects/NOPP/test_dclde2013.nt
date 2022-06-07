@@ -11,12 +11,12 @@ Global:
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
   parameters:
-    freq_start: 50
-    freq_size: 450
+    freq_start: 40
+    freq_size: 340
     tilepix_h: 300
-    pix_ps_spec: 15
-    lab_reduceby: 4
-    signal_codes: HB.s.p.2,HB.s.p.4
+    pix_ps_spec: 75
+    lab_reduceby: 3
+    signal_codes: RW
     tt_split: 0.80
     tv_split: 0.75
 Job:
@@ -38,11 +38,15 @@ Job:
       methodID2m: matlabdecimate
       methodvers2m: V1s0
       #target_samp_rate: 4096
-      target_samp_rate: 2048
+      target_samp_rate: 1024
       file_groupID:
-        #- HB_s_ns_sample1.csv
-        #- round1_pull1.csv
-        - round1_pull1_reduce.csv
+        - NOPP6_EST_20090328_files_All.csv
+        - NOPP6_EST_20090329_files_All.csv
+        - NOPP6_EST_20090330_files_All.csv
+        - NOPP6_EST_20090331_files_All.csv
+        - NOPP6_EST_20090401_files_All.csv
+        - NOPP6_EST_20090402_files_All.csv
+        - NOPP6_EST_20090403_files_All.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -112,7 +116,7 @@ Job:
       gt_depth: [signal_codes]
       lab_reduce_factor: [lab_reduceby]
       model_name: EffecientNet
-      rand_offsets: 74
+      rand_offsets: max
       spec_img_height: [tilepix_h]
       spec_pix_per_sec: [pix_ps_spec]
       train_test_split: [tt_split]
@@ -131,7 +135,7 @@ Job:
       methodID: R-pull-dbuddy-anyparam
       methodvers: v1-3
       UseFG: y
-      Analysis_ID: 17
+      Analysis_ID: 10
       #multiple can be specified with "," (no space) 
       SignalCode: [signal_codes]
     arguments: 

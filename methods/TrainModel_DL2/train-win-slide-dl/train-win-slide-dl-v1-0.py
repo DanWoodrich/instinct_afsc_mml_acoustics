@@ -10,7 +10,6 @@ import pandas as pd
 import tensorflow as tf
 import sys
 import numpy as np
-import random
 #from matplotlib.image import imread
 import os
 import pathlib
@@ -43,12 +42,13 @@ epochs = int(args[7])
 GT_depth = args[8].count(",")+1
 lab_reduce_fact = int(args[9])
 model_name = args[10]
-spec_img_height = int(args[11])
-spec_pix_per_sec = int(args[12])
-train_test_split = float(args[13]) #used to calculate steps in epoch
-train_val_split = float(args[14])
-win_height = int(args[15])
-win_length = int(args[16])
+rand_offsets = args[11]
+spec_img_height = int(args[12])
+spec_pix_per_sec = int(args[13])
+train_test_split = float(args[14]) #used to calculate steps in epoch
+train_val_split = float(args[15])
+win_height = int(args[16])
+win_length = int(args[17])
 
 tp_prop = 0.1
 fp_prop = 0.9 #doesn't have to = 1... especially not when not i_neg
@@ -71,6 +71,17 @@ dataset1 = tf.data.Dataset.from_tensor_slices(bigfiles)
 dataset2 = tf.data.Dataset.from_tensor_slices(lab_files)
 dataset3 = tf.data.Dataset.from_tensor_slices(split_files)
 
+wh_lab =int(win_height/lab_reduce_fact)
+wl_lab = int(win_length/lab_reduce_fact)
+
+if rand_offsets == 'max':
+    rand_offsets = wl_lab-1
+else:
+    rand_offsets = int(rand_offsets)
+#this will fail if wl_lab -1 < rand_offsets
+offsets = np.random.choice(range(wl_lab-1), size=rand_offsets, replace=False)
+#print(offsets)
+#dataset4 = tf.data.Dataset.from_tensor_slices(offsets)
 #dataset just maps bigfiles, to label_tensor, to split tensor
 full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3))
 
@@ -81,17 +92,33 @@ est_steps = int((totalsecs//stepsecs)* train_test_split * train_val_split)
 repetions = 5   #hardcoded, may be useful as a param later
 keep_per = 0.75 #hardcoded, may be useful as a param later
 tot_steps = int(round(est_steps*repetions)*keep_per)
-##########this whole section, and the later calculations from it, are currently not making much sense to me. 
+##########this whole section, and the later calculations from it, are currently not making much sense to me.
+
+def MakeDatasetTest(dataset,split=None,batchsize=20):
+
+    dataset = dataset.shuffle(len(bigfile)) #shuffle the whole thing
+
+    #dataset = dataset.repeat(epochs) #testing, not sure how this works
+
+    #ingest_data
+    #dataset = dataset.map(lambda x,y,z: tuple((ingest(x,y,z,p) for p in offsets)))#.unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
+
+    dataset = dataset.map(lambda x,y,z: (ingest(x,y,z,offsets)))#.unbatch()
+    #dataset = dataset.batch(5)
+    
+    return dataset
+
 
 def MakeDataset(dataset,split=None,batchsize=20):
 
     dataset = dataset.shuffle(len(bigfile)) #shuffle the whole thing
 
-#    dataset = dataset.repeat(3) #testing, not sure how this works
+    #dataset = dataset.repeat(epochs) #testing, not sure how this works
 
     #ingest_data
-    dataset = dataset.map(lambda x,y,z: ingest(x,y,z)).unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
+    #dataset = dataset.map(lambda x,y,z: ingest(x,y,z)).unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
 
+    dataset = dataset.map(lambda x,y,z: (ingest(x,y,z,offsets))).unbatch() #test, with offsets implemented in loop within ingest. 
     #accumulate label
     dataset = dataset.map(lambda x,y,z: (x,accumulate_lab(y),z))
 
@@ -112,7 +139,7 @@ def MakeDataset(dataset,split=None,batchsize=20):
     #labels to one-hot
     dataset = dataset.map(lambda x,y: (x,y[:,0])) #only take 1st column, flip to horizontal
 
-    dataset = dataset.shuffle(150) #big number because why not?
+    dataset = dataset.shuffle(10000) #big number because why not?
 
     #convert to 0/1 (not needed for all models)
     #if model_name != "EffecientNet";
@@ -121,7 +148,7 @@ def MakeDataset(dataset,split=None,batchsize=20):
     #convert features to expected image dims
     dataset = dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x),y))
     
-    dataset = dataset.batch(batchsize,drop_remainder=True)
+    dataset = dataset.batch(batchsize)
 
     dataset = dataset.prefetch(1)
                           
@@ -152,70 +179,84 @@ def accumulate_lab(y):
 
     return(out_tens)
 
-def ingest(x,y,z):
+@tf.function
+def ingest(x,y,z,offset): #try out a predetermined offset
 
     #if this approach appears to work, make into a general function (lot of copy and paste here)
 
-    wh_lab =int(win_height/lab_reduce_fact)
-    wl_lab = int(win_length/lab_reduce_fact)
-
     #this should give a random offset, each epoch!
-    offset = tf.random.uniform(shape=[],maxval=(wl_lab-1),dtype=tf.int32) #offset is on the resolution of label
+    #offset = tf.random.uniform(shape=[],maxval=(wl_lab-1),dtype=tf.int32) #offset is on the resolution of label
 
-    image = tf.io.read_file(x)
-    image = tf.image.decode_png(image, channels=1)
+    offsetbatches_img = []
+    offsetbatches_lab = []
+    offsetbatches_splt = []
+    
+    for i in range(len(offset)):
+    
+        image = tf.io.read_file(x)
+        image = tf.image.decode_png(image, channels=1)
 
-    #resample by offset    
-    image = image[:,(offset*lab_reduce_fact):,:]
+        #resample by offset    
+        image = image[:,(offset[i]*lab_reduce_fact):,:]
 
-    image = tf.reshape(tf.image.extract_patches(
-            images=tf.expand_dims(image, 0),
-            sizes=[1, win_height, win_length, 1],
-           strides=[1, win_height, win_length, 1],
-            rates=[1, 1, 1, 1],
-            padding='VALID'), (-1, win_height, win_length, 1))
+        image = tf.reshape(tf.image.extract_patches(
+                images=tf.expand_dims(image, 0),
+                sizes=[1, win_height, win_length, 1],
+               strides=[1, win_height, win_length, 1],
+                rates=[1, 1, 1, 1],
+                padding='VALID'), (-1, win_height, win_length, 1))
 
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
+        offsetbatches_img.append(image)
 
-    lab = tf.io.read_file(y)
-    lab = tf.io.decode_compressed(lab,compression_type='GZIP')
-    lab = tf.strings.split(lab, sep="\n", maxsplit=-1, name=None)[:-1]
-    lab = tf.strings.to_number(lab,out_type=tf.int32,name=None)
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
 
-    #now, try to reshape as 3d array!
-    lab = tf.expand_dims(lab,-1)
-    lab = tf.expand_dims(lab,-1)
-    lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
+        lab = tf.io.read_file(y)
+        lab = tf.io.decode_compressed(lab,compression_type='GZIP')
+        lab = tf.strings.split(lab, sep="\n", maxsplit=-1, name=None)[:-1]
+        lab = tf.strings.to_number(lab,out_type=tf.int32,name=None)
 
-    lab = lab[:,offset:,:]
-    #need to do: splice the width by
+        #now, try to reshape as 3d array!
+        lab = tf.expand_dims(lab,-1)
+        lab = tf.expand_dims(lab,-1)
+        lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
 
-    lab = tf.reshape(tf.image.extract_patches(
-            images=tf.expand_dims(lab, 0),
-            sizes=[1, wh_lab, wl_lab, 1],
-           strides=[1, wh_lab, wl_lab, 1],
-            rates=[1, 1, 1, 1],
-            padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
+        lab = lab[:,offset[i]:,:]
+        #need to do: splice the width by
 
-    splt = tf.io.read_file(z)
-    splt = tf.io.decode_compressed(splt,compression_type='GZIP')
-    splt = tf.strings.split(splt, sep="\n", maxsplit=-1, name=None)[:-1]
-    splt = tf.strings.to_number(splt,out_type=tf.int32,name=None)
+        lab = tf.reshape(tf.image.extract_patches(
+                images=tf.expand_dims(lab, 0),
+                sizes=[1, wh_lab, wl_lab, 1],
+               strides=[1, wh_lab, wl_lab, 1],
+                rates=[1, 1, 1, 1],
+                padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
 
-    splt = tf.expand_dims(splt,-1)
-    splt = tf.expand_dims(splt,-1)
-    splt = tf.reshape(splt,[1,-1,1])
+        offsetbatches_lab.append(lab)
 
-    splt = splt[:,(offset*lab_reduce_fact):,:]
+        splt = tf.io.read_file(z)
+        splt = tf.io.decode_compressed(splt,compression_type='GZIP')
+        splt = tf.strings.split(splt, sep="\n", maxsplit=-1, name=None)[:-1]
+        splt = tf.strings.to_number(splt,out_type=tf.int32,name=None)
 
-    splt = tf.reshape(tf.image.extract_patches(
-            images=tf.expand_dims(splt, 0),
-            sizes=[1, 1, win_length, 1],
-           strides=[1, 1, win_length, 1],
-            rates=[1, 1, 1, 1],
-            padding='VALID'), [-1, 1, win_length, 1])
-        
+        splt = tf.expand_dims(splt,-1)
+        splt = tf.expand_dims(splt,-1)
+        splt = tf.reshape(splt,[1,-1,1])
+
+        splt = splt[:,(offset[i]*lab_reduce_fact):,:]
+
+        splt = tf.reshape(tf.image.extract_patches(
+                images=tf.expand_dims(splt, 0),
+                sizes=[1, 1, win_length, 1],
+               strides=[1, 1, win_length, 1],
+                rates=[1, 1, 1, 1],
+                padding='VALID'), [-1, 1, win_length, 1])
+
+        offsetbatches_splt.append(splt)
+
+    image = tf.concat(offsetbatches_img,axis=0)
+    lab = tf.concat(offsetbatches_lab,axis=0)
+    splt = tf.concat(offsetbatches_splt,axis=0)
+    
     return image,lab,splt
 
 #dataset class testing
@@ -359,7 +400,7 @@ try:
   model.fit(
       train_dataset,
       validation_data=val_dataset,
-      #steps_per_epoch = 300, #int(tot_steps//batch_size), #prevent model training from running out of data which it doesn't like
+      #steps_per_epoch = 100, #int(tot_steps//batch_size), #prevent model training from running out of data which it doesn't like
       #validation_steps=225,
       epochs=epochs,
       callbacks=[csv_logger]

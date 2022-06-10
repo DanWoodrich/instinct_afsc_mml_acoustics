@@ -125,6 +125,12 @@ for(i in 1:length(bigfiles)){
     }
     
   }
+  
+  #for(k in 1:GT_depth){
+	#lab_array[,,k] = t(as.matrix(lab_array[,,k]))
+  #}
+  
+  lab_array = aperm(lab_array,dim=c(dim_y, dim_x, GT_depth))
     
   }
   

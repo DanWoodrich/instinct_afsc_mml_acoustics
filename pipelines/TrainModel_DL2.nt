@@ -22,6 +22,7 @@ TrainModel_dl2.pipe:
       process: LabelTensor
       GetFG:
         pipe: FormatFG.pipe
+        loop_on: FormatFG
         FormatFG.pipe:
           process: FormatFG
       GetGT:
@@ -57,5 +58,6 @@ TrainModel_dl2.pipe:
               process: FormatFG
       GetFG:
         pipe: FormatFG.pipe
+        loop_on: FormatFG
         FormatFG.pipe:
           process: FormatFG

@@ -808,9 +808,17 @@ class TrainModel_dl2(INSTINCT_process):
     outfile = 'model.keras'
 
     def run(self):
+        
+
+        arg_tlist= sorted(self.arguments.items())
+        arg_vals = [arg_tlist[x][1] for x in range(len(arg_tlist))]
+        arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
+        arg_string = ' '.join(arg_vals_sort)
+
         #import code
         #code.interact(local=dict(globals(), **locals()))
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+        
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 

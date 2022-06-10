@@ -1,4 +1,6 @@
-#MethodID="train-simple-dl-v1-1"
+
+#v1-1: do away with 'offset', replace with what the concept evolved into, which is stride. 
+
 
 #still experimental- this vers will attempt to save the
 #file name and associated array for test/train and label
@@ -37,18 +39,35 @@ spec_path=args[2]
 label_path=args[3]
 split_path=args[4]
 resultpath=args[5]
-batch_size = int(args[6])
-epochs = int(args[7])
+brightness=args[6]
+contrast =args[7]
 GT_depth = args[8].count(",")+1
 lab_reduce_fact = int(args[9])
 model_name = args[10]
-rand_offsets = args[11]
-spec_img_height = int(args[12])
-spec_pix_per_sec = int(args[13])
+spec_img_height = int(args[11])
+spec_pix_per_sec = int(args[12])
+stride_pix = int(args[13]) #based on label steps
 train_test_split = float(args[14]) #used to calculate steps in epoch
 train_val_split = float(args[15])
-win_height = int(args[16])
-win_length = int(args[17])
+view_plots = args[16]
+win_height = int(args[17])
+win_length = int(args[18])
+#arguments: 
+batch_size = int(args[20])
+epochs = int(args[21])
+
+
+#determine which to run based on whether input is factor or 'None'
+brightness=float(args[6])
+contrast =float(args[7])
+
+data_augmentation = keras.Sequential(
+    [
+        tf.keras.layers.RandomBrightness(factor=[-brightness,brightness]),
+        tf.keras.layers.RandomContrast(factor=contrast), 
+    ]
+)
+
 
 tp_prop = 0.1
 fp_prop = 0.9 #doesn't have to = 1... especially not when not i_neg
@@ -78,50 +97,22 @@ dataset3 = tf.data.Dataset.from_tensor_slices(split_files)
 wh_lab =int(win_height/lab_reduce_fact)
 wl_lab = int(win_length/lab_reduce_fact)
 
-if rand_offsets == 'max':
-    rand_offsets = wl_lab-1
-else:
-    rand_offsets = int(rand_offsets)
-#this will fail if wl_lab -1 < rand_offsets
-offsets = np.random.choice(range(wl_lab-1), size=rand_offsets, replace=False)
-#print(offsets)
 #dataset4 = tf.data.Dataset.from_tensor_slices(offsets)
 #dataset just maps bigfiles, to label_tensor, to split tensor
 full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3))
 
-#calculate expected steps for training:
-#totalsecs= sum(FG.SegDur)
-#stepsecs= win_length/spec_pix_per_sec
-#est_steps = int((totalsecs//stepsecs)* train_test_split * train_val_split)
-#repetions = 5   #hardcoded, may be useful as a param later
-#keep_per = 0.75 #hardcoded, may be useful as a param later
-#tot_steps = int(round(est_steps*repetions)*keep_per)
-##########this whole section, and the later calculations from it, are currently not making much sense to me.
+def MakeDataset(dataset,split=None,batchsize=20,do_shuffle=True,drop_assignment=True):
 
-def MakeDatasetTest(dataset,split=None,batchsize=20):
+    if split==3:
+        do_shuffle = False
 
-    #dataset = dataset.shuffle(bigfile) #shuffle the whole thing
-
-    #dataset = dataset.repeat(epochs) #testing, not sure how this works
-
-    #ingest_data
-    #dataset = dataset.map(lambda x,y,z: tuple((ingest(x,y,z,p) for p in offsets)))#.unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
-
-    dataset = dataset.map(lambda x,y,z: (ingest_test(x,y,z,offsets)))#.unbatch()
-    #dataset = dataset.map(lambda x,y,z: (x,accumulate_lab_test(y),z))
-    #dataset = dataset.batch(5)
-    
-    return dataset
-
-
-def MakeDataset(dataset,split=None,batchsize=20):
-
-    dataset = dataset.shuffle(bigfile) #shuffle the whole thing
+    if do_shuffle==True:
+        dataset = dataset.shuffle(bigfile) #shuffle the whole thing
 
     #ingest_data
     #dataset = dataset.map(lambda x,y,z: ingest(x,y,z)).unbatch() #this will extract slices, and associate with assignment/labels (form x,y,z: data,label,assignment)
 
-    dataset = dataset.map(lambda x,y,z: (ingest(x,y,z,offsets))).unbatch() #test, with offsets implemented in loop within ingest. 
+    dataset = dataset.map(lambda x,y,z: (ingest(x,y,z))).unbatch() #test, with offsets implemented in loop within ingest. 
     #accumulate label
     dataset = dataset.map(lambda x,y,z: (x,accumulate_lab(y),z))
 
@@ -136,27 +127,34 @@ def MakeDataset(dataset,split=None,batchsize=20):
     if(split!=None):
         dataset = dataset.filter(lambda x,y,z: z[0] == split) #1 = train, 2 = val, 3 = test
 
-    #drop assignment
-    dataset = dataset.map(lambda x,y,z: (x,y))
-    
+
     #labels to one-hot
-    dataset = dataset.map(lambda x,y: (x,y[:,0])) #only take 1st column, flip to horizontal
+    dataset = dataset.map(lambda x,y,z: (x,y[:,0],z)) #only take 1st column, flip to horizontal
 
     #experimental- see if making the label a string lets me use accuracy. 
     #dataset = dataset.map(lambda x,y: (x,tf.as_string(tf.cast(y,tf.int32)))) #it didn't work!
 
-    dataset = dataset.shuffle(10000) #10000 #big number because why not?
+    if do_shuffle==True:
+        dataset = dataset.shuffle(1000) #10000 #big number because why not?
 
     #convert to 0/1 (not needed for all models)
     #if model_name != "EffecientNet";
     #    dataset = dataset.map(lambda x,y: (x/255,y))
 
     #convert features to expected image dims
-    dataset = dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x),y))
+    dataset = dataset.map(lambda x,y,z: (tf.image.grayscale_to_rgb(x),y,z))
+
+    #do augmentation on training or if not specified
+    if split==1 or split==None:
+    dataset = dataset.map(lambda x,y,z: (data_augmentation(x),y,z))
+
+    #drop assignment
+    if drop_assignment==True:
+        dataset = dataset.map(lambda x,y,z: (x,y))
     
     dataset = dataset.batch(batchsize)
 
-    dataset = dataset.prefetch(1)
+    dataset = dataset.prefetch(tf.data.AUTOTUNE) #1
                           
     return dataset
 
@@ -185,62 +183,25 @@ def accumulate_lab(y):
 
     return(out_tens)
 
-def accumulate_lab_test(y):
-
-    #the manipulation looks right, but doesn't seem to be correctly accumulating- check the source data and the transformations. 
-
-    #out_tens = tf.reshape(y,[2,-1]) #should this be depth GTdepth instead of '2'? check.
-    out_tens = tf.reshape(y,[GT_depth,-1])
-
-    width = tf.shape(out_tens)[1]
-
-    out_tens = tf.math.bincount(out_tens,axis=-1,minlength=3) #always populates 0,1,2 - uk,fp,tp
-
-    out_tens = out_tens/width #makes it the proportion
-
-    #out_tens = tf.math.greater_equal(out_tens,[0,fp_prop,tp_prop])
-
-    #out_tens = tf.where(out_tens, 1, 0)
-
-    #out_tens = tf.reverse(out_tens,axis=[1]) #flip so that order is 2,1,0 (tp,fp,uk)
-
-    #out_tens = tf.argmax(out_tens,axis=-1) #this makes the integer order matter- prioritizes in order of correct label for tp, then fp, then uk
-
-    #out_tens = tf.one_hot(out_tens,3)
-
-    return(out_tens)
-
-
 @tf.function
-def ingest_test(x,y,z,offset):
-
-    lab = tf.io.read_file(y)
-    lab = tf.io.decode_compressed(lab,compression_type='GZIP')
-    lab = tf.strings.split(lab, sep="\n", maxsplit=-1, name=None)[:-1]
-    lab = tf.strings.to_number(lab,out_type=tf.int32,name=None)
-
-    #now, try to reshape as 3d array!
-    lab = tf.expand_dims(lab,-1)
-    lab = tf.expand_dims(lab,-1)
-    lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
-
-    return lab
-
-
-@tf.function
-def ingest(x,y,z,offset): #try out a predetermined offset
+def ingest(x,y,z): #try out a predetermined offset
 
     #if this approach appears to work, make into a general function (lot of copy and paste here)
 
     #this should give a random offset, each epoch!
     #offset = tf.random.uniform(shape=[],maxval=(wl_lab-1),dtype=tf.int32) #offset is on the resolution of label
 
-    offsetbatches_img = []
-    offsetbatches_lab = []
-    offsetbatches_splt = []
-
     image = tf.io.read_file(x)
     image = tf.image.decode_png(image, channels=1)
+    #some reason the images is read in reversed:
+    image = tf.reverse(image,[0]) #not yet tested... 
+
+    image = tf.reshape(tf.image.extract_patches(
+            images=tf.expand_dims(image, 0),
+            sizes=[1, win_height, win_length, 1],
+           strides=[1, win_height, stride_pix*lab_reduce_fact, 1],
+            rates=[1, 1, 1, 1],
+            padding='VALID'), (-1, win_height, win_length, 1))
 
     lab = tf.io.read_file(y)
     lab = tf.io.decode_compressed(lab,compression_type='GZIP')
@@ -251,6 +212,13 @@ def ingest(x,y,z,offset): #try out a predetermined offset
     lab = tf.expand_dims(lab,-1)
     lab = tf.expand_dims(lab,-1)
     lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
+
+    lab = tf.reshape(tf.image.extract_patches(
+        images=tf.expand_dims(lab, 0),
+        sizes=[1, wh_lab, wl_lab, 1],
+       strides=[1, wh_lab, stride_pix, 1],
+        rates=[1, 1, 1, 1],
+        padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
 
     splt = tf.io.read_file(z)
     splt = tf.io.decode_compressed(splt,compression_type='GZIP')
@@ -260,50 +228,14 @@ def ingest(x,y,z,offset): #try out a predetermined offset
     splt = tf.expand_dims(splt,-1)
     splt = tf.expand_dims(splt,-1)
     splt = tf.reshape(splt,[1,-1,1])
-    
-    for i in range(len(offset)):
 
-        #resample by offset    
-        image2 = image[:,(offset[i]*lab_reduce_fact):,:]
+    splt = tf.reshape(tf.image.extract_patches(
+            images=tf.expand_dims(splt, 0),
+            sizes=[1, 1, win_length, 1],
+           strides=[1, 1, stride_pix*lab_reduce_fact, 1],
+            rates=[1, 1, 1, 1],
+            padding='VALID'), [-1, 1, win_length, 1])
 
-        image2 = tf.reshape(tf.image.extract_patches(
-                images=tf.expand_dims(image2, 0),
-                sizes=[1, win_height, win_length, 1],
-               strides=[1, win_height, win_length, 1],
-                rates=[1, 1, 1, 1],
-                padding='VALID'), (-1, win_height, win_length, 1))
-
-        offsetbatches_img.append(image2)
-
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
-
-        lab2 = lab[:,offset[i]:,:]
-        #need to do: splice the width by
-
-        lab2 = tf.reshape(tf.image.extract_patches(
-                images=tf.expand_dims(lab2, 0),
-                sizes=[1, wh_lab, wl_lab, 1],
-               strides=[1, wh_lab, wl_lab, 1],
-                rates=[1, 1, 1, 1],
-                padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
-
-        offsetbatches_lab.append(lab2)
-
-        splt2 = splt[:,(offset[i]*lab_reduce_fact):,:]
-
-        splt2 = tf.reshape(tf.image.extract_patches(
-                images=tf.expand_dims(splt2, 0),
-                sizes=[1, 1, win_length, 1],
-               strides=[1, 1, win_length, 1],
-                rates=[1, 1, 1, 1],
-                padding='VALID'), [-1, 1, win_length, 1])
-
-        offsetbatches_splt.append(splt2)
-
-    image = tf.concat(offsetbatches_img,axis=0)
-    lab = tf.concat(offsetbatches_lab,axis=0)
-    splt = tf.concat(offsetbatches_splt,axis=0)
     
     return image,lab,splt
 
@@ -315,8 +247,42 @@ def ingest(x,y,z,offset): #try out a predetermined offset
 
 #next(test2)
 #next(test3)
-#import code
-#code.interact(local=dict(globals(), **locals()))
+
+#import random
+if view_plots =='y':
+    do_plot =True
+else:
+    do_plot =False
+
+if do_plot:
+    iter_obj = iter(MakeDataset(full_dataset,None,20,False,False))
+    def seespec(obj):
+        spectrogram_batch, label_batch, assn_batch = obj
+        plots_rows = 4
+        plots_cols = 5
+        fig, axes = plt.subplots(plots_rows, plots_cols, figsize=(12, 9))
+        indices = list(range(spectrogram_batch.shape[0]))
+
+        #random.shuffle(indices)
+        for i in range(plots_rows * plots_cols):
+          batch_index = indices[i]
+          class_index = label_batch[batch_index].numpy()
+          assn_index = assn_batch[batch_index].numpy()
+          ax = axes[i // plots_cols,i % plots_cols]
+          ax.pcolormesh(spectrogram_batch[batch_index, :,:,1].numpy())
+          ax.set_title(str(class_index) + ":" +  str(assn_index))
+          ax.get_xaxis().set_ticks([])
+          ax.get_yaxis().set_ticks([])
+        fig.show()
+
+    for f in range(1000):
+        seespec(next(iter_obj))
+        val = input("press any key to continue, type ! to abort")
+        if val =='!':
+            exit()
+
+    import code
+    code.interact(local=dict(globals(), **locals()))
 
 
 #select keras model constructorbased on given name
@@ -324,29 +290,37 @@ def ingest(x,y,z,offset): #try out a predetermined offset
 #for effecientnet, determine correct model name based on the inputs.
 if model_name == "ResNet50V2":
     model_con=tf.keras.applications.resnet_v2.ResNet50V2
-    assert win_height == 224
+    model_win_size = 224
 elif model_name == "ResNet50":
     model_con=tf.keras.applications.resnet50.ResNet50
-    assert win_height == 224
-elif model_name == "EffecientNet":
+    model_win_size = 224
+elif "EffecientNet" in model_name:
 
     #for this, calculate particular one based on model input size. 
     if win_height >= 600:
         model_con=tf.keras.applications.efficientnet.EfficientNetB7
+        model_win_size = 600
     elif win_height >= 528:
         model_con=tf.keras.applications.efficientnet.EfficientNetB6
+        model_win_size = 528
     elif win_height >= 456:
         model_con=tf.keras.applications.efficientnet.EfficientNetB5
+        model_win_size = 456
     elif win_height >= 380:
         model_con=tf.keras.applications.efficientnet.EfficientNetB4
+        model_win_size = 380
     elif win_height >= 300:
         model_con=tf.keras.applications.efficientnet.EfficientNetB3
+        model_win_size = 300
     elif win_height >= 260:
         model_con=tf.keras.applications.efficientnet.EfficientNetB2
+        model_win_size = 260
     elif win_height >= 240:
         model_con=tf.keras.applications.efficientnet.EfficientNetB1
+        model_win_size = 240
     elif win_height >= 224:
         model_con=tf.keras.applications.efficientnet.EfficientNetB0
+        model_win_size = 224
     else:
         raise MyValidationError("input size too small for EffecientNet")  
 else:
@@ -365,9 +339,9 @@ else:
 def KerasModel(constructor=model_con):
   return tf.keras.Sequential([
     tf.keras.Input(shape=(win_height, win_length, 3)),
-    tf.keras.layers.RandomCrop(height = win_height, width = win_length), #in case it is differently sized
-    #tf.keras.layers.RandomBrightness(factor=0.2),
-    #tf.keras.layers.RandomContrast(factor=[0, 255]), 
+    tf.keras.layers.RandomCrop(height = model_win_size, width = model_win_size), #in case it is differently sized
+    #tf.keras.layers.RandomBrightness(factor=[-1,1]),
+    #tf.keras.layers.RandomContrast(factor=0.8), 
     constructor(include_top=False, weights=None, pooling="max"),
     tf.keras.layers.ReLU(),
     tf.keras.layers.Dense(128, activation="relu"),
@@ -406,8 +380,6 @@ def KerasModel(constructor=model_con):
 #    tf.keras.layers.Dense(1),
 #    tf.keras.layers.Activation("sigmoid"),
 #  ])
-
-
 
 model = KerasModel(model_con)
 

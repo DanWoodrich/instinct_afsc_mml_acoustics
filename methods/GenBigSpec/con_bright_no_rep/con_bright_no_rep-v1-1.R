@@ -142,5 +142,5 @@ for(i in 1:length(bigfiles)){
 
 #In future versions, a printout of the spectrogram power histograms and a sample plot would be nice.
 #like in a two column multiplot.
-writeLines("spectrograms successfully written",paste(resultpath,'receipt.txt',sep="/"))
+writeLines(as.character(length(bigfiles)),paste(resultpath,'receipt.txt',sep="/")) #write the number of bigfiles to expect
 #

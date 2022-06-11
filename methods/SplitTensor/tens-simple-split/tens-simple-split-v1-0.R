@@ -1,3 +1,6 @@
+#v1-1:
+#change parameters 
+
 library(signal)
 library(dplyr)
 
@@ -11,8 +14,8 @@ args<-commandArgs(trailingOnly = TRUE)
 FG = read.csv(paste(args[1],"/FileGroupFormat.csv.gz",sep=""))
 bigfilespath = args[2]
 resultpath = args[3]
-seed_val = as.integer(args[4])
-spec_pix_per_sec= as.numeric(args[5])
+native_pix_per_sec= as.numeric(args[4])
+seed_val = as.integer(args[5])
 split_protocol= args[6] 
 test_split= as.numeric(args[7])
 train_test_split= as.numeric(args[8])
@@ -50,7 +53,7 @@ for(i in 1:length(bigfiles)){
   
   if(split_protocol=="within_file"){
   
-  total_pix = FGsecs * spec_pix_per_sec
+  total_pix = FGsecs * native_pix_per_sec
   
   training_pix =  train_test_split *total_pix
   

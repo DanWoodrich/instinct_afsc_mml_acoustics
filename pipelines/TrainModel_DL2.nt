@@ -1,7 +1,7 @@
-pipe: TrainModel_dl2.pipe
+pipe: DLmodel_Train.pipe
 #this one I made a custom pipe shape for to make it less convoluted. Lots of dependency tie ins. 
-TrainModel_dl2.pipe:
-  process: TrainModel_dl2
+DLmodel_Train.pipe:
+  process: DLmodel_Train
   GetFG: 
     pipe: FormatFG.pipe
     loop_on: FormatFG

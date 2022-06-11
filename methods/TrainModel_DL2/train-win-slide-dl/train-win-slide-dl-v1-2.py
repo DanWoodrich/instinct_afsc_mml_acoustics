@@ -1,6 +1,6 @@
 
 #v1-1: do away with 'offset', replace with what the concept evolved into, which is stride. 
-
+#v1-2: update parameters to get rid of stuff that doesn't matter, add stuff that does. 
 
 #still experimental- this vers will attempt to save the
 #file name and associated array for test/train and label
@@ -39,35 +39,34 @@ spec_path=args[2]
 label_path=args[3]
 split_path=args[4]
 resultpath=args[5]
+modelpath=args[6]
+stage= args[6] #train, test, or inf
 brightness_high=float(args[6])
 brightness_low=float(args[7])
 contrast_high =float(args[8])
 contrast_low =float(args[9])
 GT_depth = args[10].count(",")+1
-lab_reduce_fact = int(args[11])
 model_name = args[12]
-spec_img_height = int(args[13])
-spec_pix_per_sec = int(args[14])
-stride_pix = int(args[15]) #based on label steps
-train_test_split = float(args[16]) #used to calculate steps in epoch
-train_val_split = float(args[17])
+native_img_height = int(args[13])
+native_pix_per_sec = int(args[14])
+stride_pix = int(args[15]) #based on win_t_factor * native_pix_per_sec
+test_tp_perc: 0.01
+test_fp_perc: 0.99
+train_fp_perc: 0.75
+train_tp_perc: 0.25
+val_fp_perc: 0.9
+val_tp_perc: 0.1
 view_plots = args[18]
+win_f_factor= float(args[19])
+win_t_factor= float(args[19])
 win_height = int(args[19])
 win_length = int(args[20])
 #arguments: 
 batch_size = int(args[22])
 epochs = int(args[23])
 
-tp_prop = 0.1
-fp_prop = 0.9 #doesn't have to = 1... especially not when not i_neg
-
-#FG = pd.read_csv(FGpath,compression='gzip')
-
 f = open(spec_path + '/receipt.txt', "r")
 bigfile = int(f.read())
-
-#intead of using pandas to find this, just read from bigfiles export file. 
-#bigfile = FG.DiffTime.unique()
 
 bigfiles = []
 lab_files= []
@@ -83,11 +82,6 @@ dataset1 = tf.data.Dataset.from_tensor_slices(bigfiles)
 dataset2 = tf.data.Dataset.from_tensor_slices(lab_files)
 dataset3 = tf.data.Dataset.from_tensor_slices(split_files)
 
-wh_lab =int(win_height/lab_reduce_fact)
-wl_lab = int(win_length/lab_reduce_fact)
-
-#dataset4 = tf.data.Dataset.from_tensor_slices(offsets)
-#dataset just maps bigfiles, to label_tensor, to split tensor
 full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3))
 
 data_augmentation = keras.Sequential(
@@ -110,7 +104,7 @@ def MakeDataset(dataset,split=None,batchsize=20,do_shuffle=True,drop_assignment=
 
     dataset = dataset.map(lambda x,y,z: (ingest(x,y,z))).unbatch() #test, with offsets implemented in loop within ingest. 
     #accumulate label
-    dataset = dataset.map(lambda x,y,z: (x,accumulate_lab(y),z))
+    dataset = dataset.map(lambda x,y,z: (x,accumulate_lab(y,split),z))
 
     #filter
     dataset = dataset.filter(lambda x,y,z: tf.reduce_all(y[:,2:3]==0)) #take records where all labels do not have ambiguity . 
@@ -154,7 +148,7 @@ def MakeDataset(dataset,split=None,batchsize=20,do_shuffle=True,drop_assignment=
                           
     return dataset
 
-def accumulate_lab(y):
+def accumulate_lab(y,split):
 
     #the manipulation looks right, but doesn't seem to be correctly accumulating- check the source data and the transformations. 
 
@@ -167,7 +161,12 @@ def accumulate_lab(y):
 
     out_tens = out_tens/width #makes it the proportion
 
-    out_tens = tf.math.greater_equal(out_tens,[0,fp_prop,tp_prop])
+    if split == 1:
+        out_tens = tf.math.greater_equal(out_tens,[0,train_fp_perc,train_tp_perc])
+    elif split==2:
+        out_tens = tf.math.greater_equal(out_tens,[0,val_fp_perc,val_tp_perc])
+    elif split==3:
+        out_tens = tf.math.greater_equal(out_tens,[0,test_fp_perc,test_tp_perc])
 
     out_tens = tf.where(out_tens, 1, 0)
 
@@ -190,12 +189,14 @@ def ingest(x,y,z): #try out a predetermined offset
     image = tf.io.read_file(x)
     image = tf.image.decode_png(image, channels=1)
     #some reason the images is read in reversed:
-    image = tf.reverse(image,[0]) #not yet tested... 
+    image = tf.reverse(image,[0])
+    image = tf.image.resize(image,[native_img_height*win_f_factor,-1,1])
+    #
 
     image = tf.reshape(tf.image.extract_patches(
             images=tf.expand_dims(image, 0),
             sizes=[1, win_height, win_length, 1],
-           strides=[1, win_height, stride_pix*lab_reduce_fact, 1],
+           strides=[1, win_height, int(stride_pix*win_t_factor), 1],
             rates=[1, 1, 1, 1],
             padding='VALID'), (-1, win_height, win_length, 1))
 
@@ -207,14 +208,14 @@ def ingest(x,y,z): #try out a predetermined offset
     #now, try to reshape as 3d array!
     lab = tf.expand_dims(lab,-1)
     lab = tf.expand_dims(lab,-1)
-    lab = tf.reshape(lab,[wh_lab,-1,GT_depth]) #don't do height yet, since putting it through patches.
+    lab = tf.reshape(lab,[native_img_height,-1,GT_depth])
 
     lab = tf.reshape(tf.image.extract_patches(
         images=tf.expand_dims(lab, 0),
-        sizes=[1, wh_lab, wl_lab, 1],
-       strides=[1, wh_lab, stride_pix, 1],
+        sizes=[1, native_img_height, , 1],
+       strides=[1, native_img_height, stride_pix, 1],
         rates=[1, 1, 1, 1],
-        padding='VALID'), [-1, wh_lab, wl_lab, GT_depth])
+        padding='VALID'), [-1, native_img_height, int(win_length/win_t_factor), GT_depth])
 
     splt = tf.io.read_file(z)
     splt = tf.io.decode_compressed(splt,compression_type='GZIP')
@@ -227,24 +228,14 @@ def ingest(x,y,z): #try out a predetermined offset
 
     splt = tf.reshape(tf.image.extract_patches(
             images=tf.expand_dims(splt, 0),
-            sizes=[1, 1, win_length, 1],
-           strides=[1, 1, stride_pix*lab_reduce_fact, 1],
+            sizes=[1, 1, int(win_length/win_t_factor), 1],
+           strides=[1, 1, stride_pix, 1],
             rates=[1, 1, 1, 1],
-            padding='VALID'), [-1, 1, win_length, 1])
+            padding='VALID'), [-1, 1, int(win_length/win_t_factor), 1])
 
     
     return image,lab,splt
 
-#dataset class testing
-
-
-#test2 = iter(MakeDatasetTest(full_dataset,2))
-#test3 = iter(MakeDataset(full_dataset,2))
-
-#next(test2)
-#next(test3)
-
-#import random
 if view_plots =='y':
     do_plot =True
 else:
@@ -281,176 +272,110 @@ if do_plot:
     import code
     code.interact(local=dict(globals(), **locals()))
 
-
 #select keras model constructorbased on given name
-
-#for effecientnet, determine correct model name based on the inputs.
 if model_name == "ResNet50V2":
     model_con=tf.keras.applications.resnet_v2.ResNet50V2
     model_win_size = 224
 elif model_name == "ResNet50":
     model_con=tf.keras.applications.resnet50.ResNet50
     model_win_size = 224
-elif "EffecientNet" in model_name:
-
+elif model_name == "EffecientNetB0":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB0
+    model_win_size = 224
+elif model_name == "EffecientNetB1":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB1
+    model_win_size = 240
+elif model_name == "EffecientNetB2":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB2
+    model_win_size = 260
+elif model_name == "EffecientNetB3":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB3
+    model_win_size = 300
+elif model_name == "EffecientNetB4":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB4
+    model_win_size = 380
+elif model_name == "EffecientNetB5":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB5
+    model_win_size = 456
+elif model_name == "EffecientNetB6":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB6
+    model_win_size = 528
+elif model_name == "EffecientNetB7":
+    model_con=tf.keras.applications.efficientnet.EfficientNetB7
+    model_win_size = 600
     #for this, calculate particular one based on model input size. 
-    if win_height >= 600:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB7
-        model_win_size = 600
-    elif win_height >= 528:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB6
-        model_win_size = 528
-    elif win_height >= 456:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB5
-        model_win_size = 456
-    elif win_height >= 380:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB4
-        model_win_size = 380
-    elif win_height >= 300:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB3
-        model_win_size = 300
-    elif win_height >= 260:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB2
-        model_win_size = 260
-    elif win_height >= 240:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB1
-        model_win_size = 240
-    elif win_height >= 224:
-        model_con=tf.keras.applications.efficientnet.EfficientNetB0
-        model_win_size = 224
-    else:
-        raise MyValidationError("input size too small for EffecientNet")  
 else:
     raise MyValidationError("Model not found")
 
-#select correct loss function for multi or single class:
+assert model_win_size <= win_length
+assert model_win_size <= win_height
 
-if GT_depth >1:
-    loss_fxn = "categorical_crossentropy"
-    loss_metric ="categorical_accuracy"
+if stage=="train":
+
+    #select correct loss function for multi or single class:
+
+    if GT_depth >1:
+        loss_fxn = "categorical_crossentropy"
+        loss_metric ="categorical_accuracy"
+    else:
+        loss_fxn = "binary_crossentropy"
+        loss_metric = "binary_accuracy" #accuracy bugged for some reason...?
+        #loss_metric = "accuracy" 
+
+    def KerasModel(constructor=model_con):
+      return tf.keras.Sequential([
+        tf.keras.Input(shape=(win_height, win_length, 3)),
+        tf.keras.layers.RandomCrop(height = model_win_size, width = model_win_size), #in case it is differently sized
+        #tf.keras.layers.RandomBrightness(factor=[-1,1]),
+        #tf.keras.layers.RandomContrast(factor=0.8), 
+        constructor(include_top=False, weights=None, pooling="max"),
+        tf.keras.layers.ReLU(),
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dense(GT_depth),
+        tf.keras.layers.Activation("sigmoid"),
+      ])
+
+    model = KerasModel(model_con)
+
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+
+    model.compile(
+        optimizer="adam",
+        loss=loss_fxn,
+        metrics=[
+            loss_metric,
+            tf.keras.metrics.AUC(name="rocauc"),
+            tf.keras.metrics.AUC(curve="pr", name="ap"),
+            tf.keras.metrics.Precision(),
+            tf.keras.metrics.Recall()
+        ],
+    )
+
+    train_dataset = MakeDataset(full_dataset,split=1,batchsize=batch_size)
+    val_dataset = MakeDataset(full_dataset,split=2,batchsize=batch_size)
+
+    logpath = resultpath + "/model_history_log.csv"
+
+    if os.path.isfile(logpath):
+        os.remove(logpath)
+        
+    csv_logger = CSVLogger(logpath, append=True)
+
+    try:
+      model.fit(
+          train_dataset,
+          validation_data=val_dataset,
+          epochs=epochs,
+          callbacks=[csv_logger]
+      )
+    except KeyboardInterrupt:
+      pass
+
+    model.save(resultpath + "/model.keras")
 else:
-    loss_fxn = "binary_crossentropy"
-    loss_metric = "binary_accuracy" #accuracy bugged for some reason...?
-    #loss_metric = "accuracy" 
-
-def KerasModel(constructor=model_con):
-  return tf.keras.Sequential([
-    tf.keras.Input(shape=(win_height, win_length, 3)),
-    tf.keras.layers.RandomCrop(height = model_win_size, width = model_win_size), #in case it is differently sized
-    #tf.keras.layers.RandomBrightness(factor=[-1,1]),
-    #tf.keras.layers.RandomContrast(factor=0.8), 
-    constructor(include_top=False, weights=None, pooling="max"),
-    tf.keras.layers.ReLU(),
-    tf.keras.layers.Dense(128, activation="relu"),
-    tf.keras.layers.Dense(GT_depth),
-    tf.keras.layers.Activation("sigmoid"),
-  ])
-
-
-#def KerasApplicationsModel(constructor=tf.keras.applications.resnet_v2.ResNet50V2):
-#  return tf.keras.Sequential([
-#    tf.keras.Input(shape=(model_input_size, wl_mod, 3)),
-#    tf.keras.layers.RandomCrop(height = model_input_size, width = model_input_size),
-    #tf.keras.layers.Lambda(fake_image, name="fake_image"),
-#    constructor(include_top=False, weights=None, pooling="max"),
-#    tf.keras.layers.ReLU(),
-#    tf.keras.layers.Dense(128, activation="relu"),
-#    tf.keras.layers.Dense(1),
-#    tf.keras.layers.Activation("sigmoid"),
-#  ])
-
-#Matt Harvey proposed smaller CNN. 
-#def SmallCNNModel():
-#  return tf.keras.Sequential([
-#    tf.keras.Input(shape=(model_input_size, win_length, 3)),
-#    tf.keras.layers.RandomCrop(height = model_input_size, width = model_input_size),
-#    tf.keras.layers.Conv2D(16, 7, use_bias=False, activation="relu"),
-#    tf.keras.layers.MaxPooling2D(2, 2),
-#    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"),
-#    tf.keras.layers.MaxPooling2D(2, 2),
-#    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
-#    tf.keras.layers.MaxPooling2D(2, 2),
-#    tf.keras.layers.Conv2D(64, 3, use_bias=False, activation="relu"), 
-#    tf.keras.layers.GlobalMaxPool2D(),
-#    tf.keras.layers.Dense(128, activation="relu"),
-#    tf.keras.layers.Dropout(0.5),
-#    tf.keras.layers.Dense(1),
-#    tf.keras.layers.Activation("sigmoid"),
-#  ])
-
-model = KerasModel(model_con)
-
-#import code
-#code.interact(local=dict(globals(), **locals()))
-
-model.compile(
-    optimizer="adam",
-    # binary_crossentropy and sigmoid are for independent classes, which is the
-    # proper assumption for species detection. For spoken digits, it's more
-    # proper to use categorical_cross_entropy and softmax, but this example
-    # won't.
-    loss=loss_fxn,
-    metrics=[
-        loss_metric,
-        tf.keras.metrics.AUC(name="rocauc"),
-        tf.keras.metrics.AUC(curve="pr", name="ap"),
-        tf.keras.metrics.Precision(),
-        tf.keras.metrics.Recall()
-    ],
-)
-
-#test2 = iter(MakeDatasetTest(full_dataset))
-#test3 = iter(MakeDataset(full_dataset,1))
-
-#out = 
-
-#plt.gray()
-#plt.imshow(next(test2),interpolation='nearest')
-
-#import code
-#code.interact(local=dict(globals(), **locals()))
-#next(test3)
-#
-
-
-#might think about a try catch here- on GPU OOM error, iteratively decrease batch size to maximize it.
-
-train_dataset = MakeDataset(full_dataset,split=1,batchsize=batch_size)
-val_dataset = MakeDataset(full_dataset,split=2,batchsize=batch_size)
-
-logpath = resultpath + "/model_history_log.csv"
-
-if os.path.isfile(logpath):
-    os.remove(logpath)
-    
-csv_logger = CSVLogger(logpath, append=True)
-
-try:
-  model.fit(
-      train_dataset,
-      validation_data=val_dataset,
-      #steps_per_epoch = 100, #int(tot_steps//batch_size), #prevent model training from running out of data which it doesn't like
-      #validation_steps=225,
-      epochs=epochs,
-      callbacks=[csv_logger]
-  )
-except KeyboardInterrupt:
-  pass
-
-#import code
-#code.interact(local=dict(globals(), **locals()))
-
-#two outputs:
-
-#np.save(resultpath + "/history.npy",model.history)
-model.save(resultpath + "/model.keras")
-
-
-#working well. Now, we can move on to training. 
-
-#next(train_iter)[0].shape
-#next(test_iter)[0].shape
-#next(all_iter)[0].shape
+    win_length = model_win_size #set this equal to model dimension
+    win_height = model_win_size
 
 
 

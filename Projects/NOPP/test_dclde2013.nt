@@ -14,12 +14,9 @@ Global:
     freq_start: 40
     freq_size: 300
     #tilepix_h: 300
-    tilepix_h: 224
-    pix_ps_spec: 56
-    lab_reduceby: 4
+    native_height: 124
+    native_pix_per_sec: 31
     signal_codes: RW
-    tt_split: 0.80
-    tv_split: 0.75
 Job:
   ModelEval_NN:
     parameters:
@@ -59,14 +56,12 @@ Job:
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep
-      methodvers: v1-1
-      brightness_mod: -1
-      contrast_mod: 0
+      methodvers: v1-2
       crop_freq: y
       crop_freq_size: [freq_size]
       crop_freq_start: [freq_start]
-      img_height: [tilepix_h]
-      pix_per_sec: [pix_ps_spec]
+      native_height: [native_height]
+      native_pix_per_sec: [npps]
       window_length: 512
     arguments:
       hard_rerun: n
@@ -76,15 +71,14 @@ Job:
   LabelTensor:
     parameters:
       methodID: tens-simple-label
-      methodvers: v1-1
+      methodvers: v1-2
       #1 if only on time, 2 if time/frequency
       dimensions: 2
       #reduce_factor is the factor by which to divide spec dimensions (lower resolution than spec) 
-      reduce_factor: [lab_reduceby]
       freq_size: [freq_size]
       freq_start: [freq_start]
-      spec_img_height: [tilepix_h]
-      spec_pix_per_sec: [pix_ps_spec]
+      native_height: [native_height]
+      native_pix_per_sec: [npps]
     arguments:
       hard_rerun: n
     descriptors:
@@ -94,41 +88,49 @@ Job:
     parameters:
       methodID: tens-simple-split
       methodvers: v1-0
+	  native_pix_per_sec: [npps]
       seed_val: 1
       #by_file or within_file
       split_protocol: within_file
       test_split: n
-      train_test_split: [tt_split]
+      train_test_split: 0.80
       #of the test in previous, what is the split between train and val
-      train_val_split: [tv_split]
+      train_val_split: 0.75
       #or per_file. by-file smoother, per_file more label effecient
       use_seed: y
-      spec_pix_per_sec: [pix_ps_spec]
     arguments:
       hard_rerun: n
     descriptors:
       runtype: lib
       language: R
-  TrainModel_dl2:
+  DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      #methodvers: v1-0
-      methodvers: v1-1
-      brightness: 0.5
-      contrast: 0.75
+      methodvers: v1-2
+      brightness_high: 0.25
+      brightness_low: 0.55
+      contrast_high: 1
+      contrast_low: 1
       gt_depth: [signal_codes]
-      lab_reduce_factor: [lab_reduceby]
-      model_name: EffecientNet
-      #rand_offsets: max
-      #rand_offsets: 2
-      spec_img_height: [tilepix_h]
-      spec_pix_per_sec: [pix_ps_spec]
-      stride_pix: 1
-      train_test_split: [tt_split]
-      train_val_split: [tv_split]
-      view_plots: y
+      model_name: EffecientNetB0
+      native_height: [native_height]
+      native_pix_per_sec: [npps]
+	  #in native pix:
+      stride_pix: 28
+      test_fp_perc: 0.99
+      test_tp_perc: 0.01
+      train_fp_perc: 0.75
+      train_tp_perc: 0.25
+      val_fp_perc: 0.9
+	  val_tp_perc: 0.1
+      view_plots: n
+      #stride_pix: 1
+	  #what to multiply npps by to get to model resolution
+      win_f_factor: 2
+      win_t_factor: 2
+	  #in pixels
       win_height: 224
-      win_length: 224
+      win_length: 280
     arguments: 
       batch_size: 175
       epoch: 15

@@ -14,8 +14,8 @@ Global:
     freq_start: 40
     freq_size: 300
     #tilepix_h: 300
-    native_height: 124
-    native_pix_per_sec: 31
+    native_height: 151
+    npps: 31
     signal_codes: RW
 Job:
   ModelEval_NN:
@@ -28,6 +28,34 @@ Job:
     descriptors:
       runtype: lib
       language: Python
+  DLmodel*:
+    parameters:
+      methodID: train-win-slide-dl
+      methodvers: v1-2
+      gt_depth: [signal_codes]
+      model_name: EffecientNetB0
+      native_height: [native_height]
+      native_pix_per_sec: [npps]
+      perc_fp: 0.9
+      perc_tp: 0.1
+      #in native pix:
+      stride_pix: 31
+      view_plots: n
+      #stride_pix: 1
+      #what to multiply npps by to get to model resolution
+      win_factor_f: 1.4834
+      win_factor_t: 1.8064
+      #in pixels
+      win_height: 224
+      win_length: 280
+    arguments: 
+      batch_size: 4000
+      hard_rerun: y
+    descriptors:
+      runtype: lib
+      language: Python
+      venv: Conda
+      venv_name: tf-gpu3
   FormatFG:
     parameters:
       decimate_data: y
@@ -39,13 +67,13 @@ Job:
       #target_samp_rate: 4096
       target_samp_rate: 1024
       file_groupID:
-        - NOPP6_EST_20090328_files_All.csv
-        - NOPP6_EST_20090329_files_All.csv
-        - NOPP6_EST_20090330_files_All.csv
-        - NOPP6_EST_20090331_files_All.csv
-        #- NOPP6_EST_20090401_files_All.csv
-        #- NOPP6_EST_20090402_files_All.csv
-        #- NOPP6_EST_20090403_files_All.csv
+        #- NOPP6_EST_20090328_files_All.csv
+        #- NOPP6_EST_20090329_files_All.csv
+        #- NOPP6_EST_20090330_files_All.csv
+        #- NOPP6_EST_20090331_files_All.csv
+        - NOPP6_EST_20090401_files_All.csv
+        - NOPP6_EST_20090402_files_All.csv
+        - NOPP6_EST_20090403_files_All.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -53,6 +81,88 @@ Job:
       language: batch
       runtype2m: bin
       language2m: MATLAB
+  TrainModel_paramset:
+    FormatFG:
+      parameters:
+        decimate_data: y
+        methodID: dbuddy-pull-FG
+        #methodID: dbuddy-pull-FG-ord
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        #target_samp_rate: 4096
+        target_samp_rate: 1024
+        file_groupID:
+          - NOPP6_EST_20090328_files_All.csv
+          - NOPP6_EST_20090329_files_All.csv
+          - NOPP6_EST_20090330_files_All.csv
+          - NOPP6_EST_20090331_files_All.csv
+          #- NOPP6_EST_20090401_files_All.csv
+          #- NOPP6_EST_20090402_files_All.csv
+          #- NOPP6_EST_20090403_files_All.csv
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: batch
+        runtype2m: bin
+        language2m: MATLAB
+    seperate_ds_train:
+      SplitTensor:
+        parameters:
+          methodID: tens-simple-split
+          methodvers: v1-0
+          native_pix_per_sec: [npps]
+          seed_val: 1
+          #by_file or within_file
+          split_protocol: within_file
+          test_split: n
+          #do not break into test splits
+          train_test_split: 1.0
+          #of the test in previous, what is the split between train and val
+          train_val_split: 0.75
+          #or per_file. by-file smoother, per_file more label effecient
+          use_seed: y    
+        arguments:
+          hard_rerun: n
+        descriptors:
+          runtype: lib
+          language: R
+    test1:
+      DLmodel*:
+        parameters:
+          methodID: train-win-slide-dl
+          methodvers: v1-2
+          brightness_high: 0.25
+          brightness_low: 0.55
+          contrast_high: 1
+          contrast_low: 1
+          gt_depth: [signal_codes]
+          model_name: EffecientNetB0
+          native_height: [native_height]
+          native_pix_per_sec: [npps]
+          perc_fp: 0.99
+          perc_tp: 0.1
+          #in native pix:
+          stride_pix: 31
+          view_plots: n
+          #stride_pix: 1
+          #this gets to exact model height
+          win_factor_f: 1.4834
+          #what to multiply npps by to get to model resolution
+          win_factor_t: 1.8064
+          #in pixels
+          win_height: 224
+          win_length: 280
+        arguments: 
+          batch_size: 175
+          epoch: 25
+          hard_rerun: y
+        descriptors:
+          runtype: lib
+          language: Python
+          venv: Conda
+          venv_name: tf-gpu3
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep
@@ -88,7 +198,7 @@ Job:
     parameters:
       methodID: tens-simple-split
       methodvers: v1-0
-	  native_pix_per_sec: [npps]
+      native_pix_per_sec: [npps]
       seed_val: 1
       #by_file or within_file
       split_protocol: within_file
@@ -97,49 +207,32 @@ Job:
       #of the test in previous, what is the split between train and val
       train_val_split: 0.75
       #or per_file. by-file smoother, per_file more label effecient
-      use_seed: y
+      use_seed: y    
     arguments:
       hard_rerun: n
     descriptors:
       runtype: lib
       language: R
-  DLmodel*:
-    parameters:
-      methodID: train-win-slide-dl
-      methodvers: v1-2
-      brightness_high: 0.25
-      brightness_low: 0.55
-      contrast_high: 1
-      contrast_low: 1
-      gt_depth: [signal_codes]
-      model_name: EffecientNetB0
-      native_height: [native_height]
-      native_pix_per_sec: [npps]
-	  #in native pix:
-      stride_pix: 28
-      test_fp_perc: 0.99
-      test_tp_perc: 0.01
-      train_fp_perc: 0.75
-      train_tp_perc: 0.25
-      val_fp_perc: 0.9
-	  val_tp_perc: 0.1
-      view_plots: n
-      #stride_pix: 1
-	  #what to multiply npps by to get to model resolution
-      win_f_factor: 2
-      win_t_factor: 2
-	  #in pixels
-      win_height: 224
-      win_length: 280
-    arguments: 
-      batch_size: 175
-      epoch: 15
-      hard_rerun: y
-    descriptors:
-      runtype: lib
-      language: Python
-      venv: Conda
-      venv_name: tf-gpu3
+  seperate_ds_test:
+    SplitTensor:
+      parameters:
+        methodID: tens-simple-split
+        methodvers: v1-0
+        native_pix_per_sec: [npps]
+        seed_val: 1
+        #by_file or within_file
+        split_protocol: within_file
+        test_split: n
+        train_test_split: 0.80
+        #of the test in previous, what is the split between train and val
+        train_val_split: 0.75
+        #or per_file. by-file smoother, per_file more label effecient
+        use_seed: y    
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam
@@ -162,7 +255,7 @@ Job:
     #this shuold really be a parameter, not an argument
     #I should change this to y/n to be more consistent with other parameters
       fg_fill: T
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: R

@@ -62,7 +62,7 @@ img_print <-function(object,xbins,pix_height,path){
     yaxs = 'i',
     yaxt = 'n')
   
-  plot(object)
+  plot(object, axes = 0)
   
   dev.off()
   
@@ -82,12 +82,12 @@ args<-commandArgs(trailingOnly = TRUE)
 FG= read.csv(paste(args[1],"/FileGroupFormat.csv.gz",sep=""))
 resultpath = args[2]
 SFroot = args[3]
-crop_freq = args[6]
-crop_freq_size = as.numeric(args[7])
-crop_freq_start = as.numeric(args[8])
-native_img_height = as.numeric(args[9])
-native_pix_per_sec = as.numeric(args[10])
-windowLength = as.numeric(args[11])
+crop_freq = args[4]
+crop_freq_size = as.numeric(args[5])
+crop_freq_start = as.numeric(args[6])
+native_img_height = as.numeric(args[7])
+native_pix_per_sec = as.numeric(args[8])
+windowLength = as.numeric(args[9])
 
 #for each difftime, load in the sound data. 
 
@@ -115,14 +115,15 @@ for(i in 1:length(bigfiles)){
   sounddata = Wave(sounddata,samp.rate=sounddataheader$sample.rate,bit = sounddataheader$bits)
   
   #v1-1: try to round the division to protect against dropped samples
-  xbins = round(length(sounddata@left)/sounddataheader$sample.rate)*pix_per_sec
+  xbins = round(length(sounddata@left)/sounddataheader$sample.rate)*native_pix_per_sec
   
   overlap = windowLength/xbins + windowLength- (length(sounddata@left)/xbins)  
   
   spec_img<- gen_spec_image(sounddata,windowLength,overlap,contrast_mod,brightness_mod,crop_freq,crop_freq_start,crop_freq_size)
-  
+  if(i ==1){
   print("initial dimensions:")
-  print(dim(spec_img)) #initial dimenions
+  print(paste(dim(spec_img)[1]/round(length(sounddata@left)/sounddataheader$sample.rate),dim(spec_img)[2])) #initial dimenions
+  }
 
   spec_img =resize(spec_img,size_x = xbins,size_y = native_img_height) #make height
 

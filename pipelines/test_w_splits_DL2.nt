@@ -1,0 +1,68 @@
+pipe: DLmodel_Test.pipe
+params_drop: TrainModel_paramset
+DLmodel_Test.pipe:
+  process: DLmodel_Test
+  GetModel:
+    pipe: DLmodel_Train.pipe
+    params_drop: test1
+    pipe_link: 
+      name: TrainModel_DL2.nt
+  GetFG: 
+    pipe: FormatFG.pipe
+    loop_on: FormatFG
+    FormatFG.pipe:
+      process: FormatFG
+  GetSpec: 
+    pipe: GenBigSpec.pipe
+    GenBigSpec.pipe:
+      process: GenBigSpec
+      GetFG:
+        pipe: FormatFG.pipe
+        loop_on: FormatFG
+        FormatFG.pipe:
+          process: FormatFG
+  GetLabels: 
+    pipe: LabelTensor.pipe
+    LabelTensor.pipe:
+      process: LabelTensor
+      GetFG:
+        pipe: FormatFG.pipe
+        loop_on: FormatFG
+        FormatFG.pipe:
+          process: FormatFG
+      GetGT:
+        pipe: FormatGT.pipe
+        loop_on: FormatFG
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG:
+            pipe: FormatFG.pipe
+            FormatFG.pipe:
+              process: FormatFG
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            pipe: FormatFG.pipe
+            loop_on: FormatFG
+            FormatFG.pipe:
+              process: FormatFG
+  GetSplits: 
+    pipe: SplitTensor.pipe
+    SplitTensor.pipe:
+      process: SplitTensor
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            pipe: FormatFG.pipe
+            loop_on: FormatFG
+            FormatFG.pipe:
+              process: FormatFG
+      GetFG:
+        pipe: FormatFG.pipe
+        loop_on: FormatFG
+        FormatFG.pipe:
+          process: FormatFG

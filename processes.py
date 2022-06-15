@@ -821,9 +821,9 @@ class DLmodel_Train(INSTINCT_process):
 class DLmodel_Test(INSTINCT_process):
 
     #pipeshape = dl2_special
-    pipeshape = FourUpstream_noCon
+    pipeshape = FiveUpstream_noCon
     
-    upstreamdef = ["GetFG","GetSpec","GetLabels","GetSplits"]
+    upstreamdef = ["GetFG","GetSpec","GetLabels","GetSplits","GetModel"]
 
     outfile = 'model.keras'
 
@@ -833,8 +833,11 @@ class DLmodel_Test(INSTINCT_process):
         arg_vals = [arg_tlist[x][1] for x in range(len(arg_tlist))]
         arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
         arg_string = ' '.join(arg_vals_sort)
+
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
         
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),[modelpath],"test",self.param_string,arg_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[4].outfilegen(),self.ports[3].outpath(),self.ports[2].outpath(),self.ports[1].outpath(),self.outpath(),self.ports[0].outfilegen(),"test",self.param_string,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -843,7 +846,7 @@ class DLmodel_Inf(INSTINCT_process):
     #pipeshape = dl2_special
     pipeshape = FourUpstream_noCon
     
-    upstreamdef = ["GetFG","GetSpec","GetLabels","GetSplits"]
+    upstreamdef = ["GetFG","GetSpec","GetSplits","GetModel"]
 
     outfile = 'model.keras'
 
@@ -854,7 +857,7 @@ class DLmodel_Inf(INSTINCT_process):
         arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
         arg_string = ' '.join(arg_vals_sort)
         
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),[modelpath],"inf",self.param_string,arg_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),"NULL",self.outpath(),self.ports[0].outpath(),"inf",self.param_string,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 

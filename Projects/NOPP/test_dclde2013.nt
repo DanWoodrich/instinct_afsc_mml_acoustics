@@ -31,25 +31,25 @@ Job:
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-2
+      methodvers: v1-3
       gt_depth: [signal_codes]
       model_name: EffecientNetB0
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      perc_fp: 0.9
-      perc_tp: 0.1
+      perc_fp: 0.99
+      perc_tp: 0.01
       #in native pix:
-      stride_pix: 31
+      stride_pix: 15
       view_plots: n
       #stride_pix: 1
       #what to multiply npps by to get to model resolution
       win_factor_f: 1.4834
-      win_factor_t: 1.8064
+      win_factor_t: 3
       #in pixels
       win_height: 224
-      win_length: 280
+      win_length: 279
     arguments: 
-      batch_size: 4000
+      batch_size: 3000
       hard_rerun: y
     descriptors:
       runtype: lib
@@ -93,9 +93,9 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 1024
         file_groupID:
-          - NOPP6_EST_20090328_files_All.csv
-          - NOPP6_EST_20090329_files_All.csv
-          - NOPP6_EST_20090330_files_All.csv
+          #- NOPP6_EST_20090328_files_All.csv
+          #- NOPP6_EST_20090329_files_All.csv
+          #- NOPP6_EST_20090330_files_All.csv
           - NOPP6_EST_20090331_files_All.csv
           #- NOPP6_EST_20090401_files_All.csv
           #- NOPP6_EST_20090402_files_All.csv
@@ -111,14 +111,15 @@ Job:
       SplitTensor:
         parameters:
           methodID: tens-simple-split
-          methodvers: v1-0
+          methodvers: v1-1
           native_pix_per_sec: [npps]
           seed_val: 1
           #by_file or within_file
           split_protocol: within_file
           test_split: n
           #do not break into test splits
-          train_test_split: 1.0
+          #train_test_split: 1.0
+          train_test_split: 0.80
           #of the test in previous, what is the split between train and val
           train_val_split: 0.75
           #or per_file. by-file smoother, per_file more label effecient
@@ -132,41 +133,51 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-2
+          methodvers: v1-3
           brightness_high: 0.25
           brightness_low: 0.55
           contrast_high: 1
           contrast_low: 1
           gt_depth: [signal_codes]
+          learn_rate: 0.001
           model_name: EffecientNetB0
           native_height: [native_height]
           native_pix_per_sec: [npps]
           perc_fp: 0.99
-          perc_tp: 0.1
+          perc_tp: 0.01
           #in native pix:
-          stride_pix: 31
+          stride_pix: 15
           view_plots: n
           #stride_pix: 1
           #this gets to exact model height
           win_factor_f: 1.4834
           #what to multiply npps by to get to model resolution
-          win_factor_t: 1.8064
+          win_factor_t: 3
           #in pixels
           win_height: 224
-          win_length: 280
+          win_length: 279
         arguments: 
           batch_size: 175
-          epoch: 25
+          epoch: 1
+          #epoch: 1
           hard_rerun: y
         descriptors:
           runtype: lib
           language: Python
           venv: Conda
           venv_name: tf-gpu3
+	  ScoresToDETx:
+	    parameters:
+		  #group output scores by # of pixels(can be different to original step to 'smooth')
+		  methodID: moving-smooth
+          methodvers: v1-0
+		  group_pixels: 25
+		  smooth_method: mean
+		  
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep
-      methodvers: v1-2
+      methodvers: v1-3
       crop_freq: y
       crop_freq_size: [freq_size]
       crop_freq_start: [freq_start]
@@ -181,7 +192,7 @@ Job:
   LabelTensor:
     parameters:
       methodID: tens-simple-label
-      methodvers: v1-2
+      methodvers: v1-3
       #1 if only on time, 2 if time/frequency
       dimensions: 2
       #reduce_factor is the factor by which to divide spec dimensions (lower resolution than spec) 
@@ -197,7 +208,7 @@ Job:
   SplitTensor:
     parameters:
       methodID: tens-simple-split
-      methodvers: v1-0
+      methodvers: v1-1
       native_pix_per_sec: [npps]
       seed_val: 1
       #by_file or within_file
@@ -217,13 +228,13 @@ Job:
     SplitTensor:
       parameters:
         methodID: tens-simple-split
-        methodvers: v1-0
+        methodvers: v1-1
         native_pix_per_sec: [npps]
         seed_val: 1
         #by_file or within_file
         split_protocol: within_file
         test_split: n
-        train_test_split: 0.80
+        train_test_split: 0
         #of the test in previous, what is the split between train and val
         train_val_split: 0.75
         #or per_file. by-file smoother, per_file more label effecient

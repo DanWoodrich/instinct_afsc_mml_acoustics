@@ -1,7 +1,10 @@
 pipe: ModelEval_NN.pipe
+params_drop: TrainModel_paramset-test1
 ModelEval_NN.pipe:
   process: ModelEval_NN
   GetModel:
     pipe: DLmodel_Train.pipe
     pipe_link: 
       name: TrainModel_DL2.nt
+  GetStats:
+    pipe: 

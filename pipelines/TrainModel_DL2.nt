@@ -1,5 +1,6 @@
 pipe: DLmodel_Train.pipe
 #this one I made a custom pipe shape for to make it less convoluted. Lots of dependency tie ins. 
+#switching from combining on initial FG to processing in groups and combining after. 
 DLmodel_Train.pipe:
   process: DLmodel_Train
   GetFG: 
@@ -9,42 +10,49 @@ DLmodel_Train.pipe:
       process: FormatFG
   GetSpec: 
     pipe: GenBigSpec.pipe
+    loop_on: FormatFG
     GenBigSpec.pipe:
       process: GenBigSpec
       GetFG:
-        pipe: FormatFG.pipe
-        loop_on: FormatFG
-        FormatFG.pipe:
-          process: FormatFG
+        process: FormatFG
+        #pipe: FormatFG.pipe
+        #loop_on: FormatFG
+        #FormatFG.pipe:
+        #  process: FormatFG
   GetLabels: 
     pipe: LabelTensor.pipe
+    loop_on: FormatFG
     LabelTensor.pipe:
       process: LabelTensor
       GetFG:
-        pipe: FormatFG.pipe
-        loop_on: FormatFG
-        FormatFG.pipe:
-          process: FormatFG
+        process: FormatFG
+        #pipe: FormatFG.pipe
+        #loop_on: FormatFG
+        #FormatFG.pipe:
+        #  process: FormatFG
       GetGT:
         pipe: FormatGT.pipe
-        loop_on: FormatFG
+        #loop_on: FormatFG
         FormatGT.pipe:
           process: FormatGT
           GetFG:
-            pipe: FormatFG.pipe
-            FormatFG.pipe:
-              process: FormatFG
+            process: FormatFG
+            #pipe: FormatFG.pipe
+            #FormatFG.pipe:
+            #  process: FormatFG
       GetImg:
         pipe: GenBigSpec.pipe
         GenBigSpec.pipe:
           process: GenBigSpec
           GetFG:
-            pipe: FormatFG.pipe
-            loop_on: FormatFG
-            FormatFG.pipe:
-              process: FormatFG
+            process: FormatFG
+            #pipe: FormatFG.pipe
+            #loop_on: FormatFG
+            #FormatFG.pipe:
+            #  process: FormatFG
   GetSplits: 
     pipe: SplitTensor.pipe
+    loop_on: FormatFG
     SplitTensor.pipe:
       process: SplitTensor
       GetImg:
@@ -52,12 +60,14 @@ DLmodel_Train.pipe:
         GenBigSpec.pipe:
           process: GenBigSpec
           GetFG:
-            pipe: FormatFG.pipe
-            loop_on: FormatFG
-            FormatFG.pipe:
-              process: FormatFG
+            process: FormatFG
+            #pipe: FormatFG.pipe
+            #loop_on: FormatFG
+            #FormatFG.pipe:
+            #  process: FormatFG
       GetFG:
-        pipe: FormatFG.pipe
-        loop_on: FormatFG
-        FormatFG.pipe:
-          process: FormatFG
+        process: FormatFG
+        #pipe: FormatFG.pipe
+        #loop_on: FormatFG
+        #FormatFG.pipe:
+        #  process: FormatFG

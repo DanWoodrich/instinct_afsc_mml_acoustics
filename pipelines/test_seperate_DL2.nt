@@ -3,8 +3,8 @@ DLmodel_Test.pipe:
   process: DLmodel_Test
   GetModel:
     pipe: DLmodel_Train.pipe
-	#do params drop here to seperate FG
-	params_drop: TrainModel_paramset-TrainModel-seperate_ds_train
+    #do params drop here to seperate FG
+    params_drop: TrainModel_paramset-seperate_ds_train-test1
     pipe_link: 
       name: TrainModel_DL2.nt
   GetFG: 
@@ -50,7 +50,7 @@ DLmodel_Test.pipe:
               process: FormatFG
   GetSplits: 
     pipe: SplitTensor.pipe
-	params_drop: seperate_ds_test
+    params_drop: seperate_ds_test
     SplitTensor.pipe:
       process: SplitTensor
       GetImg:

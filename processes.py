@@ -757,14 +757,15 @@ class GenBigSpec(INSTINCT_process):#
     pipeshape = OneUpstream
     upstreamdef = ["GetFG"]
 
-    outfile = 'receipt.txt' 
+    outfile = 'filepaths.csv' 
 
     def run(self):
 
         #import code
         #code.interact(local=locals())
 
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),
+                       self.ports[0].parameters['file_groupID'],self.param_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
         
@@ -860,11 +861,23 @@ class DLmodel_Inf(INSTINCT_process):
         self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),"NULL",self.outpath(),self.ports[0].outpath(),"inf",self.param_string,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
+        
+class ScoresToDETx(INSTINCT_process):
+
+    pipeshape = FourUpstream_noCon
+    upstreamdef = ["GetFG","GetScores",'GetSpec','GetSplits']
+    
+    outfile = "DETx.csv.gz"
+    
+    def run(self):
+        self.cmd_args=[self.ports[4].outfilegen(),self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
+        
+        self.run_cmd()
 
 class ModelEval_NN(INSTINCT_process):
 
-    pipeshape = OneUpstream
-    upstreamdef = ["GetModel"]
+    pipeshape = TwoUpstream_noCon
+    upstreamdef = ["GetModel",'GetStats']
 
     outfile = 'summary.png'
     
@@ -879,14 +892,14 @@ class LabelTensor(INSTINCT_process):
     pipeshape =ThreeUpstream_bothUpTo1
     upstreamdef = ["GetFG","GetImg","GetGT"]
 
-    outfile = 'receipt.txt'
+    outfile = 'filepaths.csv'
 
     def run(self):
     
         #import code
         #code.interact(local=locals())
         
-        self.cmd_args=[self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.ports[2].parameters['file_groupID'],self.param_string]
         
         self.run_cmd()
 
@@ -895,10 +908,10 @@ class SplitTensor(INSTINCT_process):
     pipeshape = TwoUpstream
     upstreamdef = ["GetFG","GetImg"]
 
-    outfile = 'receipt.txt'
+    outfile = 'filepaths.csv'
     
     def run(self):
 
-        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.ports[1].parameters['file_groupID'],self.param_string]
 
         self.run_cmd()

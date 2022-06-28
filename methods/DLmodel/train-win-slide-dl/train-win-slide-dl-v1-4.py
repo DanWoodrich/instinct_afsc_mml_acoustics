@@ -1,6 +1,7 @@
 
 #v1-1: do away with 'offset', replace with what the concept evolved into, which is stride. 
 #v1-2: update parameters to get rid of stuff that doesn't matter, add stuff that does. 
+#v1-3: read filepaths instead of assume them 
 
 #still experimental- this vers will attempt to save the
 #file name and associated array for test/train and label
@@ -16,6 +17,9 @@ import numpy as np
 import os
 import pathlib
 import matplotlib.pyplot as plt
+import csv
+import gzip
+
 
 #from tensorflow import keras
 from tensorflow import keras
@@ -88,19 +92,40 @@ else:
         tf.keras.layers.RandomContrast(factor=[contrast_low,contrast_high]), 
     ]
     )
+    
 
-f = open(spec_path + '/receipt.txt', "r")
-bigfile = int(f.read())
 
-bigfiles = []
+#read spectrogram paths
+bigfiles =[]
+with open(spec_path + '/filepaths.csv') as f:
+    next(f, None)
+    for row in f:
+        bigfiles.append(row.split(',')[0].replace('"', ''))
+        
+#total files:
+bigfile = len(bigfiles)
+        
+#read label paths
 lab_files= []
-split_files =[]
+with open(label_path + '/filepaths.csv') as f:
+    next(f, None)
+    for row in f:
+        lab_files.append(row.split(',')[0].replace('"', ''))
+        
+#read splits paths
+split_files= []
+with open(split_path + '/filepaths.csv') as f:
+    next(f, None)
+    for row in f:
+        split_files.append(row.split(',')[0].replace('"', ''))
 
-for n in range(bigfile):
+#import code
+#code.interact(local=dict(globals(), **locals()))
+#for n in range(bigfile):
 
-    bigfiles.append(spec_path + '/bigfiles/bigfile' + str(n+1) + '.png')
-    lab_files.append(label_path + '/labeltensors/labeltensor' + str(n+1) + '.csv.gz')
-    split_files.append(split_path + '/splittensors/splittensor' + str(n+1) + '.csv.gz')
+#    bigfiles.append(spec_path + '/bigfiles/bigfile' + str(n+1) + '.png')
+#    lab_files.append(label_path + '/labeltensors/labeltensor' + str(n+1) + '.csv.gz')
+#    split_files.append(split_path + '/splittensors/splittensor' + str(n+1) + '.csv.gz')
 
 dataset1 = tf.data.Dataset.from_tensor_slices(bigfiles)
 dataset2 = tf.data.Dataset.from_tensor_slices(lab_files)
@@ -146,7 +171,7 @@ def accumulate_lab2(y):
 
     return(out_tens)
 
-def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assignment=True):
+def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assignment=True,augment==False):
 
     if split==3:
         do_shuffle = False
@@ -190,7 +215,7 @@ def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assig
     dataset = dataset.map(lambda x,y,z: (tf.image.grayscale_to_rgb(x),y,z))
 
     #do augmentation on training or if not specified
-    if split==1 or split==None:
+    if split==1 or augment==True:
         dataset = dataset.map(lambda x,y,z: (data_augmentation(x),y,z))
 
     #drop assignment
@@ -359,7 +384,7 @@ if do_plot:
         include_val = input("include val? (y/n)")
         if include_val:
             _split = None
-    iter_obj = iter(MakeDataset(full_dataset,win_height,win_length,_split,20,(shuffle=='y'),False))
+    iter_obj = iter(MakeDataset(full_dataset,win_height,win_length,_split,20,(shuffle=='y'),False,True))
     def seespec(obj):
         spectrogram_batch, label_batch, assn_batch = obj
         plots_rows = 4
@@ -461,89 +486,29 @@ if stage=="train":
     except KeyboardInterrupt:
       pass
 
-    #do a predict on val:
-    scores = []
-    for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=2,batchsize=batch_size):
-            scores_for_batch = model.predict(features_for_batch)
-            scores.append(scores_for_batch)
-
-    scores = np.vstack(scores)
-
-    #write scores
-
-    import code
-    code.interact(local=dict(globals(), **locals()))
-
     model.save(resultpath + "/model.keras")
-else:
+if stage == 'test': #maybe same behavior for all test/inference? 
 
     #load model
 
     model = keras.models.load_model(modelpath)
 
-    
-
-    if stage == "test":
-
-        import sklearn
-        from sklearn import metrics
-
-        scores = []
-        labels = []
-
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
-
-        #generator = MakeDataset(full_dataset,split=3,batchsize=1)
-        #scores = model.predict(generator)
-
-        for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=3,batchsize=batch_size):
+    #do a predict on val:
+    scores = []
+    for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=None,batchsize=batch_size,augment=False):
             scores_for_batch = model.predict(features_for_batch)
             scores.append(scores_for_batch)
-            labels.append(labels_for_batch.numpy())
 
-        scores = np.vstack(scores)
-        labels = np.vstack(labels)
+    scores = np.vstack(scores)
 
-        pr_fig = plt.figure()
-        pr_axes = pr_fig.add_subplot(111)
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+    with gzip.open(resultpath + '/val_scores.csv.gz', 'wt', newline='') as f:   
+        write = csv.writer(f)
+        write.writerows(scores)
 
-        roc_fig = plt.figure()
-        roc_axes = roc_fig.add_subplot(111)
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+    #write scores
 
-        for class_index in range(GT_depth):
-          class_true = labels[:, class_index]
-          class_scores = scores[:, class_index]
-
-          fpr, tpr, _ = metrics.roc_curve(class_true, class_scores)
-          roc_auc = metrics.roc_auc_score(class_true, class_scores)
-          ap = metrics.average_precision_score(class_true, class_scores)
-          p, r, _ = metrics.precision_recall_curve(class_true, class_scores)
-          pr_axes.plot(r, p, label="{:d}  AP={:.3f}".format(class_index, ap))
-
-          roc_axes.plot(fpr, tpr, label="{:d}  AUC={:.3f}".format(class_index, roc_auc))
-
-        pr_axes.legend(loc=3)
-        pr_axes.set_xlim(0, 1)
-        pr_axes.set_ylim(0, 1)
-        pr_axes.set_xlabel("Recall")
-        pr_axes.set_ylabel("Precision")
-        pr_axes.set_title("Precision / Recall")
-        pr_fig.show()
-
-        import code
-        code.interact(local=dict(globals(), **locals()))
-
-        roc_axes.legend(loc=1)
-        roc_axes.set_xlim(0, 1)
-        roc_axes.set_ylim(0, 1)
-        roc_axes.set_xlabel("False Positive Rate")
-        roc_axes.set_ylabel("True Positive Rate")
-        roc_axes.set_title("ROC")
-        roc_fig.show()
-        #performance eval (for now at least)
-        #print("ok")
-    else:
-        #export a DETx.csv.gz, to be used by other pipelines. 
-        print("ok")
 

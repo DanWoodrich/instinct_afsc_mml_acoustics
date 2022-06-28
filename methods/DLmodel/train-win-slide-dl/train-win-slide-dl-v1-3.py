@@ -1,6 +1,7 @@
 
 #v1-1: do away with 'offset', replace with what the concept evolved into, which is stride. 
 #v1-2: update parameters to get rid of stuff that doesn't matter, add stuff that does. 
+#v1-3: read filepaths instead of assume them 
 
 #still experimental- this vers will attempt to save the
 #file name and associated array for test/train and label
@@ -16,6 +17,9 @@ import numpy as np
 import os
 import pathlib
 import matplotlib.pyplot as plt
+import csv
+import gzip
+
 
 #from tensorflow import keras
 from tensorflow import keras
@@ -88,19 +92,40 @@ else:
         tf.keras.layers.RandomContrast(factor=[contrast_low,contrast_high]), 
     ]
     )
+    
 
-f = open(spec_path + '/receipt.txt', "r")
-bigfile = int(f.read())
 
-bigfiles = []
+#read spectrogram paths
+bigfiles =[]
+with open(spec_path + '/filepaths.csv') as f:
+    next(f, None)
+    for row in f:
+        bigfiles.append(row.split(',')[0].replace('"', ''))
+        
+#total files:
+bigfile = len(bigfiles)
+        
+#read label paths
 lab_files= []
-split_files =[]
+with open(label_path + '/filepaths.csv') as f:
+    next(f, None)
+    for row in f:
+        lab_files.append(row.split(',')[0].replace('"', ''))
+        
+#read splits paths
+split_files= []
+with open(split_path + '/filepaths.csv') as f:
+    next(f, None)
+    for row in f:
+        split_files.append(row.split(',')[0].replace('"', ''))
 
-for n in range(bigfile):
+#import code
+#code.interact(local=dict(globals(), **locals()))
+#for n in range(bigfile):
 
-    bigfiles.append(spec_path + '/bigfiles/bigfile' + str(n+1) + '.png')
-    lab_files.append(label_path + '/labeltensors/labeltensor' + str(n+1) + '.csv.gz')
-    split_files.append(split_path + '/splittensors/splittensor' + str(n+1) + '.csv.gz')
+#    bigfiles.append(spec_path + '/bigfiles/bigfile' + str(n+1) + '.png')
+#    lab_files.append(label_path + '/labeltensors/labeltensor' + str(n+1) + '.csv.gz')
+#    split_files.append(split_path + '/splittensors/splittensor' + str(n+1) + '.csv.gz')
 
 dataset1 = tf.data.Dataset.from_tensor_slices(bigfiles)
 dataset2 = tf.data.Dataset.from_tensor_slices(lab_files)
@@ -468,11 +493,18 @@ if stage=="train":
             scores.append(scores_for_batch)
 
     scores = np.vstack(scores)
-
-    #write scores
+    
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+    with gzip.open(resultpath + '/val_scores.csv.gz', 'wt', newline='') as f:   
+        write = csv.writer(f)
+        write.writerows(scores)
 
     import code
-    code.interact(local=dict(globals(), **locals()))
+    #code.interact(local=dict(globals(), **locals()))
+    #write scores
+
+    
 
     model.save(resultpath + "/model.keras")
 else:

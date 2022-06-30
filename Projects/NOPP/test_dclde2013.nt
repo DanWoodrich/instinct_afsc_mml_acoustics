@@ -17,6 +17,10 @@ Global:
     native_height: 151
     npps: 31
     signal_codes: RW
+    msp_train: 15
+    msp_inf: 5
+    split_prot: within_file
+    inf_batch_size: 3000
 Job:
   ModelEval_NN:
     parameters:
@@ -39,7 +43,7 @@ Job:
       perc_fp: 0.99
       perc_tp: 0.01
       #in native pix:
-      stride_pix: 15
+      stride_pix: [msp_inf]
       view_plots: n
       #stride_pix: 1
       #what to multiply npps by to get to model resolution
@@ -49,7 +53,7 @@ Job:
       win_height: 224
       win_length: 279
     arguments: 
-      batch_size: 3000
+      batch_size: [inf_batch_size]
       hard_rerun: y
     descriptors:
       runtype: lib
@@ -115,7 +119,7 @@ Job:
           native_pix_per_sec: [npps]
           seed_val: 1
           #by_file or within_file
-          split_protocol: within_file
+          split_protocol: [split_prot]
           test_split: n
           #do not break into test splits
           #train_test_split: 1.0
@@ -133,7 +137,7 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-3
+          methodvers: v1-4
           brightness_high: 0.25
           brightness_low: 0.55
           contrast_high: 1
@@ -146,7 +150,8 @@ Job:
           perc_fp: 0.99
           perc_tp: 0.01
           #in native pix:
-          stride_pix: 15
+          stride_pix: [msp_train]
+          stride_pix_inf: [msp_inf]
           view_plots: n
           #stride_pix: 1
           #this gets to exact model height
@@ -158,22 +163,30 @@ Job:
           win_length: 279
         arguments: 
           batch_size: 175
+          batch_size_inf: [inf_batch_size]
           epoch: 1
           #epoch: 1
-          hard_rerun: y
+          hard_rerun: n
         descriptors:
           runtype: lib
           language: Python
           venv: Conda
           venv_name: tf-gpu3
-	  ScoresToDETx:
-	    parameters:
-		  #group output scores by # of pixels(can be different to original step to 'smooth')
-		  methodID: moving-smooth
+      ScoresToDETx:
+        parameters:
+          #group output scores by # of pixels(can be different to original step to 'smooth')
+          methodID: moving-smooth
           methodvers: v1-0
-		  group_pixels: 25
-		  smooth_method: mean
-		  
+          group_pixels: 25
+          native_pix_per_sec: [npps]
+          smooth_method: mean
+          split_protocol: [split_prot]
+          stride_pix: [msp_train]
+        arguments:
+          hard_rerun: n
+        descriptors:
+          runtype: lib
+          language: R
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep

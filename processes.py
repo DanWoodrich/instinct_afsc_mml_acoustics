@@ -865,12 +865,12 @@ class DLmodel_Inf(INSTINCT_process):
 class ScoresToDETx(INSTINCT_process):
 
     pipeshape = FourUpstream_noCon
-    upstreamdef = ["GetFG","GetScores",'GetSpec','GetSplits']
+    upstreamdef = ["GetFG","GetScores",'GetImg','GetSplits']
     
     outfile = "DETx.csv.gz"
     
     def run(self):
-        self.cmd_args=[self.ports[4].outfilegen(),self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
         
         self.run_cmd()
 

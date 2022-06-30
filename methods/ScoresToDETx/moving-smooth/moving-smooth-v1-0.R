@@ -1,10 +1,29 @@
 #pseudo: 
 
-#load in FG, scores, split files, stride_pix, native pix per second, parameter 'stage' (train,val,test) , parameter group_pixels, parameter smooth method
+#load in FG, scores, split files, stride_pix, native pix per second, parameter 'stage' (train,val,test) , parameter group_pixels, parameter smooth method , parameter split method (global) 
 
-#going to be tricky to reconstruct since have to use same assumptions used during model training to get to splits. Like, where does it start in 'splits'? Could be anywhere within the range, dependent on the size
-#of what came before (anywhere within 1 window). 
+#what if I just output a pixel start along with the scores? Then I could backtrack however I want? (would need some knowledge of the split protocol - if knowing splits were 'by file', would assume that each 
+#break is the start of a new file. But if I used a different procedure, I would have to encorportate this. 
 
-#What I should do is export all of the scores, not just val. That way I can reuse the object and I can actually associate the split files. 
 
-#next, think about how I want to handle the cases (train, test1, test2, and inference). can maybe do if train (run train), and then have standard script for outputing scores that can be run by both train and test. 
+#args<-"//161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/bd89c5999c35/ //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/bd89c5999c35/a21b11/ //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/bd89c5999c35/d69c8f/ //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/bd89c5999c35/d69c8f/795dc2 n mean labels-w-GT-bins-v1-4"
+
+#args<-strsplit(args,split=" ")[[1]]
+
+args<-commandArgs(trailingOnly = TRUE)
+
+#docker values
+FGpath <- args[1]
+ScorePath <- args[2]
+SpecPath <- args[3]
+SplitPath <- args[4]
+resultPath <- args[5]
+
+group_pix = args[6]
+native_pix_per_sec= args[7]
+smooth_method= eval(parse(text=args[8]))
+split_protocol= args[9]
+stride_pix= args[10]
+
+
+stop()

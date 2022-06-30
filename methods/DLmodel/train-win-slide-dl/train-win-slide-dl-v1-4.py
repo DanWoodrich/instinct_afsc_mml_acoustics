@@ -76,15 +76,17 @@ else:
     native_pix_per_sec = int(args[16])
     fp_perc= float(args[17])
     tp_perc= float(args[18])
-    stride_pix = int(args[19]) #based on win_t_factor * native_pix_per_sec
-    view_plots = args[20]
-    win_f_factor= float(args[21])
-    win_t_factor= float(args[22])
-    win_height = int(args[23])
-    win_length = int(args[24])
+    stride_pix = int(args[19]) 
+    stride_pix_inf = int(args[20]) 
+    view_plots = args[21]
+    win_f_factor= float(args[22])
+    win_t_factor= float(args[23])
+    win_height = int(args[24])
+    win_length = int(args[25])
     #arguments: 
-    batch_size = int(args[26])
-    epochs = int(args[27])
+    batch_size_train = int(args[27])
+    batch_size = int(args[28])
+    epochs = int(args[29])
 
     data_augmentation = keras.Sequential(
     [
@@ -171,7 +173,7 @@ def accumulate_lab2(y):
 
     return(out_tens)
 
-def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assignment=True,augment==False):
+def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assignment=True,augment=False):
 
     if split==3:
         do_shuffle = False
@@ -466,8 +468,8 @@ if stage=="train":
         ],
     )
 
-    train_dataset = MakeDataset(full_dataset,win_height,win_length,split=1,batchsize=batch_size)
-    val_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,split=2,batchsize=batch_size) #different wh and wl avoid the random crop
+    train_dataset = MakeDataset(full_dataset,win_height,win_length,split=1,batchsize=batch_size_train)
+    val_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,split=2,batchsize=batch_size_train) #different wh and wl avoid the random crop
 
     logpath = resultpath + "/model_history_log.csv"
 
@@ -487,28 +489,29 @@ if stage=="train":
       pass
 
     model.save(resultpath + "/model.keras")
-if stage == 'test': #maybe same behavior for all test/inference? 
+elif stage == 'test': #maybe same behavior for all test/inference? 
 
     #load model
 
     model = keras.models.load_model(modelpath)
 
-    #do a predict on val:
-    scores = []
-    for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=None,batchsize=batch_size,augment=False):
-            scores_for_batch = model.predict(features_for_batch)
-            scores.append(scores_for_batch)
 
-    scores = np.vstack(scores)
+#run prediction on full FG data. 
+scores = []
+for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=None,batchsize=batch_size,augment=False,do_shuffle=False):
+        scores_for_batch = model.predict(features_for_batch)
+        scores.append(scores_for_batch)
 
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
-    with gzip.open(resultpath + '/val_scores.csv.gz', 'wt', newline='') as f:   
-        write = csv.writer(f)
-        write.writerows(scores)
+scores = np.vstack(scores)
 
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
-    #write scores
+#import code
+#code.interact(local=dict(globals(), **locals()))
+with gzip.open(resultpath + '/val_scores.csv.gz', 'wt', newline='') as f:   
+    write = csv.writer(f)
+    write.writerows(scores)
+
+#import code
+#code.interact(local=dict(globals(), **locals()))
+#write scores
 
 

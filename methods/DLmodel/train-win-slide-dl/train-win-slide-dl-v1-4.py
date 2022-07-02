@@ -173,7 +173,7 @@ def accumulate_lab2(y):
 
     return(out_tens)
 
-def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assignment=True,augment=False):
+def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assignment=True,augment=False,filter_splits=True):
 
     if split==3:
         do_shuffle = False
@@ -189,8 +189,9 @@ def MakeDataset(dataset,wh,wl,split=None,batchsize=20,do_shuffle=True,drop_assig
     dataset = dataset.map(lambda x,y,z: (x,accumulate_lab(y),z))
 
     #filter
-    dataset = dataset.filter(lambda x,y,z: tf.reduce_all(y[:,2:3]==0)) #take records where all labels do not have ambiguity . 
-    dataset = dataset.filter(lambda x,y,z: tf.shape(tf.unique(tf.reshape(z,[-1])))[0]>1) #Take record where split assigment is unambiguous
+    if filter_splits==True:
+        dataset = dataset.filter(lambda x,y,z: tf.reduce_all(y[:,2:3]==0)) #take records where all labels do not have ambiguity . 
+        dataset = dataset.filter(lambda x,y,z: tf.shape(tf.unique(tf.reshape(z,[-1])))[0]>1) #Take record where split assigment is unambiguous
 
     #reduce to single assignment
     dataset = dataset.map(lambda x,y,z: (x,y,z[0,0]))
@@ -498,7 +499,7 @@ elif stage == 'test': #maybe same behavior for all test/inference?
 
 #run prediction on full FG data. 
 scores = []
-for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=None,batchsize=batch_size,augment=False,do_shuffle=False):
+for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=None,batchsize=batch_size,augment=False,do_shuffle=False,filter_splits=False):
         scores_for_batch = model.predict(features_for_batch)
         scores.append(scores_for_batch)
 

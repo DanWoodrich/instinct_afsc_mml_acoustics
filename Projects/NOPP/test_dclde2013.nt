@@ -89,7 +89,8 @@ Job:
     FormatFG:
       parameters:
         decimate_data: y
-        methodID: dbuddy-pull-FG
+        methodID: dbuddy-pull-FG-wname
+        #methodID: dbuddy-pull-FG
         #methodID: dbuddy-pull-FG-ord
         methodvers: v1-0
         methodID2m: matlabdecimate
@@ -99,7 +100,7 @@ Job:
         file_groupID:
           #- NOPP6_EST_20090328_files_All.csv
           #- NOPP6_EST_20090329_files_All.csv
-          #- NOPP6_EST_20090330_files_All.csv
+          - NOPP6_EST_20090330_files_All.csv
           - NOPP6_EST_20090331_files_All.csv
           #- NOPP6_EST_20090401_files_All.csv
           #- NOPP6_EST_20090402_files_All.csv
@@ -108,7 +109,7 @@ Job:
         hard_rerun: n
       descriptors:
         runtype: lib
-        language: batch
+        language: R
         runtype2m: bin
         language2m: MATLAB
     seperate_ds_train:
@@ -177,6 +178,8 @@ Job:
           #group output scores by # of pixels(can be different to original step to 'smooth')
           methodID: moving-smooth
           methodvers: v1-0
+          freq_low: [freq_start]
+          freq_size: [freq_size]
           group_pixels: 25
           native_pix_per_sec: [npps]
           smooth_method: mean

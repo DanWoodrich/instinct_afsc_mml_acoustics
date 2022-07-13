@@ -876,9 +876,11 @@ class ScoresToDETx(INSTINCT_process):
 
 class ModelEval_NN(INSTINCT_process):
 
-    pipeshape = TwoUpstream_noCon
-    upstreamdef = ["GetModel",'GetStats']
-
+    #pipeshape = TwoUpstream_noCon
+    #upstreamdef = ["GetModel",'GetStats']
+    pipeshape = OneUpstream
+    upstreamdef = ["GetModel"]
+    
     outfile = 'summary.png'
     
     def run(self):

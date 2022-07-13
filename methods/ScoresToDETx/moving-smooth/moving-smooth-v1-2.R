@@ -5,8 +5,15 @@
 #what if I just output a pixel start along with the scores? Then I could backtrack however I want? (would need some knowledge of the split protocol - if knowing splits were 'by file', would assume that each 
 #break is the start of a new file. But if I used a different procedure, I would have to encorportate this. 
 
+#v1-1:
+#bugfix error where detections not properly mapping when files switch due to not encoding initial file offset.
+#bugfix to make detections properly represent size of window
 
-args = "C:/Apps/INSTINCT/Cache/91633/744413/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/258509/960654/219124/497684/211125 C:/Apps/INSTINCT/Cache/258509/960654/129751 C:/Apps/INSTINCT/Cache/258509/960654/219124/497684 C:/Apps/INSTINCT/Cache/258509/960654/219124/497684/674757 40 300 25 31 mean within_file 15 moving-smooth-v1-0"
+#v1-2:
+#experiment with moving the scores so that they represent midpoint instead of start of detection
+#seems to be more true to form, not sure why they are working that way from the model perspective. 
+
+args = "C:/Apps/INSTINCT/Cache/91633/596522/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200 C:/Apps/INSTINCT/Cache/258509/960654/38545 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/767094 40 300 20 248 31 mean within_file 20 2 moving-smooth-v1-1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -22,10 +29,12 @@ resultPath <- args[5]
 freq_low = as.integer(args[6])
 freq_size = as.integer(args[7])
 group_pix = as.integer(args[8])
-native_pix_per_sec= as.integer(args[9])
-smooth_method= eval(parse(text=args[10]))
-split_protocol= args[11]
-stride_pix= as.integer(args[12])
+model_win_size = as.integer(args[9])
+native_pix_per_sec= as.integer(args[10])
+smooth_method= eval(parse(text=args[11]))
+split_protocol= args[12]
+stride_pix= as.integer(args[13])
+time_expand = as.integer(args[14])
 
 #detx also requires frequency information. This will be freq size * modifier / model size, and using
 #information on how windows are split vertically if at all. For single vertical pass, will only use
@@ -166,25 +175,38 @@ if(vertical_bins==1){
       scores = approx(scores, n=new_size)$y
       
       scores_starts= seq(0,length(scores)*group_pix/native_pix_per_sec-group_pix/native_pix_per_sec,group_pix/native_pix_per_sec)
-      scores_ends = scores_starts + (group_pix/native_pix_per_sec)
+      
+      #v1-2: shift so that the scores correspond instead to midpoint of signal: 
+      scores_starts = scores_starts-(model_win_size/(native_pix_per_sec*time_expand))/2
+      #--
+      
+      scores_ends = scores_starts + (model_win_size/(native_pix_per_sec*time_expand))
+      
+      #v1-2: crop the initial value so that it is >0
+      scores_starts[which(scores_starts<0)]=0.1
       
       #crop the final value so that it is within difftime interval
-      scores_ends[length(scores_ends)]=dur-0.1
+      scores_ends[which(scores_ends>dur)]=dur-0.1
       
-      FGdt = aggregate(SegDur ~ FileName, data = FGdt, sum)
-      FGdt$cumdur = cumsum(FGdt$SegDur)
+      FGdt2 = aggregate(SegDur ~ FileName, data = FGdt, sum)
+      FGdt2$cumdur = cumsum(FGdt2$SegDur)
       #now can assemble detx info. 
-      if(nrow(FGdt)>1){
-        FGdt$startcum =c(0,FGdt$SegDur[1:(nrow(FGdt)-1)])
+      if(nrow(FGdt2)>1){
+        FGdt2$startcum =c(0,FGdt2$SegDur[1:(nrow(FGdt2)-1)])
+        FGdt2$offset = c(FGdt$SegStart[1],rep(0,nrow(FGdt2)-1))
       }else{
-        FGdt$startcum=0
+        FGdt2$startcum=0
+        FGdt2$offset = FGdt$SegStart[1]
       }
       
-      startfiles = FGdt$FileName[findInterval(scores_starts,c(0,FGdt$cumdur))]
-      endfiles = FGdt$FileName[findInterval(scores_ends,c(0,FGdt$cumdur))]
+      startfiles = FGdt2$FileName[findInterval(scores_starts,c(0,FGdt2$cumdur))]
+      endfiles = FGdt2$FileName[findInterval(scores_ends,c(0,FGdt2$cumdur))]
       
-      scores_starts = scores_starts- FGdt$startcum[findInterval(scores_starts,c(0,FGdt$cumdur))]
-      scores_ends = scores_ends- FGdt$startcum[findInterval(scores_ends,c(0,FGdt$cumdur))]
+      startint = findInterval(scores_starts,c(0,FGdt2$cumdur))
+      endint = findInterval(scores_ends,c(0,FGdt2$cumdur))
+      
+      scores_starts = scores_starts- FGdt2$startcum[startint]+FGdt2$offset[startint]
+      scores_ends = scores_ends- FGdt2$startcum[endint]+FGdt2$offset[endint]
       
       detx = data.frame(scores_starts,scores_ends,freq_low,freq_low+freq_size,startfiles,endfiles,scores)
         

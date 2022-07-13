@@ -95,31 +95,78 @@ else:
     ]
     )
     
+FGnames = []
 
+with gzip.open(FGpath, mode="rt") as f:
+    cols = next(f, None)
+    cols = cols[:-1] #lose \n
+    cols = cols.split(",")
+    idx = cols.index("Name")
+    
+    for row in f:
+        FGnames.append(row.split(",")[idx].replace('"', ''))
+        
+#import code
+#code.interact(local=dict(globals(), **locals()))
+
+usedFG = set()
+uniqueFG = [x for x in FGnames if x not in usedFG and (usedFG.add(x) or True)]
 
 #read spectrogram paths
 bigfiles =[]
+bigfileskey=[]
 with open(spec_path + '/filepaths.csv') as f:
     next(f, None)
     for row in f:
         bigfiles.append(row.split(',')[0].replace('"', ''))
+        bigfileskey.append(row.split(',')[1].replace('"', ''))
         
 #total files:
 bigfile = len(bigfiles)
+
+bfinds = []
+for i in range(len(uniqueFG)):
+    bfinds.append([x for x, j in enumerate(bigfileskey) if j[:-1] == uniqueFG[i]])
+bfinds=sum(bfinds, [])
+
+#sort lab_files:
+bigfiles = [bigfiles[i] for i in bfinds]
         
 #read label paths
 lab_files= []
+lab_fileskey =[]
 with open(label_path + '/filepaths.csv') as f:
     next(f, None)
     for row in f:
         lab_files.append(row.split(',')[0].replace('"', ''))
+        lab_fileskey.append(row.split(',')[1].replace('"', ''))
         
+#sort by uniqueFG
+lfinds = []
+for i in range(len(uniqueFG)):
+    lfinds.append([x for x, j in enumerate(lab_fileskey) if j[:-1] == uniqueFG[i]])
+lfinds=sum(lfinds, [])
+
+#sort lab_files:
+lab_files = [lab_files[i] for i in lfinds]
+
 #read splits paths
 split_files= []
+split_fileskey =[]
 with open(split_path + '/filepaths.csv') as f:
     next(f, None)
     for row in f:
         split_files.append(row.split(',')[0].replace('"', ''))
+        split_fileskey.append(row.split(',')[1].replace('"', ''))
+
+#sort by uniqueFG
+sfinds = []
+for i in range(len(uniqueFG)):
+    sfinds.append([x for x, j in enumerate(split_fileskey) if j[:-1] == uniqueFG[i]])
+sfinds=sum(sfinds, [])
+
+#sort split_files:
+split_files = [split_files[i] for i in sfinds]
 
 #import code
 #code.interact(local=dict(globals(), **locals()))
@@ -498,15 +545,16 @@ elif stage == 'test': #maybe same behavior for all test/inference?
 
 
 #run prediction on full FG data. 
-scores = []
-for features_for_batch, labels_for_batch in MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=None,batchsize=batch_size,augment=False,do_shuffle=False,filter_splits=False):
-        scores_for_batch = model.predict(features_for_batch)
-        scores.append(scores_for_batch)
-
-scores = np.vstack(scores)
-
+#scores = []
 #import code
 #code.interact(local=dict(globals(), **locals()))
+
+ds= MakeDataset(full_dataset,wh=model_win_size,wl=model_win_size,split=None,batchsize=batch_size,augment=False,do_shuffle=False,filter_splits=False)
+scores = model.predict(ds)
+
+#scores = np.vstack(scores)
+
+
 with gzip.open(resultpath + '/val_scores.csv.gz', 'wt', newline='') as f:   
     write = csv.writer(f)
     write.writerows(scores)

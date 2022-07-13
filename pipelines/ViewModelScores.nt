@@ -1,0 +1,17 @@
+pipe: ViewDETx
+params_drop: TrainModel_paramset-test1
+ViewDETx:
+  process: RavenViewDETx
+  GetDETx:
+    pipe: ApplyCutoff.pipe
+    ApplyCutoff.pipe: 
+      process: ApplyCutoff
+      GetDETx:
+        pipe: ScoresToDETx.pipe
+        pipe_link: 
+          name: EvalSCores.nt
+  GetFG:
+    pipe: FormatFG.pipe
+    loop_on: FormatFG
+    FormatFG.pipe:
+      process: FormatFG

@@ -17,10 +17,13 @@ Global:
     native_height: 151
     npps: 31
     signal_codes: RW
-    msp_train: 15
+    #msp_train: 15
+    msp_train: 20
     msp_inf: 5
     split_prot: within_file
-    inf_batch_size: 3000
+    inf_batch_size: 175
+    time_expand_spec: 2
+    model_window_native: 224
 Job:
   ModelEval_NN:
     parameters:
@@ -40,18 +43,18 @@ Job:
       model_name: EffecientNetB0
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      perc_fp: 0.99
-      perc_tp: 0.01
+      perc_fp: 0.97
+      perc_tp: 0.03
       #in native pix:
       stride_pix: [msp_inf]
       view_plots: n
       #stride_pix: 1
       #what to multiply npps by to get to model resolution
       win_factor_f: 1.4834
-      win_factor_t: 3
+      win_factor_t: [time_expand_spec]
       #in pixels
-      win_height: 224
-      win_length: 279
+      win_height: [model_window_native]
+      win_length: 248
     arguments: 
       batch_size: [inf_batch_size]
       hard_rerun: y
@@ -98,8 +101,8 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 1024
         file_groupID:
-          #- NOPP6_EST_20090328_files_All.csv
-          #- NOPP6_EST_20090329_files_All.csv
+          - NOPP6_EST_20090328_files_All.csv
+          - NOPP6_EST_20090329_files_All.csv
           - NOPP6_EST_20090330_files_All.csv
           - NOPP6_EST_20090331_files_All.csv
           #- NOPP6_EST_20090401_files_All.csv
@@ -148,8 +151,10 @@ Job:
           model_name: EffecientNetB0
           native_height: [native_height]
           native_pix_per_sec: [npps]
-          perc_fp: 0.99
-          perc_tp: 0.01
+          #perc_fp: 0.99
+          #perc_tp: 0.01
+          perc_fp: 0.97
+          perc_tp: 0.03
           #in native pix:
           stride_pix: [msp_train]
           stride_pix_inf: [msp_inf]
@@ -158,14 +163,16 @@ Job:
           #this gets to exact model height
           win_factor_f: 1.4834
           #what to multiply npps by to get to model resolution
-          win_factor_t: 3
+          #win_factor_t: 3
+          win_factor_t: [time_expand_spec]
           #in pixels
-          win_height: 224
-          win_length: 279
+          win_height: [model_window_native]
+          #win_length: 279
+          win_length: 248
         arguments: 
           batch_size: 175
           batch_size_inf: [inf_batch_size]
-          epoch: 1
+          epoch: 15
           #epoch: 1
           hard_rerun: n
         descriptors:
@@ -177,14 +184,16 @@ Job:
         parameters:
           #group output scores by # of pixels(can be different to original step to 'smooth')
           methodID: moving-smooth
-          methodvers: v1-0
+          methodvers: v1-2
           freq_low: [freq_start]
           freq_size: [freq_size]
-          group_pixels: 25
+          group_pixels: 20
+          mod_size_l: [model_window_native]
           native_pix_per_sec: [npps]
           smooth_method: mean
           split_protocol: [split_prot]
           stride_pix: [msp_train]
+          time_expand: [time_expand_spec]
         arguments:
           hard_rerun: n
         descriptors:
@@ -324,3 +333,8 @@ Job:
     descriptors:
       language: R
       runtype: lib
+  ApplyCutoff:
+    parameters:
+      cutoff: 0.80
+    descriptors:
+      runtype: no_method

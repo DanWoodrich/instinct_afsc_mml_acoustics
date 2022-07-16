@@ -1,6 +1,5 @@
 pipe: DLmodel_Train.pipe
-#this one I made a custom pipe shape for to make it less convoluted. Lots of dependency tie ins. 
-#switching from combining on initial FG to processing in groups and combining after. 
+#call splits params drop if needed before invoking this fxn. 
 DLmodel_Train.pipe:
   process: DLmodel_Train
   GetFG: 

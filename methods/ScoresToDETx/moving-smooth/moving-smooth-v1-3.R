@@ -13,6 +13,9 @@
 #experiment with moving the scores so that they represent midpoint instead of start of detection
 #seems to be more true to form, not sure why they are working that way from the model perspective. 
 
+#v1-3:
+#add FGID to column to it is retained in outputs. 
+
 args = "C:/Apps/INSTINCT/Cache/117592/772508/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200/836944 C:/Apps/INSTINCT/Cache/117592/273952/556187 C:/Apps/INSTINCT/Cache/397754/84782/748378/331477 C:/Apps/INSTINCT/Cache/397754/84782/748378/331477/325430 40 300 20 224 31 mean within_file 20 2 moving-smooth-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
@@ -209,9 +212,9 @@ if(vertical_bins==1){
       scores_starts = scores_starts- FGdt2$startcum[startint]+FGdt2$offset[startint]
       scores_ends = scores_ends- FGdt2$startcum[endint]+FGdt2$offset[endint]
       
-      detx = data.frame(scores_starts,scores_ends,freq_low,freq_low+freq_size,startfiles,endfiles,scores)
+      detx = data.frame(scores_starts,scores_ends,freq_low,freq_low+freq_size,startfiles,endfiles,scores,FGdt$Name[1])
         
-      colnames(detx) = c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","probs")
+      colnames(detx) = c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","probs","FGID")
       
       #read in split data
       

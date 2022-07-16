@@ -1,0 +1,9 @@
+pipe: PerfEval2DL.pipe
+params_drop: TrainModel_paramset
+PerfEval2DL.pipe:
+  process: PerfEval2DL
+  GetModel_w_probs:
+    pipe: AssignLabels.pipe
+    loop_on: FormatFG
+    pipe_link: 
+      name: ScoresDL_w_AL_Train.nt

@@ -32,7 +32,7 @@ print(tf.version.VERSION)
 
 #######import params###########
 
-#args="C:/Apps/INSTINCT/Cache/394448/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/394448/516798 C:/Apps/INSTINCT/Cache/394448/756783/391491 C:/Apps/INSTINCT/Cache/394448/516798/399814 C:/Apps/INSTINCT/Cache/394448/516798/399814/249442 15 125 HB.s.p.2,HB.s.p.4 4 EffecientNet 300 15 300 300 train-win-slide-dl-v1-0"
+#args="C:/Apps/INSTINCT/Cache/491386/235062/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/491386/159690/295444 C:/Apps/INSTINCT/Cache/491386/756342/508664/182373 C:/Apps/INSTINCT/Cache/117419/673303/707058/700613 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200/295543 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200/model.keras test RW EffecientNetB0 151 31 0.97 0.03 5 n 1.4834 2 224 248 train-win-slide-dl-v1-3 175 y 1"
 #args=args.split()
 
 args=sys.argv
@@ -555,7 +555,7 @@ scores = model.predict(ds)
 #scores = np.vstack(scores)
 
 
-with gzip.open(resultpath + '/val_scores.csv.gz', 'wt', newline='') as f:   
+with gzip.open(resultpath + '/scores.csv.gz', 'wt', newline='') as f:   
     write = csv.writer(f)
     write.writerows(scores)
 

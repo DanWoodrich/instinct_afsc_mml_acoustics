@@ -38,7 +38,7 @@ Job:
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-3
+      methodvers: v1-4
       gt_depth: [signal_codes]
       model_name: EffecientNetB0
       native_height: [native_height]
@@ -66,8 +66,7 @@ Job:
   FormatFG:
     parameters:
       decimate_data: y
-      methodID: dbuddy-pull-FG
-      #methodID: dbuddy-pull-FG-ord
+      methodID: dbuddy-pull-FG-wname
       methodvers: v1-0
       methodID2m: matlabdecimate
       methodvers2m: V1s0
@@ -85,7 +84,7 @@ Job:
       hard_rerun: n
     descriptors:
       runtype: lib
-      language: batch
+      language: R
       runtype2m: bin
       language2m: MATLAB
   TrainModel_paramset:
@@ -126,8 +125,8 @@ Job:
           split_protocol: [split_prot]
           test_split: n
           #do not break into test splits
-          #train_test_split: 1.0
-          train_test_split: 0.80
+          train_test_split: 1.0
+          #train_test_split: 0.80
           #of the test in previous, what is the split between train and val
           train_val_split: 0.75
           #or per_file. by-file smoother, per_file more label effecient
@@ -157,6 +156,7 @@ Job:
           perc_tp: 0.03
           #in native pix:
           stride_pix: [msp_train]
+          #including this has the effect of stride_pix_inf being a parameter which will redo training... 
           stride_pix_inf: [msp_inf]
           view_plots: n
           #stride_pix: 1
@@ -184,7 +184,7 @@ Job:
         parameters:
           #group output scores by # of pixels(can be different to original step to 'smooth')
           methodID: moving-smooth
-          methodvers: v1-2
+          methodvers: v1-3
           freq_low: [freq_start]
           freq_size: [freq_size]
           group_pixels: 20
@@ -302,6 +302,27 @@ Job:
     descriptors:
       runtype: lib
       language: R
+  AssignLabels:
+    parameters: 
+      methodID: labels-w-iou-simple
+      methodvers: v1-4
+      iou_thresh: 0.01
+      write_GT: y
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval2DL:
+    parameters:
+      methodID: pe2dl-simple
+      methodvers: v1-1
+      cexmod: 2
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
   EditRAVENx:
     #this process always has an instructions parameter. changing these will change hash
     parameters: 
@@ -333,6 +354,25 @@ Job:
     descriptors:
       language: R
       runtype: lib
+  ScoresToDETx:
+    parameters:
+      #group output scores by # of pixels(can be different to original step to 'smooth')
+      methodID: moving-smooth
+      methodvers: v1-3
+      freq_low: [freq_start]
+      freq_size: [freq_size]
+      group_pixels: 20
+      mod_size_l: [model_window_native]
+      native_pix_per_sec: [npps]
+      smooth_method: mean
+      split_protocol: [split_prot]
+      stride_pix: [msp_inf]
+      time_expand: [time_expand_spec]
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
   ApplyCutoff:
     parameters:
       cutoff: 0.80

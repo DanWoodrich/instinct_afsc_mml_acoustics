@@ -411,6 +411,19 @@ class PerfEval2(INSTINCT_process):
         self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.ports[1].outpath(),self.param_string]
         
         self.run_cmd()
+        
+class PerfEval2DL(INSTINCT_process):
+
+    pipeshape = OneUpstream
+    upstreamdef = ["GetModel_w_probs"]
+    
+    outfile = 'PE2ball.tgz'
+
+    def run(self):
+        
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string]
+        
+        self.run_cmd()
 
 class TrainModel_RF_CV(INSTINCT_process):
 
@@ -826,7 +839,7 @@ class DLmodel_Test(INSTINCT_process):
     
     upstreamdef = ["GetFG","GetSpec","GetLabels","GetSplits","GetModel"]
 
-    outfile = 'model.keras'
+    outfile = 'scores.csv.gz'
 
     def run(self):
 

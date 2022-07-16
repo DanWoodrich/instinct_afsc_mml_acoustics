@@ -1,0 +1,17 @@
+pipe: AssignLabels.pipe
+AssignLabels.pipe:
+  process: AssignLabels
+  GetDETx:
+    pipe: SplitForPE.pipe
+    SplitForPE.pipe:
+      process: SplitForPE
+      GetModel_w_probs:
+        pipe: ScoresToDETx.pipe
+        pipe_link: 
+          name: EvalScores_SS.nt
+      GetFG:
+        process: FormatFG
+  GetGT:
+    process: FormatGT
+  GetFG:
+    process: FormatFG

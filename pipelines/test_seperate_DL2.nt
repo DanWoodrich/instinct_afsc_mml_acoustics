@@ -14,42 +14,33 @@ DLmodel_Test.pipe:
       process: FormatFG
   GetSpec: 
     pipe: GenBigSpec.pipe
+    loop_on: FormatFG
     GenBigSpec.pipe:
       process: GenBigSpec
       GetFG:
-        pipe: FormatFG.pipe
-        loop_on: FormatFG
-        FormatFG.pipe:
-          process: FormatFG
+        process: FormatFG
   GetLabels: 
     pipe: LabelTensor.pipe
+    loop_on: FormatFG
     LabelTensor.pipe:
       process: LabelTensor
       GetFG:
-        pipe: FormatFG.pipe
-        loop_on: FormatFG
-        FormatFG.pipe:
-          process: FormatFG
+        process: FormatFG
       GetGT:
         pipe: FormatGT.pipe
-        loop_on: FormatFG
         FormatGT.pipe:
           process: FormatGT
           GetFG:
-            pipe: FormatFG.pipe
-            FormatFG.pipe:
-              process: FormatFG
+            process: FormatFG
       GetImg:
         pipe: GenBigSpec.pipe
         GenBigSpec.pipe:
           process: GenBigSpec
           GetFG:
-            pipe: FormatFG.pipe
-            loop_on: FormatFG
-            FormatFG.pipe:
-              process: FormatFG
+            process: FormatFG
   GetSplits: 
     pipe: SplitTensor.pipe
+    loop_on: FormatFG
     params_drop: seperate_ds_test
     SplitTensor.pipe:
       process: SplitTensor
@@ -58,12 +49,6 @@ DLmodel_Test.pipe:
         GenBigSpec.pipe:
           process: GenBigSpec
           GetFG:
-            pipe: FormatFG.pipe
-            loop_on: FormatFG
-            FormatFG.pipe:
-              process: FormatFG
+            process: FormatFG
       GetFG:
-        pipe: FormatFG.pipe
-        loop_on: FormatFG
-        FormatFG.pipe:
-          process: FormatFG
+        process: FormatFG

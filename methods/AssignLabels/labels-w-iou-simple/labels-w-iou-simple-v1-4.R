@@ -12,8 +12,10 @@ MethodID<-"labels-w-iou-simple-v1-3"
 #add a parameter to control whether GT is written to the data. 
 #v1-3: 
 #fix a bug where wasn't properly reordering FG to match other data. 
+#v1-4:
+#retain splits if present. May be buggy if outlong is not dense. 
 
-args<-"C:/Apps/INSTINCT/Cache/117592 C:/Apps/INSTINCT/Cache/117592/185160 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/225931/719286 C:/Apps/INSTINCT/Cache/117592/185160/864110 0.01 y labels-w-iou-simple-v1-3"
+args<-"C:/Apps/INSTINCT/Cache/91633 C:/Apps/INSTINCT/Cache/91633/590204 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/225931/219358 C:/Apps/INSTINCT/Cache/91633/590204/426112 0.01 y labels-w-iou-simple-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -190,6 +192,23 @@ for(i in 1:nrow(GTlong)){
   
   
 }
+}
+
+if("splits" %in% colnames(outLong)){
+  #populate splits for GT, using closest detection (should be close enough considering DL has uniform
+  #detection results). 
+  
+  GTlong$splits = 0
+  
+  for(i in 1:nrow(GTlong)){
+    GTlong$splits[i]=outLong[which.min(abs(GTlong$StartTime[i]-outLong$StartTime)),"splits"]
+  } 
+  
+  #need to retain FG info too
+  
+  GTlong$FGID = FGdata$Name[1]
+  outLong$FGID = FGdata$Name[1]
+  
 }
 
 GTlong$StartTime<-GTdata$StartTime

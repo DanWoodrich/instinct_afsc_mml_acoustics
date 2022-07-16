@@ -6,4 +6,3 @@ ModelEval_NN.pipe:
     pipe: DLmodel_Train.pipe
     pipe_link: 
       name: TrainModel_DL2.nt
-  #GetStats: 

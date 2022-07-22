@@ -57,7 +57,7 @@ Job:
       win_length: 248
     arguments: 
       batch_size: [inf_batch_size]
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: Python
@@ -183,8 +183,8 @@ Job:
       ScoresToDETx:
         parameters:
           #group output scores by # of pixels(can be different to original step to 'smooth')
-          methodID: moving-smooth
-          methodvers: v1-3
+          methodID: moving-smooth-nocorrect
+          methodvers: v1-0
           freq_low: [freq_start]
           freq_size: [freq_size]
           group_pixels: 20
@@ -357,8 +357,8 @@ Job:
   ScoresToDETx:
     parameters:
       #group output scores by # of pixels(can be different to original step to 'smooth')
-      methodID: moving-smooth
-      methodvers: v1-3
+      methodID: moving-smooth-nocorrect
+      methodvers: v1-0
       freq_low: [freq_start]
       freq_size: [freq_size]
       group_pixels: 20

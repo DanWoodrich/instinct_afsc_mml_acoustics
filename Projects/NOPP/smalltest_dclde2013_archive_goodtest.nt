@@ -1,0 +1,324 @@
+Global:
+    cache_root: C:/Apps/INSTINCT/Cache
+    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    Wrapper: False
+    parameters:
+        freq_start: 40
+        freq_size: 300
+        native_height: 151
+        npps: 31
+        signal_codes: RW
+        msp_train: 20
+        msp_inf: 20
+        split_prot: within_file
+        inf_batch_size: 175
+        time_expand_spec: 2
+        model_window_native: 224
+Job:
+    ModelEval_NN:
+        parameters:
+            methodID: simple-eval
+            methodvers: v1-1
+            gt_depth: [signal_codes]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+    DLmodel*:
+        parameters:
+            methodID: train-win-slide-dl
+            methodvers: v1-6
+            gt_depth: [signal_codes]
+            model_name: EffecientNetB0
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+            perc_fp: 0.96
+            perc_tp: 0.04
+            stride_pix: [msp_inf]
+            view_plots: n
+            win_factor_f: 1.4834
+            win_factor_t: [time_expand_spec]
+            win_height: [model_window_native]
+            win_length: 248
+        arguments:
+            batch_size: [inf_batch_size]
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+            venv: Conda
+            venv_name: tf-gpu3
+    FormatFG:
+        parameters:
+            decimate_data: y
+            methodID: dbuddy-pull-FG-wname
+            methodvers: v1-0
+            methodID2m: matlabdecimate
+            methodvers2m: V1s0
+            target_samp_rate: 1024
+            file_groupID:
+                - NOPP6_EST_20090401_files_All.csv
+                - NOPP6_EST_20090402_files_All.csv
+                - NOPP6_EST_20090403_files_All.csv
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    TrainModel_paramset:
+        FormatFG:
+            parameters:
+                decimate_data: y
+                methodID: dbuddy-pull-FG-wname
+                methodvers: v1-0
+                methodID2m: matlabdecimate
+                methodvers2m: V1s0
+                target_samp_rate: 1024
+                file_groupID:
+                    - NOPP6_EST_20090328_files_All.csv
+                    - NOPP6_EST_20090329_files_All.csv
+                    - NOPP6_EST_20090330_files_All.csv
+                    - NOPP6_EST_20090331_files_All.csv
+            arguments:
+                hard_rerun: n
+            descriptors:
+                runtype: lib
+                language: R
+                runtype2m: bin
+                language2m: MATLAB
+        seperate_ds_train:
+            SplitTensor:
+                parameters:
+                    methodID: tens-simple-split
+                    methodvers: v1-1
+                    native_pix_per_sec: [npps]
+                    seed_val: 1
+                    split_protocol: [split_prot]
+                    test_split: n
+                    train_test_split: 1.0
+                    train_val_split: 0.75
+                    use_seed: y    
+                arguments:
+                    hard_rerun: n
+                descriptors:
+                    runtype: lib
+                    language: R
+        test1:
+            DLmodel*:
+                parameters:
+                    methodID: train-win-slide-dl
+                    methodvers: v1-6
+                    brightness_high: 0.20
+                    brightness_low: 0.55
+                    contrast_high: 1
+                    gauss_val: 20
+                    gt_depth: [signal_codes]
+                    learn_rate: 0.0005
+                    model_name: EffecientNetB0
+                    native_height: [native_height]
+                    native_pix_per_sec: [npps]
+                    perc_fp: 0.96
+                    perc_tp: 0.04
+                    stride_pix: [msp_train]
+                    stride_pix_inf: [msp_inf]
+                    tp_weight: 15
+                    view_plots: n
+                    win_factor_f: 1.4834
+                    win_factor_t: [time_expand_spec]
+                    win_height: [model_window_native]
+                    win_length: 248
+                arguments:
+                    batch_size: 200
+                    batch_size_inf: [inf_batch_size]
+                    epoch: 25
+                    hard_rerun: n
+                descriptors:
+                    runtype: lib
+                    language: Python
+                    venv: Conda
+                    venv_name: tf-gpu3
+            ScoresToDETx:
+                parameters:
+                    methodID: moving-smooth
+                    methodvers: v1-3
+                    freq_low: [freq_start]
+                    freq_size: [freq_size]
+                    group_pixels: 20
+                    mod_size_l: [model_window_native]
+                    native_pix_per_sec: [npps]
+                    smooth_method: mean
+                    split_protocol: [split_prot]
+                    stride_pix: [msp_train]
+                    time_expand: [time_expand_spec]
+                arguments:
+                    hard_rerun: n
+                descriptors:
+                    runtype: lib
+                    language: R
+    GenBigSpec:
+        parameters:
+            methodID: con_bright_no_rep
+            methodvers: v1-3
+            crop_freq: y
+            crop_freq_size: [freq_size]
+            crop_freq_start: [freq_start]
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+            window_length: 512
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    LabelTensor:
+        parameters:
+            methodID: tens-simple-label
+            methodvers: v1-3
+            dimensions: 2
+            freq_size: [freq_size]
+            freq_start: [freq_start]
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    SplitTensor:
+        parameters:
+            methodID: tens-simple-split
+            methodvers: v1-1
+            native_pix_per_sec: [npps]
+            seed_val: 1
+            split_protocol: within_file
+            test_split: n
+            train_test_split: 0.80
+            train_val_split: 0.75
+            use_seed: y    
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    seperate_ds_test:
+        SplitTensor:
+            parameters:
+                methodID: tens-simple-split
+                methodvers: v1-1
+                native_pix_per_sec: [npps]
+                seed_val: 1
+                split_protocol: within_file
+                test_split: n
+                train_test_split: 0
+                train_val_split: 0.75
+                use_seed: y    
+            arguments:
+                hard_rerun: n
+            descriptors:
+                runtype: lib
+                language: R
+    FormatGT:
+        parameters:
+            methodID: R-pull-dbuddy-anyparam
+            methodvers: v1-3
+            UseFG: y
+            Analysis_ID: 10
+            SignalCode: [signal_codes]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-8
+        arguments:
+            fg_fill: T
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+        parameters:
+            methodID: rd-simple-w-metadata
+            methodvers: v1-5
+        descriptors:
+            runtype: lib
+            language: R
+    AssignLabels:
+        parameters:
+            methodID: labels-w-iou-simple
+            methodvers: v1-4
+            iou_thresh: 0.01
+            write_GT: y
+        arguments:
+            hard_rerun: y
+        descriptors:
+            runtype: lib
+            language: R
+    PerfEval2DL:
+        parameters:
+            methodID: pe2dl-simple
+            methodvers: v1-1
+            cexmod: 2
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    EditRAVENx:
+        parameters:
+            instructions:
+                >
+                > INSTRUCTIONS: 
+                >
+                > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+                > Review the outputs and populate label column. Allowable labels are y/m/n (yes, maybe, or no).  
+                > Comments can be made and will be retained in the database. Adding, deleting, or modifying timestamps or frequency of
+                > detections is forbidden by protocol. 
+                >
+                > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
+                > Instead, use the EditGTpublish pipeline. 
+                >
+                > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: no_method
+    CompareAndPublishDets:
+        parameters:
+            methodID: dbuddy-compare-publish
+            methodvers: v1-2
+        arguments:
+            hard_rerun: n
+        descriptors:
+            language: R
+            runtype: lib
+    ScoresToDETx:
+        parameters:
+            methodID: moving-smooth
+            methodvers: v1-3
+            freq_low: [freq_start]
+            freq_size: [freq_size]
+            group_pixels: 20
+            mod_size_l: [model_window_native]
+            native_pix_per_sec: [npps]
+            smooth_method: mean
+            split_protocol: [split_prot]
+            stride_pix: [msp_inf]
+            time_expand: [time_expand_spec]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    ApplyCutoff:
+        parameters:
+            cutoff: 0.60
+        descriptors:
+            runtype: no_method

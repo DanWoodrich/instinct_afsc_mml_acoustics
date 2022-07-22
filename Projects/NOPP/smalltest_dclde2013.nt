@@ -1,6 +1,8 @@
 #this is the params file for training a model for HB phrase detection. 
 #second version of the model
 
+#This test concerns introducing TP weight in a new version of model training v1-5. Also, lowers the max brightness in the augmentation. Also, increases the tp criteria by a touch. And, increase shuffle size within 1-5
+
 Global:
   cache_root: C:/Apps/INSTINCT/Cache
   #cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
@@ -18,8 +20,8 @@ Global:
     npps: 31
     signal_codes: RW
     #msp_train: 15
-    msp_train: 20
-    msp_inf: 5
+    msp_train: 62
+    msp_inf: 20
     split_prot: within_file
     inf_batch_size: 175
     time_expand_spec: 2
@@ -31,22 +33,23 @@ Job:
       methodvers: v1-1
       gt_depth: [signal_codes]
     arguments: 
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: Python
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-4
+      methodvers: v1-6
       gt_depth: [signal_codes]
       model_name: EffecientNetB0
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      perc_fp: 0.97
-      perc_tp: 0.03
+      perc_fp: 0.96
+      perc_tp: 0.04
       #in native pix:
       stride_pix: [msp_inf]
+      #stride_pix: 60
       view_plots: n
       #stride_pix: 1
       #what to multiply npps by to get to model resolution
@@ -77,9 +80,9 @@ Job:
         #- NOPP6_EST_20090329_files_All.csv
         #- NOPP6_EST_20090330_files_All.csv
         #- NOPP6_EST_20090331_files_All.csv
-        - NOPP6_EST_20090401_files_All.csv
+        #- NOPP6_EST_20090401_files_All.csv
         - NOPP6_EST_20090402_files_All.csv
-        - NOPP6_EST_20090403_files_All.csv
+        #- NOPP6_EST_20090403_files_All.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -100,10 +103,10 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 1024
         file_groupID:
-          - NOPP6_EST_20090328_files_All.csv
-          - NOPP6_EST_20090329_files_All.csv
+          #- NOPP6_EST_20090328_files_All.csv
+          #- NOPP6_EST_20090329_files_All.csv
           - NOPP6_EST_20090330_files_All.csv
-          - NOPP6_EST_20090331_files_All.csv
+          #- NOPP6_EST_20090331_files_All.csv
           #- NOPP6_EST_20090401_files_All.csv
           #- NOPP6_EST_20090402_files_All.csv
           #- NOPP6_EST_20090403_files_All.csv
@@ -140,11 +143,12 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-4
-          brightness_high: 0.25
+          methodvers: v1-6
+          brightness_high: 0.20
           brightness_low: 0.55
           contrast_high: 1
-          contrast_low: 1
+          gauss_val: 25
+          #gauss_val: 0
           gt_depth: [signal_codes]
           learn_rate: 0.001
           model_name: EffecientNetB0
@@ -152,12 +156,13 @@ Job:
           native_pix_per_sec: [npps]
           #perc_fp: 0.99
           #perc_tp: 0.01
-          perc_fp: 0.97
-          perc_tp: 0.03
+          perc_fp: 1
+          perc_tp: 0.1
           #in native pix:
           stride_pix: [msp_train]
           #including this has the effect of stride_pix_inf being a parameter which will redo training... 
           stride_pix_inf: [msp_inf]
+          tp_weight: 15
           view_plots: n
           #stride_pix: 1
           #this gets to exact model height
@@ -167,14 +172,14 @@ Job:
           win_factor_t: [time_expand_spec]
           #in pixels
           win_height: [model_window_native]
-          #win_length: 279
+          #win_length: 279#
           win_length: 248
         arguments: 
-          batch_size: 175
+          batch_size: 200
           batch_size_inf: [inf_batch_size]
           epoch: 15
           #epoch: 1
-          hard_rerun: n
+          hard_rerun: y
         descriptors:
           runtype: lib
           language: Python
@@ -184,7 +189,7 @@ Job:
         parameters:
           #group output scores by # of pixels(can be different to original step to 'smooth')
           methodID: moving-smooth
-          methodvers: v1-3
+          methodvers: v1-4
           freq_low: [freq_start]
           freq_size: [freq_size]
           group_pixels: 20
@@ -358,7 +363,7 @@ Job:
     parameters:
       #group output scores by # of pixels(can be different to original step to 'smooth')
       methodID: moving-smooth
-      methodvers: v1-3
+      methodvers: v1-4
       freq_low: [freq_start]
       freq_size: [freq_size]
       group_pixels: 20
@@ -375,6 +380,6 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0.80
+      cutoff: 0.60
     descriptors:
       runtype: no_method

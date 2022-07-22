@@ -57,7 +57,7 @@ Job:
       win_length: 248
     arguments: 
       batch_size: [inf_batch_size]
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: Python
@@ -146,14 +146,14 @@ Job:
           contrast_high: 1
           contrast_low: 1
           gt_depth: [signal_codes]
-          learn_rate: 0.001
+          learn_rate: 0.0005
           model_name: EffecientNetB0
           native_height: [native_height]
           native_pix_per_sec: [npps]
           #perc_fp: 0.99
           #perc_tp: 0.01
-          perc_fp: 0.97
-          perc_tp: 0.03
+          perc_fp: 0.9
+          perc_tp: 0.1
           #in native pix:
           stride_pix: [msp_train]
           #including this has the effect of stride_pix_inf being a parameter which will redo training... 
@@ -172,7 +172,7 @@ Job:
         arguments: 
           batch_size: 175
           batch_size_inf: [inf_batch_size]
-          epoch: 15
+          epoch: 25
           #epoch: 1
           hard_rerun: n
         descriptors:

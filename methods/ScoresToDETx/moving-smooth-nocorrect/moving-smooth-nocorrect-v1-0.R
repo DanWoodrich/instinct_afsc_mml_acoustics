@@ -180,9 +180,9 @@ if(vertical_bins==1){
       
       scores_starts= seq(0,length(scores)*group_pix/native_pix_per_sec-group_pix/native_pix_per_sec,group_pix/native_pix_per_sec)
       
-      stop()
-      #v1-2: shift so that the scores correspond instead to midpoint of signal: 
-      scores_starts = scores_starts-(model_win_size/(native_pix_per_sec*time_expand))/2
+      #: shift so that the scores correspond instead to midpoint of signal: 
+      #nocorrect- disable this to assess effect. 
+      #scores_starts = scores_starts-(model_win_size/(native_pix_per_sec*time_expand))/2
       #--
       
       scores_ends = scores_starts + (model_win_size/(native_pix_per_sec*time_expand))

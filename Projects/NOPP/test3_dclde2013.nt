@@ -1,6 +1,8 @@
 #this is the params file for training a model for HB phrase detection. 
 #second version of the model
 
+#This test concerns introducing TP weight in a new version of model training v1-5. Also, lowers the max brightness in the augmentation. Also, increases the tp criteria by a touch. And, increase shuffle size within 1-5
+
 Global:
   cache_root: C:/Apps/INSTINCT/Cache
   #cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
@@ -31,22 +33,23 @@ Job:
       methodvers: v1-1
       gt_depth: [signal_codes]
     arguments: 
-      hard_rerun: y
+      hard_rerun: n
     descriptors:
       runtype: lib
       language: Python
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-4
+      methodvers: v1-5
       gt_depth: [signal_codes]
       model_name: EffecientNetB0
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      perc_fp: 0.97
-      perc_tp: 0.03
+      perc_fp: 0.96
+      perc_tp: 0.04
       #in native pix:
-      stride_pix: [msp_inf]
+      #stride_pix: [msp_inf]
+      stride_pix: 20
       view_plots: n
       #stride_pix: 1
       #what to multiply npps by to get to model resolution
@@ -57,7 +60,7 @@ Job:
       win_length: 248
     arguments: 
       batch_size: [inf_batch_size]
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: Python
@@ -140,8 +143,8 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-4
-          brightness_high: 0.25
+          methodvers: v1-5
+          brightness_high: 0.20
           brightness_low: 0.55
           contrast_high: 1
           contrast_low: 1
@@ -152,12 +155,13 @@ Job:
           native_pix_per_sec: [npps]
           #perc_fp: 0.99
           #perc_tp: 0.01
-          perc_fp: 0.97
-          perc_tp: 0.03
+          perc_fp: 0.96
+          perc_tp: 0.04
           #in native pix:
           stride_pix: [msp_train]
           #including this has the effect of stride_pix_inf being a parameter which will redo training... 
           stride_pix_inf: [msp_inf]
+          tp_weight: 3
           view_plots: n
           #stride_pix: 1
           #this gets to exact model height
@@ -172,7 +176,7 @@ Job:
         arguments: 
           batch_size: 175
           batch_size_inf: [inf_batch_size]
-          epoch: 15
+          epoch: 10
           #epoch: 1
           hard_rerun: n
         descriptors:

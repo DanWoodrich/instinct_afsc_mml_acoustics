@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "C:/Apps/INSTINCT/Cache/117592/772508/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200/836944 C:/Apps/INSTINCT/Cache/117592/273952/556187 C:/Apps/INSTINCT/Cache/397754/84782/748378/331477 C:/Apps/INSTINCT/Cache/397754/84782/748378/331477/325430 40 300 20 224 31 mean within_file 20 2 moving-smooth-v1-2"
+args = "C:/Apps/INSTINCT/Cache/117592/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/91633/462486/12466/308017/583171 C:/Apps/INSTINCT/Cache/117592/273952 C:/Apps/INSTINCT/Cache/117592/273952/843920 C:/Apps/INSTINCT/Cache/117592/273952/843920/372966 40 300 20 224 31 mean within_file 20 2 moving-smooth-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -146,7 +146,8 @@ filetabs$tot_strides = ceiling(filetabs$tot_pix/stride_pix)
 #the model is outputting fewer than the calculated total number of strides- this likely has to do 
 #with behavior which throws out strides between splits? 
 
-vertical_bins = as.integer(nrow(Scores)/sum(filetabs$tot_strides))
+
+vertical_bins = round(nrow(Scores)/sum(filetabs$tot_strides))
 
 #from here, for each difftime in the FG, create the scores vector and then determine the 
 #
@@ -154,6 +155,8 @@ vertical_bins = as.integer(nrow(Scores)/sum(filetabs$tot_strides))
 SplitTab = SplitTab[order(factor(SplitTab$FGname, levels = FGs_og_order)), ]
 
 #right now, seems like test deployment of the 
+
+model_s_size = model_win_size/(native_pix_per_sec*time_expand)
 
 if(vertical_bins==1){
   
@@ -170,7 +173,9 @@ if(vertical_bins==1){
       
       dur = sum(FGdt$SegDur)
       
-      end_ind = (scores_ind+ceiling(dur*native_pix_per_sec/stride_pix)-1)
+      #v-4: need to find
+      
+      end_ind = (scores_ind+floor((dur-model_s_size)*native_pix_per_sec/stride_pix)-1)
       
       scores= Scores$V1[scores_ind:end_ind]
       
@@ -180,18 +185,18 @@ if(vertical_bins==1){
       
       scores_starts= seq(0,length(scores)*group_pix/native_pix_per_sec-group_pix/native_pix_per_sec,group_pix/native_pix_per_sec)
       
-      stop()
       #v1-2: shift so that the scores correspond instead to midpoint of signal: 
-      scores_starts = scores_starts-(model_win_size/(native_pix_per_sec*time_expand))/2
+      #no longer needed after v4 change (change to model step behavior)
+      #scores_starts = scores_starts-(model_win_size/(native_pix_per_sec*time_expand))/2
       #--
       
-      scores_ends = scores_starts + (model_win_size/(native_pix_per_sec*time_expand))
+      scores_ends = scores_starts + model_s_size
       
       #v1-2: crop the initial value so that it is >0
-      scores_starts[which(scores_starts<0)]=0.1
+      #scores_starts[which(scores_starts<0)]=0.1
       
       #crop the final value so that it is within difftime interval
-      scores_ends[which(scores_ends>dur)]=dur-0.1
+      #scores_ends[which(scores_ends>dur)]=dur-0.1
       
       FGdt2 = aggregate(SegDur ~ FileName, data = FGdt, sum)
       FGdt2$cumdur = cumsum(FGdt2$SegDur)

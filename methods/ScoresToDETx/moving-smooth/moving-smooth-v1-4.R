@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "C:/Apps/INSTINCT/Cache/117592/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/91633/462486/12466/308017/583171 C:/Apps/INSTINCT/Cache/117592/273952 C:/Apps/INSTINCT/Cache/117592/273952/843920 C:/Apps/INSTINCT/Cache/117592/273952/843920/372966 40 300 20 224 31 mean within_file 20 2 moving-smooth-v1-4"
+args = "C:/Apps/INSTINCT/Cache/91633/596522/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/164548/481046/8032/575945/354171 C:/Apps/INSTINCT/Cache/258509/960654/38545 C:/Apps/INSTINCT/Cache/164548/481046/8032/575945 C:/Apps/INSTINCT/Cache/164548/481046/8032/575945/510789 40 300 20 224 31 mean within_file 124 2 moving-smooth-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -174,8 +174,8 @@ if(vertical_bins==1){
       dur = sum(FGdt$SegDur)
       
       #v-4: need to find
-      
-      end_ind = (scores_ind+floor((dur-model_s_size)*native_pix_per_sec/stride_pix)-1)
+      #stealth bugfix to try to fix offset seen in scores
+      end_ind = (scores_ind+floor((dur-model_s_size)*native_pix_per_sec/stride_pix))
       
       scores= Scores$V1[scores_ind:end_ind]
       
@@ -196,7 +196,7 @@ if(vertical_bins==1){
       #scores_starts[which(scores_starts<0)]=0.1
       
       #crop the final value so that it is within difftime interval
-      #scores_ends[which(scores_ends>dur)]=dur-0.1
+      scores_ends[which(scores_ends>dur)]=dur-0.1
       
       FGdt2 = aggregate(SegDur ~ FileName, data = FGdt, sum)
       FGdt2$cumdur = cumsum(FGdt2$SegDur)

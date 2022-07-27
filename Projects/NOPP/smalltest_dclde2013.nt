@@ -20,8 +20,8 @@ Global:
     npps: 31
     signal_codes: RW
     #msp_train: 15
-    msp_train: 62
-    msp_inf: 20
+    msp_train: 124
+    msp_inf: 5
     split_prot: within_file
     inf_batch_size: 175
     time_expand_spec: 2
@@ -40,7 +40,10 @@ Job:
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-6
+      methodvers: v1-8
+      brightness_high: 0.20
+      brightness_low: 0.55
+      contrast_high: 1
       gt_depth: [signal_codes]
       model_name: EffecientNetB0
       native_height: [native_height]
@@ -80,9 +83,9 @@ Job:
         #- NOPP6_EST_20090329_files_All.csv
         #- NOPP6_EST_20090330_files_All.csv
         #- NOPP6_EST_20090331_files_All.csv
-        #- NOPP6_EST_20090401_files_All.csv
+        - NOPP6_EST_20090401_files_All.csv
         - NOPP6_EST_20090402_files_All.csv
-        #- NOPP6_EST_20090403_files_All.csv
+        - NOPP6_EST_20090403_files_All.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -103,10 +106,10 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 1024
         file_groupID:
-          #- NOPP6_EST_20090328_files_All.csv
-          #- NOPP6_EST_20090329_files_All.csv
+          - NOPP6_EST_20090328_files_All.csv
+          - NOPP6_EST_20090329_files_All.csv
           - NOPP6_EST_20090330_files_All.csv
-          #- NOPP6_EST_20090331_files_All.csv
+          - NOPP6_EST_20090331_files_All.csv
           #- NOPP6_EST_20090401_files_All.csv
           #- NOPP6_EST_20090402_files_All.csv
           #- NOPP6_EST_20090403_files_All.csv
@@ -143,27 +146,27 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-6
+          methodvers: v1-8
           brightness_high: 0.20
           brightness_low: 0.55
           contrast_high: 1
           gauss_val: 25
           #gauss_val: 0
           gt_depth: [signal_codes]
-          learn_rate: 0.001
+          learn_rate: 0.0005
           model_name: EffecientNetB0
           native_height: [native_height]
           native_pix_per_sec: [npps]
           #perc_fp: 0.99
           #perc_tp: 0.01
-          perc_fp: 1
-          perc_tp: 0.1
+          perc_fp: 0.90
+          perc_tp: 0.15
           #in native pix:
           stride_pix: [msp_train]
           #including this has the effect of stride_pix_inf being a parameter which will redo training... 
           stride_pix_inf: [msp_inf]
-          tp_weight: 15
-          view_plots: n
+          tp_weight: 5
+          view_plots: y
           #stride_pix: 1
           #this gets to exact model height
           win_factor_f: 1.4834
@@ -177,9 +180,9 @@ Job:
         arguments: 
           batch_size: 200
           batch_size_inf: [inf_batch_size]
-          epoch: 15
+          epoch: 20
           #epoch: 1
-          hard_rerun: y
+          hard_rerun: n
         descriptors:
           runtype: lib
           language: Python
@@ -197,7 +200,7 @@ Job:
           native_pix_per_sec: [npps]
           smooth_method: mean
           split_protocol: [split_prot]
-          stride_pix: [msp_train]
+          stride_pix: [msp_inf]
           time_expand: [time_expand_spec]
         arguments:
           hard_rerun: n

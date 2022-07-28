@@ -19,13 +19,18 @@ Global:
     native_height: 151
     npps: 31
     signal_codes: RW
-    #msp_train: 15
-    msp_train: 124
+    msp_train: 100
+    #msp_train: 124
+    #msp_train: 130
     msp_inf: 5
     split_prot: within_file
     inf_batch_size: 175
-    time_expand_spec: 2
-    model_window_native: 224
+    #time_expand_spec: 2
+    time_expand_spec: 3
+    #model_window_native: 260
+    model_window_native: 300
+    #wff: 1.72185
+    wff: 1.98675
 Job:
   ModelEval_NN:
     parameters:
@@ -40,23 +45,24 @@ Job:
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-8
+      methodvers: v1-9
       brightness_high: 0.20
       brightness_low: 0.55
       contrast_high: 1
       gt_depth: [signal_codes]
-      model_name: EffecientNetB0
+      model_name: EffecientNetB3
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      perc_fp: 0.96
-      perc_tp: 0.04
+      perc_fp: 1.00
+      perc_tp: 0.15
       #in native pix:
       stride_pix: [msp_inf]
       #stride_pix: 60
       view_plots: n
       #stride_pix: 1
       #what to multiply npps by to get to model resolution
-      win_factor_f: 1.4834
+      #win_factor_f: 1.4834
+      win_factor_f: [wff]
       win_factor_t: [time_expand_spec]
       #in pixels
       win_height: [model_window_native]
@@ -146,67 +152,49 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-8
+          methodvers: v1-9
           brightness_high: 0.20
           brightness_low: 0.55
           contrast_high: 1
           gauss_val: 25
           #gauss_val: 0
           gt_depth: [signal_codes]
-          learn_rate: 0.0005
-          model_name: EffecientNetB0
+          learn_rate: 0.00001
+          model_name: EffecientNetB3
           native_height: [native_height]
           native_pix_per_sec: [npps]
           #perc_fp: 0.99
           #perc_tp: 0.01
-          perc_fp: 0.90
+          perc_fp: 1.00
           perc_tp: 0.15
           #in native pix:
           stride_pix: [msp_train]
           #including this has the effect of stride_pix_inf being a parameter which will redo training... 
           stride_pix_inf: [msp_inf]
-          tp_weight: 5
-          view_plots: y
+          tp_weight: 2
+          view_plots: n
           #stride_pix: 1
           #this gets to exact model height
-          win_factor_f: 1.4834
+          #win_factor_f: 1.4834
+          win_factor_f: [wff]
+          #win_factor_f: 1.98675
           #what to multiply npps by to get to model resolution
-          #win_factor_t: 3
           win_factor_t: [time_expand_spec]
           #in pixels
           win_height: [model_window_native]
-          #win_length: 279#
-          win_length: 248
+          #a float which represents: the # of 0s (negatives) to be retained during training. Helps balance the ratios. 
+          zero_drop: 0.05 
         arguments: 
-          batch_size: 200
+          batch_size: 25
           batch_size_inf: [inf_batch_size]
-          epoch: 20
+          epoch: 25
           #epoch: 1
-          hard_rerun: n
+          hard_rerun: y
         descriptors:
           runtype: lib
           language: Python
           venv: Conda
           venv_name: tf-gpu3
-      ScoresToDETx:
-        parameters:
-          #group output scores by # of pixels(can be different to original step to 'smooth')
-          methodID: moving-smooth
-          methodvers: v1-4
-          freq_low: [freq_start]
-          freq_size: [freq_size]
-          group_pixels: 20
-          mod_size_l: [model_window_native]
-          native_pix_per_sec: [npps]
-          smooth_method: mean
-          split_protocol: [split_prot]
-          stride_pix: [msp_inf]
-          time_expand: [time_expand_spec]
-        arguments:
-          hard_rerun: n
-        descriptors:
-          runtype: lib
-          language: R
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep
@@ -377,7 +365,7 @@ Job:
       stride_pix: [msp_inf]
       time_expand: [time_expand_spec]
     arguments:
-      hard_rerun: n
+      hard_rerun: y
     descriptors:
       runtype: lib
       language: R

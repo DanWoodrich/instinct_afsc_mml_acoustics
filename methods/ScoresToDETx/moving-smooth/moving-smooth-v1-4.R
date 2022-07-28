@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "C:/Apps/INSTINCT/Cache/91633/596522/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/164548/481046/8032/575945/354171 C:/Apps/INSTINCT/Cache/258509/960654/38545 C:/Apps/INSTINCT/Cache/164548/481046/8032/575945 C:/Apps/INSTINCT/Cache/164548/481046/8032/575945/510789 40 300 20 224 31 mean within_file 124 2 moving-smooth-v1-4"
+args = "C:/Apps/INSTINCT/Cache/117592/772508/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/164548/481046/8032/575945/908254/334885 C:/Apps/INSTINCT/Cache/117592/273952/556187 C:/Apps/INSTINCT/Cache/117592/273952/843920/369508 C:/Apps/INSTINCT/Cache/117592/273952/843920/369508/587481 40 300 20 260 31 mean within_file 5 2 moving-smooth-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -196,7 +196,7 @@ if(vertical_bins==1){
       #scores_starts[which(scores_starts<0)]=0.1
       
       #crop the final value so that it is within difftime interval
-      scores_ends[which(scores_ends>dur)]=dur-0.1
+      scores_ends[which(scores_ends>=dur)]=dur-0.1
       
       FGdt2 = aggregate(SegDur ~ FileName, data = FGdt, sum)
       FGdt2$cumdur = cumsum(FGdt2$SegDur)
@@ -221,6 +221,10 @@ if(vertical_bins==1){
       detx = data.frame(scores_starts,scores_ends,freq_low,freq_low+freq_size,startfiles,endfiles,scores,FGdt$Name[1])
         
       colnames(detx) = c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","probs","FGID")
+      
+      if(any(is.na(detx$EndFile))){
+        stop("Bug catch")
+      }
       
       #read in split data
       

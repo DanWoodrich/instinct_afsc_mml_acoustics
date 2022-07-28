@@ -94,7 +94,6 @@ else:
     win_f_factor= float(args[23])
     win_t_factor= float(args[24])
     win_height = int(args[25])
-    zero_drop = float(args[26])
     #arguments: 
     batch_size_train = int(args[28])
     batch_size = int(args[29])
@@ -203,7 +202,7 @@ dataset4 = tf.data.Dataset.from_tensor_slices(np.zeros((len(bigfiles),), dtype=i
 full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3,dataset4))
 
 def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,\
-                addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,zero_drop_=None):
+                addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,is_rgb=True):
 
     #this should give a random offset, each epoch!
     
@@ -243,19 +242,20 @@ def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=No
     if label!=None:
         dataset = dataset.filter(lambda x,y,z,z2: tf.reduce_any(y==label)) #0 or 1
 
-    if zero_drop_!=None:
-        dataset = dataset.filter(lambda x,y,z,z2: tf.reduce_any(float(y) > (tf.random.uniform(shape=[])-zero_drop_)))
+    #if zero_drop_!=None:
+    #    dataset = dataset.filter(lambda x,y,z,z2: tf.reduce_any(float(y) > (tf.random.uniform(shape=[])-zero_drop_)))
         
     #shuffle
-    if shuffle_size!=None:
+    if shuffle_size!=None and shuffle_size!='initial':
         dataset = dataset.shuffle(shuffle_size)
 
     #faster before converting out of grayscale
     if addnoise!=None:
-       dataset = dataset.map(lambda x,y,z,z2: (add_noise(x,"high_reduce",[0.75]),y,z,z2))  #Gaussian_val
+       dataset = dataset.map(lambda x,y,z,z2: (add_noise(x,y,z,z2,addnoise)))  #Gaussian_val
 
     #convert features to expected image dims
-    dataset = dataset.map(lambda x,y,z,z2: (tf.image.grayscale_to_rgb(x),y,z,z2))
+    if is_rgb:
+        dataset = dataset.map(lambda x,y,z,z2: (tf.image.grayscale_to_rgb(x),y,z,z2))
 
     #do augmentation on training or if not specified
     if augment==True:
@@ -279,31 +279,21 @@ def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=No
                           
     return dataset
 
-def add_noise(x,method,params):
+def add_noise(x,y,z,z2,ds):
 
-    if method =="Guassian":
+    #this will stitch together a window with a window from another dataset and average results
 
-        newvals = x + tf.random.normal(tf.shape(x),0,tf.random.uniform([1],0,params[0])[0])
+    xb,yb,z2b = next(ds)
 
-        newvals = tf.clip_by_value(newvals, 0., 255.) #make sure values still fall within expected range
+    fact =  tf.cast((tf.abs(tf.random.normal([],0.65))),tf.float32)
 
-        #could do a uniform one, but that will take very different parameters. Try later as needed. 
-        #elif std_method =="normal":
-        #    newvals = x + tf.random.normal(tf.shape(x),0,tf.random.normal([1],0,20)[0])
+    #fact=0.1
 
-        return newvals 
-
-    elif method =="high_reduce":
-
-        high = float(tf.reduce_max(x))
-        #new_high = high-high*params[0] #here, params[1] is float 0.1, meaning that the new high is 90% of original
-
-        new_high = high-high*tf.random.uniform([1],0,0.15) #here, params[1] is float 0.1, meaning that the new high is 90% of original
-
-        newvals = tf.clip_by_value(x, 0., new_high)
-
-    return newvals  
-    
+    #scale the impact and weights by the random factor
+    #not sure if or what modification to make to the weight. I want to make these instances important, but not hurt training
+    return (x+xb*fact)/(1+1*fact),y,z,(z2+z2b*fact)/(1+1*fact)
+    #return (xb+x)/2,y,z,(z2b+z2)/2
+    #return (xb+x)/2,y,z,z2b/1000
 def accumulate_lab(x,y,z,z2):
 
     #the manipulation looks right, but doesn't seem to be correctly accumulating- check the source data and the transformations. 
@@ -332,7 +322,7 @@ def accumulate_lab(x,y,z,z2):
     out_tens = tf.gather(out_tens,[1,0,2],axis=1)
 
 
-    return x,out_tens,z,out_tens_tp_prop
+    return x,out_tens,z,tf.cast(out_tens_tp_prop,tf.float32)
 
 #@tf.function
 def ingest(x,y,z,z1,wh,wl,stride_pix,do_offset): #try out a predetermined offset
@@ -483,6 +473,8 @@ if stage=="train":
 
     #calculate estimated bins in training to use for right sizing shuffle later.
     estbins =(sum(FGdurs)*native_pix_per_sec)/stride_pix_train
+
+    print(estbins)
     #for now, hardcode that shuffle buffer will be 1/20th the size of total dataset
     shuffle_size_all = round(estbins*0.05)
 
@@ -494,14 +486,28 @@ if stage=="train":
 
     #define datasets
 
-#def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,\
-    #shuffle_size=None,drop_assignment=True,addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,zero_drop=None):
+    #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,\
+    #            addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,is_rgb=True):
 
-    train_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,batch_size_train,\
-                                shuffle_size_all,True,None,True,True,None,True,True,zero_drop)
+    train_dataset_2gs = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,shuffle_size_all,True,None,False,None,0,True,True,False)
 
-    #train_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,20,\
-    #                            round(shuffle_size_all/20),True,None,True,True,None,True,True,zero_drop)
+    #train_dataset_1a = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
+    #                               True,None,True,True,1,True,True)
+    train_dataset_1b = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
+                                   True,iter(train_dataset_2gs),False,True,1,True,True)
+
+    train_dataset_2a = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,shuffle_size_all,True,None,False,None,0,True,True)
+    train_dataset_2b = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,shuffle_size_all,True,iter(train_dataset_2gs),False,None,0,True,True)
+
+
+
+    #train_dataset_1 = tf.data.Dataset.sample_from_datasets([train_dataset_1a, train_dataset_1b], weights=[0.10, 0.90])
+
+    train_dataset_2= tf.data.Dataset.sample_from_datasets([train_dataset_2a, train_dataset_2b], weights=[0.75, 0.25])
+    
+    #train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1, train_dataset_2], weights=[0.25, 0.75]).batch(batch_size_train)
+    train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1b, train_dataset_2], weights=[0.25, 0.75]).batch(batch_size_train)
+
 
     val_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,False,2,batch_size_train,None,True,None,False,True,None,False,False) #different wh and wl avoid the random crop
 
@@ -697,7 +703,7 @@ if stage=="train":
     try:
       model.fit(
           train_dataset,
-          steps_per_epoch=500,
+          steps_per_epoch=1500,
           validation_data=val_dataset,
           epochs=epochs,
           callbacks=[csv_logger]
@@ -706,20 +712,16 @@ if stage=="train":
       pass
 
     model.save(resultpath + "/model.keras")
-elif stage == 'test': #maybe same behavior for all test/inference?
-
-    #load model
-
-    model = keras.models.load_model(modelpath)
-
 
 #run prediction on full FG data. 
 #scores = []
 #import code
 #code.interact(local=dict(globals(), **locals()))
 
+#load model back in no matter what, so it is in inference mode. 
+model = keras.models.load_model(modelpath)
 #set phase to test
-tf.keras.backend.set_learning_phase(0) #keep it in training phase,
+tf.keras.backend.set_learning_phase(0) #set to inference phase
 #so random augments will still happen
 
 #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,addnoise=None,

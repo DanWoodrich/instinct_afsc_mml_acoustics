@@ -54,57 +54,58 @@ modelpath=args[6]
 stage= args[7] #train, test, or inf
 
 if stage !="train":
-    brightness_high=float(args[8])
-    brightness_low=float(args[9])
-    contrast_high =float(args[10])
-    GT_depth = args[11].count(",")+1
-    model_name = args[12]
-    native_img_height = int(args[13])
-    native_pix_per_sec = int(args[14])
-    fp_perc= float(args[15])
-    tp_perc= float(args[16])
-    stride_pix_inf = int(args[17]) 
-    view_plots = args[18]
-    win_f_factor= float(args[19])
-    win_t_factor= float(args[20])
-    win_height = int(args[21])
-    win_length = int(args[22])
-    #arguments: 
-    batch_size = int(args[24])
+    augstr = args[8].split(",")
+    brightness_high=float(augstr[0])
+    brightness_low=float(augstr[1])
+    contrast_high =float(augstr[2])
+    GT_depth = args[9].count(",")+1
+    model_name = args[10]
+    native_img_height = int(args[11])
+    native_pix_per_sec = int(args[12])
+    stride_pix_inf = int(args[13]) 
+    view_plots = args[14]
+    model_win_size = int(args[15])
+    win_size_native = int(args[16])
     
-    Gaussian_val="NULL"
+    #win_f_factor= float(args[19])
+    #win_t_factor= float(args[20])
+
+    #arguments: 
+    batch_size = int(args[18])
+
+    #dummy vars
     tp_weights=1.
+    fp_perc = 0.5
+    tp_perc = 0.5
 
 else:
-    brightness_high=float(args[8])
-    brightness_low=float(args[9])
-    contrast_high =float(args[10])
-    Gaussian_val = int(args[11])
-    GT_depth = args[12].count(",")+1
-    learning_rate = float(args[13])
-    model_name = args[14]
-    native_img_height = int(args[15])
-    native_pix_per_sec = int(args[16])
-    fp_perc= float(args[17])
-    tp_perc= float(args[18])
-    stride_pix_train = int(args[19]) 
-    stride_pix_inf = int(args[20])
-    tp_weights = float(args[21])
-    view_plots = args[22]
-    win_f_factor= float(args[23])
-    win_t_factor= float(args[24])
-    win_height = int(args[25])
+    augstr = args[8].split(",")
+    brightness_high=float(augstr[0])
+    brightness_low=float(augstr[1])
+    contrast_high =float(augstr[2])
+    GT_depth = args[9].count(",")+1
+    learning_rate = float(args[10])
+    model_name = args[11]
+    native_img_height = int(args[12])
+    native_pix_per_sec = int(args[13])
+    fp_perc= float(args[14])
+    tp_perc= float(args[15])
+    stride_pix_train = int(args[16]) 
+    tp_weights = float(args[17])
+    view_plots = args[18]
+    model_win_size = int(args[19])
+    win_size_native = int(args[20])
     #arguments: 
-    batch_size_train = int(args[28])
-    batch_size = int(args[29])
-    epochs = int(args[30])
+    batch_size_train = int(args[22])
+    batch_size = int(args[23])
+    epochs = int(args[24])
+    epoch_steps = int(args[25])
 
-    
+#calculate this based on given dimensions
+win_t_factor = model_win_size/win_size_native
 
-#add gaussian noise introduction. 
 data_augmentation = keras.Sequential(
 [
-    #tf.keras.layers.GaussianNoise(tf.random.uniform([1],0,30, tf.float32)[0]),
     tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]),
     tf.keras.layers.RandomContrast(factor=[0,contrast_high]), 
 ]
@@ -214,7 +215,7 @@ def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=No
 
     dataset = dataset.map(lambda x,y,z,z2: (ingest(x,y,z,z2,wh,wl,stride_pix,do_offset)),num_parallel_calls = tf.data.AUTOTUNE).unbatch() #test, with offsets implemented in loop within ingest. 
     #accumulate label
-    dataset = dataset.map(lambda x,y,z,z2: (accumulate_lab(x,y,z,z2)))
+    dataset = dataset.map(lambda x,y,z,z2: (accumulate_lab(x,y,z,z2)))#.cache()
 
     #filter
     if filter_splits==True:
@@ -279,13 +280,14 @@ def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=No
                           
     return dataset
 
+@tf.function
 def add_noise(x,y,z,z2,ds):
 
     #this will stitch together a window with a window from another dataset and average results
 
     xb,yb,z2b = next(ds)
 
-    fact =  tf.cast((tf.abs(tf.random.normal([],0.65))),tf.float32)
+    fact =  tf.cast((tf.abs(tf.random.normal([],0.5,0.25))),tf.float32)
 
     #fact=0.1
 
@@ -324,7 +326,7 @@ def accumulate_lab(x,y,z,z2):
 
     return x,out_tens,z,tf.cast(out_tens_tp_prop,tf.float32)
 
-#@tf.function
+@tf.function
 def ingest(x,y,z,z1,wh,wl,stride_pix,do_offset): #try out a predetermined offset
 
     if do_offset:
@@ -342,8 +344,13 @@ def ingest(x,y,z,z1,wh,wl,stride_pix,do_offset): #try out a predetermined offset
     width = tf.cast(tf.round(tf.cast(tf.shape(image)[1],tf.float32)*win_t_factor),tf.int32)
     #import code
     #code.interact(local=dict(globals(), **locals()))
-    image = tf.image.resize(image,[wh,width])
 
+    #get rid of top border
+    image=tf.slice(image,[0,0, 0], [tf.shape(image)[0]-1, tf.shape(image)[1], 1])
+
+    #resize to model size. 
+    image = tf.image.resize(image,[wh,width])
+    
     #apply the offest and padding to the image
     img_offset = int(tf.round(tf.cast(offset,tf.float32)*win_t_factor))
 
@@ -427,35 +434,26 @@ def ingest(x,y,z,z1,wh,wl,stride_pix,do_offset): #try out a predetermined offset
 #select keras model constructorbased on given name
 if model_name == "ResNet50V2":
     model_con=tf.keras.applications.resnet_v2.ResNet50V2
-    model_win_size = 224
+    assert model_win_size == 224
 elif model_name == "ResNet50":
     model_con=tf.keras.applications.resnet50.ResNet50
-    model_win_size = 224
-elif model_name == "EffecientNetB0":
+    assert model_win_size == 224
+elif model_name == "EffecientNet" and model_win_size==224:
     model_con=tf.keras.applications.efficientnet.EfficientNetB0
-    model_win_size = 224
-elif model_name == "EffecientNetB1":
+elif model_name == "EffecientNet" and model_win_size==240:
     model_con=tf.keras.applications.efficientnet.EfficientNetB1
-    model_win_size = 240
-elif model_name == "EffecientNetB2":
+elif model_name == "EffecientNet" and model_win_size==260:
     model_con=tf.keras.applications.efficientnet.EfficientNetB2
-    model_win_size = 260
-elif model_name == "EffecientNetB3":
+elif model_name == "EffecientNet" and model_win_size==300:
     model_con=tf.keras.applications.efficientnet.EfficientNetB3
-    model_win_size = 300
-elif model_name == "EffecientNetB4":
+elif model_name == "EffecientNet" and model_win_size==380:
     model_con=tf.keras.applications.efficientnet.EfficientNetB4
-    model_win_size = 380
-elif model_name == "EffecientNetB5":
+elif model_name == "EffecientNet" and model_win_size==456:
     model_con=tf.keras.applications.efficientnet.EfficientNetB5
-    model_win_size = 456
-elif model_name == "EffecientNetB6":
+elif model_name == "EffecientNet" and model_win_size==528:
     model_con=tf.keras.applications.efficientnet.EfficientNetB6
-    model_win_size = 528
-elif model_name == "EffecientNetB7":
+elif model_name == "EffecientNet" and model_win_size==600:
     model_con=tf.keras.applications.efficientnet.EfficientNetB7
-    model_win_size = 600
-    #for this, calculate particular one based on model input size. 
 else:
     raise MyValidationError("Model not found")
 
@@ -486,27 +484,39 @@ if stage=="train":
 
     #define datasets
 
+    #do_shuffle = 'initial'
+    do_shuffle = shuffle_size_all
+
     #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,\
     #            addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,is_rgb=True):
 
-    train_dataset_2gs = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,shuffle_size_all,True,None,False,None,0,True,True,False)
+    train_dataset_2gs = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,do_shuffle,True,None,False,None,0,True,True,False)
 
     #train_dataset_1a = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
     #                               True,None,True,True,1,True,True)
     train_dataset_1b = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
-                                   True,iter(train_dataset_2gs),False,True,1,True,True)
+                                   True,iter(train_dataset_2gs),False,True,1,True,True)#round(shuffle_size_all/20)
+    
 
-    train_dataset_2a = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,shuffle_size_all,True,None,False,None,0,True,True)
-    train_dataset_2b = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,shuffle_size_all,True,iter(train_dataset_2gs),False,None,0,True,True)
+    train_dataset_2a = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,do_shuffle,True,None,False,None,0,True,True)
+    train_dataset_2b = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,do_shuffle,True,iter(train_dataset_2gs),False,None,0,True,True)
 
-
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
 
     #train_dataset_1 = tf.data.Dataset.sample_from_datasets([train_dataset_1a, train_dataset_1b], weights=[0.10, 0.90])
 
     train_dataset_2= tf.data.Dataset.sample_from_datasets([train_dataset_2a, train_dataset_2b], weights=[0.75, 0.25])
     
     #train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1, train_dataset_2], weights=[0.25, 0.75]).batch(batch_size_train)
-    train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1b, train_dataset_2], weights=[0.25, 0.75]).batch(batch_size_train)
+
+     #was .25 .75
+    train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1b, train_dataset_2], weights=[0.25, 0.75])\
+                    .map(lambda x,y,z2: (data_augmentation(x),y,z2))\
+                    .batch(batch_size_train)
+    #.map(lambda x,y,z2: (data_augmentation(x),y,z2))\
+                    
+                    
 
 
     val_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,False,2,batch_size_train,None,True,None,False,True,None,False,False) #different wh and wl avoid the random crop
@@ -635,8 +645,6 @@ if do_plot:
     import code
     code.interact(local=dict(globals(), **locals()))
 
-assert model_win_size <= win_height
-
 if stage=="train":
 
     #select correct loss function for multi or single class:
@@ -652,7 +660,7 @@ if stage=="train":
     def KerasModel(constructor=model_con):
       return tf.keras.Sequential([
         tf.keras.Input(shape=(model_win_size, model_win_size, 3)),
-        #tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]), #these are just terrible. Doesn't look like they are using teh gpu effeciently at all
+        #tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]), #turn these on or off depending if limiation is in CPU or GPU
         #tf.keras.layers.RandomContrast(factor=[0,contrast_high]), 
         constructor(include_top=False, weights=None, pooling="max"),
         tf.keras.layers.ReLU(),
@@ -703,7 +711,7 @@ if stage=="train":
     try:
       model.fit(
           train_dataset,
-          steps_per_epoch=1500,
+          steps_per_epoch=epoch_steps,
           validation_data=val_dataset,
           epochs=epochs,
           callbacks=[csv_logger]
@@ -718,31 +726,39 @@ if stage=="train":
 #import code
 #code.interact(local=dict(globals(), **locals()))
 
+
+#if stage=="train":
 #load model back in no matter what, so it is in inference mode. 
-model = keras.models.load_model(modelpath)
-#set phase to test
-tf.keras.backend.set_learning_phase(0) #set to inference phase
-#so random augments will still happen
+    #model = keras.models.load_model(resultpath + "/model.keras")
+if stage=="test":
 
-#def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,addnoise=None,
-                #augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True):
-ds= MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_inf,False,None,batch_size,None,False,None,False,False,None,False,False) #experimental- augment in val
+    tf.keras.backend.set_learning_phase(0) #set to inference phase
 
-#scores1 = []
-#for i in range(5):
-scores = model.predict(ds)
-#scores1.append(scores)
+    model = keras.models.load_model(modelpath)
 
-#take max of scores
-#scores2 = np.stack(scores1)
-#scores3 = np.amax(scores2,0)
 
-#import code
-#code.interact(local=dict(globals(), **locals()))
+    #set phase to test
+    #so random augments will still happen
 
-with gzip.open(resultpath + '/scores.csv.gz', 'wt', newline='') as f:   
-    write = csv.writer(f)
-    write.writerows(scores)
+    #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,addnoise=None,
+                    #augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True):
+    ds= MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_inf,False,None,batch_size,None,False,None,False,False,None,False,False) #experimental- augment in val
+
+    #scores1 = []
+    #for i in range(5):
+    scores = model.predict(ds)
+    #scores1.append(scores)
+
+    #take max of scores
+    #scores2 = np.stack(scores1)
+    #scores3 = np.amax(scores2,0)
+
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+
+    with gzip.open(resultpath + '/scores.csv.gz', 'wt', newline='') as f:   
+        write = csv.writer(f)
+        write.writerows(scores)
 
 #import code
 #code.interact(local=dict(globals(), **locals()))

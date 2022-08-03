@@ -1,6 +1,6 @@
 #use this to build out performance eval for ground truth data. 
 pipe: ScoresToDETx.pipe
-params_drop: TrainModel_paramset-test1
+params_drop: Job-TrainModel_paramset
 ScoresToDETx.pipe:
   process: ScoresToDETx
   GetFG:
@@ -9,10 +9,9 @@ ScoresToDETx.pipe:
     FormatFG.pipe:
       process: FormatFG
   GetScores:
-    pipe: DLmodel_Train.pipe
-    params_drop: TrainModel_paramset-test1
+    pipe: DLmodel_Test.pipe
     pipe_link: 
-      name: TrainModel_DL2.nt 
+      name: train_SS_DL2.nt 
   GetImg:
     pipe: GenBigSpec.pipe
     loop_on: FormatFG

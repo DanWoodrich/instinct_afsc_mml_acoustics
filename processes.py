@@ -1,8 +1,7 @@
 #can choose to import in global namespace
 from classes import INSTINCT_process,Split_process,SplitRun_process,Unify_process,INSTINCT_userprocess
 from getglobals import PARAMSET_GLOBALS
-from misc import get_param_names
-from .misc import file_peek,get_difftime
+from misc import get_param_names,file_peek,get_difftime
 
 import hashlib
 import pandas as pd
@@ -679,8 +678,7 @@ class FormatFG(INSTINCT_process):
             FG_dict = file_peek(temppath,fn_type = object,fp_type = object,st_type = object,dur_type = 'float64')
             FG = pd.read_csv(temppath, dtype=FG_dict)
 
-            #import code
-            #code.interact(local=dict(globals(), **locals()))
+
 
             os.remove(temppath)
             
@@ -688,7 +686,15 @@ class FormatFG(INSTINCT_process):
         
         FG['StartTime'] = pd.to_datetime(FG['StartTime'], format='%y%m%d-%H%M%S')
 
-        FG=get_difftime(FG)
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
+
+        if "difftime_limit" in self.parameters:
+            difftime_lim = int(self.parameters["difftime_limit"])
+        else:
+            difftime_lim=None #default
+
+        FG=get_difftime(FG,cap_consectutive=difftime_lim)
         
         if 'decimate_data' in self.parameters and self.parameters['decimate_data'] == 'y':
             #if decimating, run decimate. Check will matter in cases where MATLAB supporting library is not installed.

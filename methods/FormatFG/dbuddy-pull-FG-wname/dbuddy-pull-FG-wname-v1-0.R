@@ -3,7 +3,7 @@
 #install.packages("//nmfs/akc-nmml/CAEP/Acoustics/Matlab Code/Other code/R/DbuddyTools_0.0.1.2.tar.gz", source = TRUE, repos=NULL)
 library("DbuddyTools")
 
-args = "C:/Apps/INSTINCT/Cache/834675/379128/FileGroupFormat.csv.gz NOPP6_EST_20090330_files_All.csv"
+args = "C:/Apps/INSTINCT/Cache/652882/tempFG.csv.gz BS16_AU_PM02-a_files_1-175_rw_hg.csv decimate_data file_groupID methodID2m methodvers2m target_samp_rate y BS16_AU_PM02-a_files_1-175_rw_hg.csv matlabdecimate V1s0 1024 dbuddy-pull-FG-wname-v1-0"
 
 args<-strsplit(args,split=" ")[[1]]
 

@@ -48,7 +48,8 @@ img_print <-function(object,xbins,pix_height,path){
   
   #calculate the total number of height pixels: 
   
-  png(path,height=pix_height,width=xbins)
+  png(path,height=pix_height,width=xbins,bg="black") #my problem is that upon saving, there is a background in 
+  #the png. Not sure how to resolve- EBImage might have a solutioin? 
   
   par(#ann = FALSE,
     mai = c(0,0,0,0),
@@ -63,14 +64,14 @@ img_print <-function(object,xbins,pix_height,path){
     yaxt = 'n')
   
   plot(object, axes = 0)
-  
+
   dev.off()
   
 }
 
 #needs PARAMSET_GLOBALS['SF_foc'] in process
 
-args="C:/Apps/INSTINCT/Cache/843873/665107 C:/Apps/INSTINCT/Cache/843873/665107/545866 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 FGname -1 0 y 300 40 300 75 512 con_bright_no_rep-v1-1"
+args="C:/Apps/INSTINCT/Cache/117592 C:/Apps/INSTINCT/Cache/117592/274152 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 NOPP6_EST_20090402_files_All.csv y 300 40 76 65 250 con_bright_no_rep-v1-3"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -125,8 +126,12 @@ for(i in 1:length(bigfiles)){
   print("initial dimensions:")
   print(paste(dim(spec_img)[1]/round(length(sounddata@left)/sounddataheader$sample.rate),dim(spec_img)[2])) #initial dimenions
   }
-
-  spec_img =resize(spec_img,size_x = xbins,size_y = native_img_height) #make height
+  
+  #spec_img = as.cimg(spec_img[,1:73,,])
+  
+  if(dim(spec_img)[1]!=xbins | dim(spec_img)[2]!=native_img_height){
+    spec_img =resize(spec_img,size_x = xbins,size_y = native_img_height) #make height
+  }
 
   filename = paste(resultpath,"/bigfiles/bigfile",bigfiles[i],".png",sep="")
 

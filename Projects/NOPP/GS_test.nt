@@ -13,11 +13,11 @@ Global:
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
   parameters:
-    signal_codes: RW
+    signal_codes: GS
     freq_start: 40
-    freq_size: 300
-    native_height: 76
-    npps: 65
+    freq_size: 960
+    native_height: 121
+    npps: 48
     native_window_size: 240
     model_window_size: 240
     model_name: EffecientNet
@@ -39,7 +39,7 @@ Job:
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-9
+      methodvers: v1-10
       augstr: 0.20,0.55,1
       gt_depth: [signal_codes]
       model_name: [model_name]
@@ -66,28 +66,20 @@ Job:
       methodID2m: matlabdecimate
       methodvers2m: V1s0
       #target_samp_rate: 4096
-      target_samp_rate: 1024
+      target_samp_rate: 2048
       file_groupID:
-        #- NOPP6_EST_20090328_files_All.csv
-        #- NOPP6_EST_20090329_files_All.csv
-        #- NOPP6_EST_20090330_files_All.csv
-        #- NOPP6_EST_20090331_files_All.csv
-        #- NOPP6_EST_20090401_files_All.csv
-        #- NOPP6_EST_20090402_files_All.csv
-        #- NOPP6_EST_20090403_files_All.csv
-        #- BS16_AU_PM02-a_files_1-175_rw_hg.csv
-        - BS16_AU_PM05_rw_hg.csv
-        #- BS15_AU_PM04_files_301-417_rw_hg.csv
-        - BS15_AU_PM02-a_files_1-104_rw_hg.csv
-        #- BS15_AU_PM02-b_files_All_rw_hg.csv
-        - BS14_AU_PM04_rw_hg.csv
-        #- BS13_AU_PM04_files_All_rw_hg.csv
-        - BS13_AU_PM02-a_rw_hg.csv
-        #- AW14_AU_BS03_files_1-160_rw_hg.csv
-        - AW14_AU_BS02_rw_hg.csv
-        #- AW12_AU_BS03_rw_hg.csv
-        - AL16_AU_BS01_rw_hg.csv
-        #- M8after2018first40_rw_hg.csv
+        - AL16_AU_BS03_files_77-170_gs_hg.csv
+        #- AW12_AU_BS03_files_1-250_gs_hg.csv
+        #- AW12_AU_BS03_files_1464-1507_gs_hg.csv
+        #- AW14_AU_BS03_files_1-71_gs_hg.csv
+        #- AW14_AU_BS03_files_309-369_gs_hg.csv
+        #- AW15_AU_BS02_files_33-103_gs_hg.csv
+        #- AW15_AU_BS03_files_705-749_gs_hg.csv
+        #- BS12_AU_PM02-a_files_1-46_gs_hg.csv
+        #- BS12_AU_PM02-b_files_689-747_gs_hg.csv
+        #- BS13_AU_PM04_files_137-224_gs_hg.csv
+        #- BS14_AU_PM04_files_74-148_gs_hg.csv
+        #- DFO_comb_gs_hg.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -108,28 +100,20 @@ Job:
         methodID2m: matlabdecimate
         methodvers2m: V1s0
         #target_samp_rate: 4096
-        target_samp_rate: 1024
+        target_samp_rate: 2048
         file_groupID:
-          #- NOPP6_EST_20090328_files_All.csv
-          #- NOPP6_EST_20090329_files_All.csv
-          #- NOPP6_EST_20090330_files_All.csv
-          #- NOPP6_EST_20090331_files_All.csv
-          #- NOPP6_EST_20090401_files_All.csv
-          #- NOPP6_EST_20090402_files_All.csv
-          #- NOPP6_EST_20090403_files_All.csv
-          - BS16_AU_PM02-a_files_1-175_rw_hg.csv
-          #- BS16_AU_PM05_rw_hg.csv
-          - BS15_AU_PM04_files_301-417_rw_hg.csv
-          #- BS15_AU_PM02-a_files_1-104_rw_hg.csv
-          - BS15_AU_PM02-b_rw_hg.csv
-          #- BS14_AU_PM04_rw_hg.csv
-          - BS13_AU_PM04_rw_hg.csv
-          #- BS13_AU_PM02-a_rw_hg.csv
-          - AW14_AU_BS03_files_1-160_rw_hg.csv
-          #- AW14_AU_BS02_rw_hg.csv
-          - AW12_AU_BS03_rw_hg.csv
-          #- AL16_AU_BS01_rw_hg.csv
-          - M8after2018first40_rw_hg.csv
+          - AL16_AU_BS03_files_77-170_gs_hg.csv
+          - AW12_AU_BS03_files_1-250_gs_hg.csv
+          - AW12_AU_BS03_files_1464-1507_gs_hg.csv
+          - AW14_AU_BS03_files_1-71_gs_hg.csv
+          - AW14_AU_BS03_files_309-369_gs_hg.csv
+          - AW15_AU_BS02_files_33-103_gs_hg.csv
+          - AW15_AU_BS03_files_705-749_gs_hg.csv
+          - BS12_AU_PM02-a_files_1-46_gs_hg.csv
+          - BS12_AU_PM02-b_files_689-747_gs_hg.csv
+          - BS13_AU_PM04_files_137-224_gs_hg.csv
+          - BS14_AU_PM04_files_74-148_gs_hg.csv
+          - DFO_comb_gs_hg.csv
       arguments:
         hard_rerun: n
       descriptors:
@@ -172,7 +156,7 @@ Job:
           native_pix_per_sec: [npps]
           perc_fp: 1.00
           #perc_tp: 0.10
-          perc_tp: 0.03
+          perc_tp: 0.06
           stride_pix: [native_window_size]
           tp_weight: 4
           view_plots: n
@@ -199,7 +183,7 @@ Job:
       crop_freq_start: [freq_start]
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      window_length: 250
+      window_length: 256
     arguments:
       hard_rerun: n
     descriptors:

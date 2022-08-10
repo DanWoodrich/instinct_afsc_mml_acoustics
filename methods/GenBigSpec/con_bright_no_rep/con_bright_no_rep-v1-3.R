@@ -26,6 +26,13 @@ gen_spec_image <-function(x,wl,ovlp,contrast,brightness,do_crop,crop_start,crop_
     
     bin_end = ceiling((crop_freq_start+crop_freq_size)/freq_per_bin)
     
+    if(bin_end>dim(spectrogram$S)[1]){
+      
+      stop("frequency cutoff does not work with spectrogram parameters as specified.")
+     
+      #bin_end = dim(spectrogram$S)[1]
+    }
+    
     spectrogram$S = spectrogram$S[bin_start:bin_end,]
     spectrogram$f = spectrogram$f[bin_start:bin_end]
     
@@ -71,7 +78,7 @@ img_print <-function(object,xbins,pix_height,path){
 
 #needs PARAMSET_GLOBALS['SF_foc'] in process
 
-args="C:/Apps/INSTINCT/Cache/117592 C:/Apps/INSTINCT/Cache/117592/274152 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 NOPP6_EST_20090402_files_All.csv y 300 40 76 65 250 con_bright_no_rep-v1-3"
+args="C:/Apps/INSTINCT/Cache/333397 C:/Apps/INSTINCT/Cache/333397/537889 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 AL16_AU_BS03_files_77-170_gs_hg.csv y 1000 40 76 48 256 con_bright_no_rep-v1-3"
 
 args<-strsplit(args,split=" ")[[1]]
 

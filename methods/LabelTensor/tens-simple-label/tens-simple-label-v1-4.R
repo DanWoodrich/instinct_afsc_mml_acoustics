@@ -5,13 +5,13 @@
 
 library(signal)
 library(dplyr)
+library(doParallel)
 
 args="C:/Apps/INSTINCT/Cache/394448 C:/Apps/INSTINCT/Cache/394448/921636 C:/Apps/INSTINCT/Cache/394448/756783 C:/Apps/INSTINCT/Cache/394448/756783/878262 FGname 2 450 50 4 600 40 tens-simple-label-v1-0"
 
 args<-strsplit(args,split=" ")[[1]]
 
 args<-commandArgs(trailingOnly = TRUE)
-
 
 FG= read.csv(paste(args[1],"/FileGroupFormat.csv.gz",sep=""))
 bf_path = paste(args[2],"bigfiles",sep="/") #one change I need to make- this actually needs to output 
@@ -29,6 +29,9 @@ freq_start = as.numeric(args[8])
 native_img_height = as.numeric(args[9])
 native_pix_per_sec = as.numeric(args[10])
 
+#find project location and route to R miscellaneous dependency. 
+source(paste(getwd(),"/user/R_misc.R",sep=""))
+
 bigfiles = unique(FG$DiffTime)
 
 GT_depth = length(unique(GTref$SignalCode))
@@ -37,7 +40,11 @@ GT_unq = sort(unique(GTref$SignalCode)) #sort arranges alphabetically- do the sa
 
 dir.create(paste(resultpath,"/labeltensors",sep=""))
 
-for(i in 1:length(bigfiles)){
+crs<-detectCores()
+
+startLocalPar(crs,"FG","bigfiles","GTref","native_img_height","native_pix_per_sec","resultpath","dimensions","freq_size","freq_start","GT_depth","GT_unq")
+
+filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr")) %dopar% {
   
   #combine GT with FG
   fileFG = FG[which(FG$DiffTime==bigfiles[i]),,drop = FALSE]
@@ -132,10 +139,10 @@ for(i in 1:length(bigfiles)){
   
   lab_array = aperm(lab_array,dim=c(dim_y, dim_x, GT_depth))
   
-  #any_TP = TRUE
+  any_TP = "is_tp"
     
   }else{
-    #any_TP = FALSE
+    any_TP = "no_tp"
   }
   
   #now, unpack this by writing serializing it going downward by each column, per page of depth. 
@@ -160,12 +167,18 @@ for(i in 1:length(bigfiles)){
   
  #write.csv(c(lab_array),lab_path,row.names = FALSE) 
   
-  write.table(c(lab_array), gzfile(paste(resultpath,"/labeltensors/labeltensor",i,".csv.gz",sep="")),sep=",",quote = FALSE,col.names=FALSE,row.names = FALSE)
+  filename=paste(resultpath,"/labeltensors/labeltensor",i,any_TP,".csv.gz",sep="")
   
+  write.table(c(lab_array), gzfile(filename),sep=",",quote = FALSE,col.names=FALSE,row.names = FALSE)
   
+  return(filename)
 }
 
-outtab = data.frame(paste(resultpath,"/labeltensors/labeltensor",1:length(bigfiles),".csv.gz",sep=""),FGname)
+stopCluster(cluz)
+
+filenames=do.call("c",filenames)
+
+outtab = data.frame(filenames,FGname)
 colnames(outtab)=c("filename","FGname")
 
 write.csv(outtab,paste(resultpath,'filepaths.csv',sep="/"),row.names=FALSE)

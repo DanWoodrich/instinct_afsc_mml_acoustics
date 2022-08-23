@@ -43,6 +43,16 @@ WriteGT<-args[6]
 GTdata<-read.csv(paste(GTpath,"DETx.csv.gz",sep="/"))
 FGdata<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))
 
+#remove any GT which aren't in FG (unsure why we get that behavior, probably a bug in the db pull earlier)
+#and warn
+
+if(any(!unique(c(GTdata$StartFile,GTdata$EndFile)) %in% FGdata$FileName)){
+  
+  GTdata = GTdata[which(GTdata$StartFile %in% FGdata$FileName & GTdata$EndFile %in% FGdata$FileName),]
+  
+  print("WARNING: GT DATA CONTAINS LABELS WHICH DO NOT BELONG TO FG.")
+}
+
 
 
 #convert FG back to old format

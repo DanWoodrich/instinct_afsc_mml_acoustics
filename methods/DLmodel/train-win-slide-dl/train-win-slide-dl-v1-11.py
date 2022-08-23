@@ -17,8 +17,6 @@
 #change training behavior so that only one dataset is used (dropout based on random number generated)
 #remove augmentation during inference
 
-#v1-10: add in label reduce during training to allow for larger windows, but more precise label localization to the center of the window. 
-
 #import pandas as pd
 import tensorflow as tf
 import sys
@@ -80,7 +78,8 @@ if stage !="train":
     fp_perc = 0.5
     tp_perc = 0.5
 
-    lab_reduce=1.0
+    prop_tp = 0.
+    prop_fp = 0.
 
 else:
     augstr = args[8].split(",")
@@ -88,23 +87,24 @@ else:
     brightness_low=float(augstr[1])
     contrast_high =float(augstr[2])
     GT_depth = args[9].count(",")+1
-    lab_reduce = float(args[10])
-    learning_rate = float(args[11])
-    model_name = args[12]
-    native_img_height = int(args[13])
-    native_pix_per_sec = int(args[14])
-    fp_perc= float(args[15])
-    tp_perc= float(args[16])
-    stride_pix_train = int(args[17]) 
-    tp_weights = float(args[18])
-    view_plots = args[19]
-    model_win_size = int(args[20])
-    win_size_native = int(args[21])
+    learning_rate = float(args[10])
+    model_name = args[11]
+    native_img_height = int(args[12])
+    native_pix_per_sec = int(args[13])
+    fp_perc= float(args[14])
+    tp_perc= float(args[15])
+    prop_fp= float(args[16])
+    prop_tp= float(args[17])
+    stride_pix_train = int(args[18]) 
+    tp_weights = float(args[19])
+    view_plots = args[20]
+    model_win_size = int(args[21])
+    win_size_native = int(args[22])
     #arguments: 
-    batch_size_train = int(args[23])
-    batch_size = int(args[24])
-    epochs = int(args[25])
-    epoch_steps = int(args[26])
+    batch_size_train = int(args[24])
+    batch_size = int(args[25])
+    epochs = int(args[26])
+    epoch_steps = int(args[27])
 
 #calculate this based on given dimensions
 win_t_factor = model_win_size/win_size_native
@@ -129,10 +129,9 @@ with gzip.open(FGpath, mode="rt") as f:
         FGnames.append(row.split(",")[idx].replace('"', ''))
         FGdurs.append(float(row.split(",")[cols.index("SegDur")].replace('"', '')))
 
-lab_window = round(model_win_size/win_t_factor)*lab_reduce
-lab_window_start = round((round(model_win_size/win_t_factor)/2) - lab_window/2)
-lab_window_end = round(lab_window_start+lab_window)
 
+#import code
+#code.interact(local=dict(globals(), **locals()))
 
 usedFG = set()
 uniqueFG = [x for x in FGnames if x not in usedFG and (usedFG.add(x) or True)]
@@ -208,9 +207,43 @@ dataset4 = tf.data.Dataset.from_tensor_slices(np.zeros((len(bigfiles),), dtype=i
 
 full_dataset = tf.data.Dataset.zip((dataset1,dataset2,dataset3,dataset4))
 
+index = [i for i, x in enumerate(lab_files) if 'is_tp' in x]
+
+lab_files_sub = [lab_files[i] for i in index]
+bigfiles_sub = [bigfiles[i] for i in index]
+split_files_sub = [split_files[i] for i in index]
+
 #import code
 #code.interact(local=dict(globals(), **locals()))
 
+TP_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(bigfiles_sub),
+                                  tf.data.Dataset.from_tensor_slices(lab_files_sub),
+                                  tf.data.Dataset.from_tensor_slices(split_files_sub),
+                                  tf.data.Dataset.from_tensor_slices(np.zeros((len(bigfiles),), dtype=int))))
+
+def assessTP(y):
+
+    lab = tf.io.read_file(y)
+    lab = tf.io.decode_compressed(lab,compression_type='GZIP')
+    lab = tf.strings.split(lab, sep="\n", maxsplit=-1, name=None)[:-1]
+    lab = tf.strings.to_number(lab,out_type=tf.int32,name=None)
+
+    is_tp = tf.reduce_any(lab==2)
+
+    return is_tp
+
+def ScanForTP(dataset):
+
+    #load in the unshuffled dataset. input the label tensors, if there are any tps, export a one, otherwise a 0.
+    #use this to subset full_dataset into tp_dataset.
+
+    #advanced version of this might include reducing the tensor to eliminate FP sections and loading the full TP tensor into memory.
+
+    dataset = dataset.map(lambda x,y,z,z2: (x,y,z,assessTP(y)))
+
+    dataset = dataset.map(lambda x,y,z,z2: z2)
+    
+    return dataset
 
 def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,\
                 addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,is_rgb=True):
@@ -223,7 +256,7 @@ def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=No
     if repeat_perma==True:
         dataset =dataset.repeat()
 
-    dataset = dataset.map(lambda x,y,z,z2: (ingest(x,y,z,z2,wh,wl,stride_pix,do_offset,lab_window_start,lab_window_end)),num_parallel_calls = tf.data.AUTOTUNE).unbatch() #test, with offsets implemented in loop within ingest. 
+    dataset = dataset.map(lambda x,y,z,z2: (ingest(x,y,z,z2,wh,wl,stride_pix,do_offset)),num_parallel_calls = tf.data.AUTOTUNE).unbatch() #test, with offsets implemented in loop within ingest. 
     #accumulate label
     dataset = dataset.map(lambda x,y,z,z2: (accumulate_lab(x,y,z,z2)))#.cache()
 
@@ -337,7 +370,7 @@ def accumulate_lab(x,y,z,z2):
     return x,out_tens,z,tf.cast(out_tens_tp_prop,tf.float32)
 
 @tf.function
-def ingest(x,y,z,z1,wh,wl,stride_pix,do_offset,lws,lwe): #try out a predetermined offset
+def ingest(x,y,z,z1,wh,wl,stride_pix,do_offset): #try out a predetermined offset
 
     if do_offset:
         offset = int(tf.random.uniform(shape=[],maxval=round(((wl/win_t_factor)-1)),dtype=tf.int32)) #offset is on the resolution of label
@@ -394,9 +427,6 @@ def ingest(x,y,z,z1,wh,wl,stride_pix,do_offset,lws,lwe): #try out a predetermine
        strides=[1, native_img_height, stride_pix, 1],
         rates=[1, 1, 1, 1],
         padding='VALID'), [-1, native_img_height, round(wl/win_t_factor), GT_depth])
-
-    #experimental v1-10:
-    lab = lab[:,:,lws:lwe,:]
 
     splt = tf.io.read_file(z)
     splt = tf.io.decode_compressed(splt,compression_type='GZIP')
@@ -479,7 +509,8 @@ else:
 
 if stage=="train":
 
-#this means that random contast, other augmentations will be used if called during training. 
+
+    #this means that random contast, other augmentations will be used if called during training. 
     tf.keras.backend.set_learning_phase(1)
 
     #calculate estimated bins in training to use for right sizing shuffle later.
@@ -487,8 +518,12 @@ if stage=="train":
 
     print(estbins)
     #for now, hardcode that shuffle buffer will be 1/20th the size of total dataset
-    shuffle_size_all = round(estbins*0.05)
 
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+
+    #shuffle_size_all = round(estbins*0.05)
+    shuffle_size_all = round(estbins/len(bigfiles))
 
     stride_pix_default = stride_pix_train
     wh_default = model_win_size
@@ -500,6 +535,14 @@ if stage=="train":
     #do_shuffle = 'initial'
     do_shuffle = shuffle_size_all
 
+    #reduce the dataset to only FGs which contain TP for more effecient processing:
+    #ind_out = list()
+    #iter_obj_tp_ds = iter(ScanForTP(full_dataset))
+    #for i in range(len(bigfiles)):
+    #   ind_out.append(next(iter_obj_tp_ds)[0])
+    #   print(ind_out)
+
+
     #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,\
     #            addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,is_rgb=True):
 
@@ -507,15 +550,17 @@ if stage=="train":
 
     #train_dataset_1a = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
     #                               True,None,True,True,1,True,True)
-    train_dataset_1b = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
+    train_dataset_1b = MakeDataset(TP_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
                                    True,iter(train_dataset_2gs),False,True,1,True,True)#round(shuffle_size_all/20)
+
+    #train_dataset_1b_test = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,round(shuffle_size_all/20),\
+    #                               True,iter(train_dataset_2gs),False,True,1,True,True)
     
 
     train_dataset_2a = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,do_shuffle,True,None,False,None,0,True,True)
     train_dataset_2b = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,True,1,None,do_shuffle,True,iter(train_dataset_2gs),False,None,0,True,True)
 
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
+
 
     #train_dataset_1 = tf.data.Dataset.sample_from_datasets([train_dataset_1a, train_dataset_1b], weights=[0.10, 0.90])
 
@@ -524,7 +569,7 @@ if stage=="train":
     #train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1, train_dataset_2], weights=[0.25, 0.75]).batch(batch_size_train)
 
      #was .25 .75
-    train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1b, train_dataset_2], weights=[0.25, 0.75])\
+    train_dataset = tf.data.Dataset.sample_from_datasets([train_dataset_1b, train_dataset_2], weights=[prop_tp, prop_fp])\
                     .map(lambda x,y,z2: (data_augmentation(x),y,z2))\
                     .batch(batch_size_train)
     #.map(lambda x,y,z2: (data_augmentation(x),y,z2))\

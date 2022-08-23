@@ -13,11 +13,11 @@ Global:
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
   parameters:
-    signal_codes: GS
-    freq_start: 40
-    freq_size: 960
-    native_height: 121
-    npps: 48
+    signal_codes: LM
+    freq_start: 0
+    freq_size: 256
+    native_height: 128
+    npps: 40
     native_window_size: 240
     model_window_size: 240
     model_name: EffecientNet
@@ -65,21 +65,16 @@ Job:
       methodvers: v1-0
       methodID2m: matlabdecimate
       methodvers2m: V1s0
-      #target_samp_rate: 4096
-      target_samp_rate: 2048
+      target_samp_rate: 512
       file_groupID:
-        - AL16_AU_BS03_files_77-170_gs_hg.csv
-        #- AW12_AU_BS03_files_1-250_gs_hg.csv
-        #- AW12_AU_BS03_files_1464-1507_gs_hg.csv
-        #- AW14_AU_BS03_files_1-71_gs_hg.csv
-        #- AW14_AU_BS03_files_309-369_gs_hg.csv
-        #- AW15_AU_BS02_files_33-103_gs_hg.csv
-        #- AW15_AU_BS03_files_705-749_gs_hg.csv
-        #- BS12_AU_PM02-a_files_1-46_gs_hg.csv
-        #- BS12_AU_PM02-b_files_689-747_gs_hg.csv
-        #- BS13_AU_PM04_files_137-224_gs_hg.csv
-        #- BS14_AU_PM04_files_74-148_gs_hg.csv
-        #- DFO_comb_gs_hg.csv
+        - LMyesSample_1.csv
+        - oneHRonePerc.csv
+        - BS13_AU_PM02-a_files_343-408_lm.csv
+        - BS13_AU_PM02-a_files_38-122_lm.csv
+        - BS13_AU_PM02-a_files_510-628_lm.csv
+        - BS14_AU_PM04_files_189-285_lm.csv
+        - BS14_AU_PM04_files_304-430_lm.csv
+        - BS14_AU_PM04_files_45-188_lm.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -99,21 +94,16 @@ Job:
         methodvers: v1-0
         methodID2m: matlabdecimate
         methodvers2m: V1s0
-        #target_samp_rate: 4096
-        target_samp_rate: 2048
+        target_samp_rate: 512
         file_groupID:
-          - AL16_AU_BS03_files_77-170_gs_hg.csv
-          - AW12_AU_BS03_files_1-250_gs_hg.csv
-          - AW12_AU_BS03_files_1464-1507_gs_hg.csv
-          - AW14_AU_BS03_files_1-71_gs_hg.csv
-          - AW14_AU_BS03_files_309-369_gs_hg.csv
-          - AW15_AU_BS02_files_33-103_gs_hg.csv
-          - AW15_AU_BS03_files_705-749_gs_hg.csv
-          - BS12_AU_PM02-a_files_1-46_gs_hg.csv
-          - BS12_AU_PM02-b_files_689-747_gs_hg.csv
-          - BS13_AU_PM04_files_137-224_gs_hg.csv
-          - BS14_AU_PM04_files_74-148_gs_hg.csv
-          - DFO_comb_gs_hg.csv
+          - LMyesSample_1.csv
+          - oneHRonePerc.csv
+          - BS13_AU_PM02-a_files_343-408_lm.csv
+          - BS13_AU_PM02-a_files_38-122_lm.csv
+          - BS13_AU_PM02-a_files_510-628_lm.csv
+          - BS14_AU_PM04_files_189-285_lm.csv
+          - BS14_AU_PM04_files_304-430_lm.csv
+          - BS14_AU_PM04_files_45-188_lm.csv
       arguments:
         hard_rerun: n
       descriptors:
@@ -155,17 +145,17 @@ Job:
           native_height: [native_height]
           native_pix_per_sec: [npps]
           perc_fp: 1.00
-          #perc_tp: 0.10
-          perc_tp: 0.06
+          #perc_tp: 0.15 #does not work for NPRW, calls are too 'small'! 
+          perc_tp: 0.01
           stride_pix: [native_window_size]
           tp_weight: 4
-          view_plots: n
+          view_plots: y
           win_size: [model_window_size]
           win_size_native: [native_window_size]
         arguments: 
           batch_size: 75
           batch_size_inf: [inf_batch_size]
-          epoch: 75
+          epoch: 120
           epoch_steps: 1000
           #epoch: 1
           hard_rerun: n
@@ -183,7 +173,7 @@ Job:
       crop_freq_start: [freq_start]
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      window_length: 256
+      window_length: 250
     arguments:
       hard_rerun: n
     descriptors:
@@ -247,9 +237,9 @@ Job:
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam
-      methodvers: v1-3
+      methodvers: v1-4
       UseFG: y
-      Analysis_ID: 10
+      Analysis_ID: 10,7,8
       #multiple can be specified with "," (no space) 
       SignalCode: [signal_codes]
     arguments: 
@@ -338,8 +328,7 @@ Job:
       difftime_cap: 2400
       freq_low: [freq_start]
       freq_size: [freq_size]
-      #group_pixels: 20
-      group_pixels: 96
+      group_pixels: 20
       #min_det_size: 90
       mod_size_1: [native_window_size]
       mod_size_2: [model_window_size]

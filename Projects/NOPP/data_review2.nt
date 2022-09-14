@@ -1,0 +1,93 @@
+Global:
+  cache_root: C:/Apps/INSTINCT/Cache
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Working_Folders/NOPP_file_format/Waves
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+  parameters:
+#    decimate: y #don't do this as global, BC formatFG is hardcoded in the process to look for 'yes'. 
+Job:
+  FormatFG:
+      parameters:
+        decimate_data: y
+        difftime_limit: 2400
+        methodID: dbuddy-pull-FG-wname
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        target_samp_rate: 2048
+        file_groupID:
+          - XP14_UK_KO01_sample1.csv
+          - XP15_UK_KO01_sample1.csv
+          - round1_pull1_reduce.csv
+          - round1_pull2.csv
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
+        runtype2m: bin
+        language2m: MATLAB
+  FormatGT:
+    parameters: 
+      methodID: R-pull-dbuddy-anyparam
+      methodvers: v1-3
+      UseFG: y
+      LastAnalyst: MW
+      #multiple can be specified with "," (no space) 
+      #SignalCode: [signal_codes]
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  RavenViewDETx:
+    parameters: 
+      methodID: rv-simple-w-metadata
+      methodvers: v1-9
+      decimate_path: y
+      fillFG: y
+    arguments:
+      hard_rerun: y
+      trim_tree: n
+    descriptors:
+      runtype: lib
+      language: R
+  RavenToDETx:
+    parameters: 
+      methodID: rd-simple-w-metadata
+      methodvers: v1-2
+    descriptors:
+      runtype: lib
+      language: R
+  #making this its own level to show how it will automatically override top level for ReduceGTall job
+  ReduceByField:
+    parameters:
+      methodID: reduce-by-label-and-string
+      methodvers: v1-1
+      ByFileOrCycle: File
+      ColString: Type
+      UseLabel: y
+      Label: y
+      UseString: n
+      LabelStringInt_or_Union: Union
+      String: OBS
+      StringInt_or_Union: Union
+    descriptors:
+      runtype: lib
+      language: R
+  EditRAVENx:
+    #this process always has an instructions parameter. changing these will change hash
+    parameters: 
+      instructions:
+        > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+        > Review the contents for correctness, adding, modifying, or deleting as necessary.
+        > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+      rerun_key: 0
+      hard_rerun: n
+    descriptors:
+      runtype: no_method

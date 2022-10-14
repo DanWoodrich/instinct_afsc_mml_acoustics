@@ -22,6 +22,10 @@ from tensorflow.keras.callbacks import CSVLogger
 #import sklearn
 print(tf.version.VERSION)
 
+sys.path.append(os.getcwd())
+from user.misc import arg_loader
+
+
 #import code
 #code.interact(local=dict(globals(), **locals()))
 
@@ -30,7 +34,7 @@ print(tf.version.VERSION)
 #args="C:/Apps/INSTINCT/Cache/394448/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/394448/516798 C:/Apps/INSTINCT/Cache/394448/756783/391491 C:/Apps/INSTINCT/Cache/394448/516798/399814 C:/Apps/INSTINCT/Cache/394448/516798/399814/249442 15 125 HB.s.p.2,HB.s.p.4 4 EffecientNet 300 15 300 300 train-win-slide-dl-v1-0"
 #args=args.split()
 
-args=sys.argv
+args=arg_loader()
 
 FGpath = args[1] #may not end up needing this. 
 spec_path=args[2]

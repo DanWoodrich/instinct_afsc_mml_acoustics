@@ -16,11 +16,12 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "C:/Apps/INSTINCT/Cache/725729/402697/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/403160/829587/638915/598587/822849/363192 C:/Apps/INSTINCT/Cache/334512/741093/393863 C:/Apps/INSTINCT/Cache/403160/829587/638915/598587 C:/Apps/INSTINCT/Cache/403160/829587/638915/598587/414584 2400 40 300 20 240 240 65 mean within_file 20 moving-smooth-v1-6"
+args = "C:/Apps/INSTINCT/Cache/462670/93924/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/461006/895266/302236/692618/680653/593225 C:/Apps/INSTINCT/Cache/461006/895266/961316 C:/Apps/INSTINCT/Cache/461006/895266/302236/692618 C:/Apps/INSTINCT/Cache/461006/895266/302236/692618/32731 3600 40 600 96 480 240 48 mean within_file 20 moving-smooth-v1-6"
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #docker values
 FGpath <- args[1]

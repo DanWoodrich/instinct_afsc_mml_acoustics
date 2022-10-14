@@ -14,7 +14,8 @@ MethodID<-"labels-w-time-oldstyle-v1-0"
 #IoUThresh<-0.50
 #SignalCode="LM"
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #docker values
 FGpath <- args[1]

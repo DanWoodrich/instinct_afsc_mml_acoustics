@@ -6,6 +6,9 @@ args<-strsplit(args,split=" ")[[1]]
 
 args<-commandArgs(trailingOnly = TRUE)
 
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
+
 EditDataPath <-args[1]
 PriorDataPath <- args[2]
 resultPath <- args[3]

@@ -20,7 +20,8 @@ args = "C:/Apps/INSTINCT/Cache/652882/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Ca
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #docker values
 FGpath <- args[1]

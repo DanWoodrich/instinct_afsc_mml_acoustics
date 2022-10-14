@@ -10,7 +10,8 @@ LABpath<-"C:/Apps/INSTINCT/Cache/d7cc1b394b7e/f636f8/bdedc3/b04cdf"
 #SignalCode="LM"
 resultPath="C:/Apps/INSTINCT/Cache/d7cc1b394b7e/f636f8/bdedc3/b04cdf/8875a4"
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #docker values
 FGpath <- args[1]

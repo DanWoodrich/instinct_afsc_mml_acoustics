@@ -82,7 +82,8 @@ args="C:/Apps/INSTINCT/Cache/333397 C:/Apps/INSTINCT/Cache/333397/537889 //161.5
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #if I am sharing these same parameters for multiple processes, I should probably pass the names and values to make it more robust to 
 #changes in the different processes. 

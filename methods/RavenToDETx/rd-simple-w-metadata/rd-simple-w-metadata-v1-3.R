@@ -7,7 +7,9 @@ args="C:/Apps/INSTINCT/Cache/472139/10624/538084/545708 C:/Apps/INSTINCT/Cache/4
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
+
 
 RAVpath <- args[1] #//akc0ss-n086/NMML_CAEP_Acoustics/Detector/LF moan project/Cole Summer 2021 materials and analysis/Review of INSTINCT positive sound files/Cole data product
 FGpath <-args[2] #C:/Users/daniel.woodrich/Desktop/database/FileGroups/oneHRonePerc.csv

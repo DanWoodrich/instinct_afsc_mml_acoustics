@@ -6,7 +6,8 @@ args="C:/Apps/INSTINCT/Outputs/runFullNovel/093e69/001fca C:/Apps/INSTINCT/Cache
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 GTpath <- args[1]
 FGpath <-args[2]

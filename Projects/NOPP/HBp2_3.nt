@@ -1,0 +1,352 @@
+#this is the params file for training a model for HB phrase detection. 
+#second version of the model
+
+#This test concerns introducing TP weight in a new version of model training v1-5. Also, lowers the max brightness in the augmentation. Also, increases the tp criteria by a touch. And, increase shuffle size within 1-5
+
+Global:
+  cache_root: C:/Apps/INSTINCT/Cache
+  #cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
+  #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves  #switch back to this after making new matlab decimation method
+  #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+  SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+  #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
+  Wrapper: False
+  parameters:
+    signal_codes: HB.s.p.3
+    freq_start: 80
+    freq_size: 530
+    native_height: 134
+    npps: 48
+    native_window_size: 480
+    model_window_size: 240
+    model_name: EffecientNet
+    inf_batch_size: 175
+    msp_inf: 20
+    split_prot: within_file
+    #difftime_limit: 3600
+Job:
+  ModelEval_NN:
+    parameters:
+      methodID: simple-eval
+      methodvers: v1-1
+      gt_depth: [signal_codes]
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: Python
+  DLmodel*:
+    parameters:
+      methodID: train-win-slide-dl
+      methodvers: v1-14
+      augstr: 0.20,0.55,1
+      gt_depth: [signal_codes]
+      model_name: [model_name]
+      native_height: [native_height]
+      native_pix_per_sec: [npps]
+      stride_pix: [msp_inf]
+      view_plots: n
+      win_size: [model_window_size]
+      win_size_native: [native_window_size]
+    arguments: 
+      batch_size: [inf_batch_size]
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: Python
+      venv: Conda
+      venv_name: tf-gpu3
+  FormatFG:
+    parameters:
+      decimate_data: y
+      difftime_limit: 3600
+      methodID: dbuddy-pull-FG-wname
+      methodvers: v1-0
+      methodID2m: matlabdecimate
+      methodvers2m: V1s0
+      #target_samp_rate: 4096
+      target_samp_rate: 2048
+      file_groupID:
+        #- XP14_UK_KO01_sample1.csv
+        - XP15_UK_KO01_sample1.csv
+        #- round1_pull1_reduce.csv
+        #- round1_pull2.csv
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+      runtype2m: bin
+      language2m: MATLAB
+  TrainModel_paramset:
+    FormatFG:
+      parameters:
+        decimate_data: y
+        #in seconds
+        difftime_limit: 3600
+        methodID: dbuddy-pull-FG-wname
+        #methodID: dbuddy-pull-FG
+        #methodID: dbuddy-pull-FG-ord
+        methodvers: v1-0
+        methodID2m: matlabdecimate
+        methodvers2m: V1s0
+        #target_samp_rate: 4096
+        target_samp_rate: 2048
+        file_groupID:
+          - XP14_UK_KO01_sample1.csv
+          - XP15_UK_KO01_sample1.csv
+          - round1_pull1_reduce.csv
+          - round1_pull2.csv
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
+        runtype2m: bin
+        language2m: MATLAB
+    seperate_ds_train:
+      SplitTensor:
+        parameters:
+          methodID: tens-simple-split
+          methodvers: v1-1
+          native_pix_per_sec: [npps]
+          seed_val: 1
+          #by_file or within_file
+          split_protocol: [split_prot]
+          test_split: n
+          #do not break into test splits
+          train_test_split: 1.0
+          #train_test_split: 0.80
+          #of the test in previous, what is the split between train and val
+          train_val_split: 0.75
+          #or per_file. by-file smoother, per_file more label effecient
+          use_seed: y    
+        arguments:
+          hard_rerun: n
+        descriptors:
+          runtype: lib
+          language: R
+    test1:
+      DLmodel*:
+        parameters:
+          methodID: train-win-slide-dl
+          methodvers: v1-13
+          addnoise_mean: 0.5
+          addnoise_stddev: 0.25
+          augstr: 0.20,0.55,1
+          gt_depth: [signal_codes]
+          learn_rate: 0.00005
+          model_name: [model_name]
+          native_height: [native_height]
+          native_pix_per_sec: [npps]
+          perc_fp: 1.00
+          #perc_tp: 0.10
+          perc_tp: 0.40
+          prop_fp: 0.75
+          prop_tp: 0.25
+          shuf_size: 0.015
+          stride_pix: 48
+          tp_weight: 1
+          view_plots: n
+          win_size: [model_window_size]
+          win_size_native: [native_window_size]
+          zero_drop: 0.1
+        arguments: 
+          batch_size: 75
+          batch_size_inf: [inf_batch_size]
+          epoch: 30
+          epoch_steps: 3000
+          #epoch: 1
+          hard_rerun: n
+        descriptors:
+          runtype: lib
+          language: Python
+          venv: Conda
+          venv_name: tf-gpu3
+  GenBigSpec:
+    parameters:
+      methodID: con_bright_no_rep
+      methodvers: v1-4
+      crop_freq: y
+      crop_freq_size: [freq_size]
+      crop_freq_start: [freq_start]
+      native_height: [native_height]
+      native_pix_per_sec: [npps]
+      window_length: 256
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  LabelTensor:
+    parameters:
+      methodID: tens-simple-label
+      methodvers: v1-4
+      #1 if only on time, 2 if time/frequency
+      dimensions: 2
+      #reduce_factor is the factor by which to divide spec dimensions (lower resolution than spec) 
+      freq_size: [freq_size]
+      freq_start: [freq_start]
+      native_height: [native_height]
+      native_pix_per_sec: [npps]
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  SplitTensor:
+    parameters:
+      methodID: tens-simple-split
+      methodvers: v1-1
+      native_pix_per_sec: [npps]
+      seed_val: 1
+      #by_file or within_file
+      split_protocol: within_file
+      test_split: n
+      train_test_split: 0.80
+      #of the test in previous, what is the split between train and val
+      train_val_split: 0.75
+      #or per_file. by-file smoother, per_file more label effecient
+      use_seed: y    
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  seperate_ds_test:
+    SplitTensor:
+      parameters:
+        methodID: tens-simple-split
+        methodvers: v1-1
+        native_pix_per_sec: [npps]
+        seed_val: 1
+        #by_file or within_file
+        split_protocol: within_file
+        test_split: n
+        train_test_split: 0
+        #of the test in previous, what is the split between train and val
+        train_val_split: 0.75
+        #or per_file. by-file smoother, per_file more label effecient
+        use_seed: y    
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
+  FormatGT:
+    parameters: 
+      methodID: R-pull-dbuddy-anyparam
+      methodvers: v1-3
+      UseFG: y
+      LastAnalyst: MW
+      #multiple can be specified with "," (no space) 
+      SignalCode: [signal_codes]
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  RavenViewDETx:
+    parameters: 
+      methodID: rv-simple-w-metadata
+      methodvers: v1-8
+    arguments:
+    #previously called RavenFill
+    #this shuold really be a parameter, not an argument
+    #I should change this to y/n to be more consistent with other parameters
+      fg_fill: T
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  RavenToDETx:
+    parameters: 
+      methodID: rd-simple-w-metadata
+      methodvers: v1-5
+    descriptors:
+      runtype: lib
+      language: R
+  AssignLabels:
+    parameters: 
+      methodID: labels-w-iou-simple
+      methodvers: v1-4
+      iou_thresh: 0.01
+      write_GT: y
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval2DL:
+    parameters:
+      methodID: pe2dl-simple
+      methodvers: v1-1
+      cexmod: 2
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  EditRAVENx:
+    #this process always has an instructions parameter. changing these will change hash
+    parameters: 
+      instructions:
+        > 
+        > INSTRUCTIONS: 
+        >
+        > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+        > Review the outputs and populate label column. Allowable labels are y/m/n (yes, maybe, or no).  
+        > Comments can be made and will be retained in the database. Adding, deleting, or modifying timestamps or frequency of
+        > detections is forbidden by protocol. 
+        > 
+        > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
+        > Instead, use the EditGTpublish pipeline. 
+        >
+        > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+    arguments: 
+      #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+      #rerun_key: 0
+      hard_rerun: n
+    descriptors:
+      runtype: no_method
+  CompareAndPublishDets:
+    parameters:
+      methodID: dbuddy-compare-publish
+      methodvers: v1-2
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      language: R
+      runtype: lib
+  ScoresToDETx:
+    parameters:
+      #group output scores by # of pixels(can be different to original step to 'smooth')
+      methodID: moving-smooth
+      #v1-7 for combining scores, but save this for later
+      methodvers: v1-8
+      difftime_cap: 3600
+      freq_low: [freq_start]
+      freq_size: [freq_size]
+      #group_pixels: 20
+      group_pixels: 96
+      #min_det_size: 90
+      mod_size_1: [native_window_size]
+      mod_size_2: [model_window_size]
+      native_pix_per_sec: [npps]
+      #smooth_prob: 0.02
+      smooth_method: mean
+      split_protocol: [split_prot]
+      stride_pix: [msp_inf]
+    arguments:
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  ApplyCutoff:
+    parameters:
+      cutoff: 0
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: no_method

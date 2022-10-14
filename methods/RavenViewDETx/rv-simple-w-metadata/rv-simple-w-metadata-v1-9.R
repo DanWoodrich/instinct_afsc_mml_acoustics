@@ -34,10 +34,12 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="C:/Apps/INSTINCT/Cache/792179/430483 C:/Apps/INSTINCT/Cache/792179 C:/Apps/INSTINCT/Cache/792179/430483/334518 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 y n 1 n y rv-simple-w-metadata-v1-9 //161.55.120.117/NMML_AcousticsData/Working_Folders/NOPP_file_format/Waves"
+args="C:/Apps/INSTINCT/Cache/380195/375313 C:/Apps/INSTINCT/Cache/380195 C:/Apps/INSTINCT/Cache/380195/375313/199660 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 y n 1 y y rv-simple-w-metadata-v1-9 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
+
 
 DETpath <- args[1]
 FGpath <-args[2]

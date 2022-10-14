@@ -100,7 +100,7 @@ class RunED(Split_process,SplitRun_process,INSTINCT_process):
         #param_names grandfathered in, should just have R parse dictionaries as a standard
         self.cmd_args=[PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),self.outpath(),self.outpath(),\
                         os.path.basename(self.input().path),'1',self.arguments['cpu'],self.arguments['file_chunk_size'],verbose,\
-                       'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string,get_param_names(self.parameters)] #params
+                       'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string2,get_param_names(self.parameters)] #params
         
         self.run_cmd()
         #do this manually instead of using run_cmd to be compatible with prvs method
@@ -171,7 +171,7 @@ class EventDetector(Unify_process,INSTINCT_process):
             #run second stage of EventDetector method
             self.cmd_args=[PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),self.outpath(),self.outpath(),\
                         'EDoutCorrect.csv.gz','2',self.arguments['cpu'],self.arguments['file_chunk_size'],verbose,\
-                       'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string,get_param_names(self.parameters)]
+                       'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string2,get_param_names(self.parameters)]
 
             self.process_ID = self.__class__.__name__ #needs to be specified here since it's a wrapper, otherwise assumed as class name
             
@@ -276,7 +276,7 @@ class RunFE(Split_process,SplitRun_process,INSTINCT_process):
 
         self.cmd_args= [self.ports[1].outpath(),os.path.dirname(self.input().path),PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,1),\
                         self.outpath(),str(self.split_ID) + '_' + str(self.splits),str(self.arguments['cpu']),verbose,\
-                        'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string,get_param_names(self.parameters)]
+                        'method1',self.parameters['methodID'] + '-' + self.parameters['methodvers'],self.param_string2,get_param_names(self.parameters)]
         
         self.run_cmd()
 
@@ -303,10 +303,10 @@ class RavenViewDETx(INSTINCT_process):
 
     def run(self):
         #import code
-        #code.interact(local=locals())
+        #code.interact(local=dict(globals(), **locals()))
         self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),\
                        PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,1),\
-                       " ".join(self.arguments.values()).strip(),self.param_string.strip(),\
+                       os.environ["INS_ARG_SEP"].join(self.arguments.values()).strip(),self.param_string2.strip(),\
                        PARAMSET_GLOBALS['SF_raw']]
         
         
@@ -329,7 +329,7 @@ class ReduceByField(INSTINCT_process):
 
     def run(self):
         
-        self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string2]
         
         self.run_cmd()
 
@@ -362,7 +362,7 @@ class AssignLabels(INSTINCT_process):
         #import code
         #code.interact(local=locals())
         
-        self.cmd_args=[self.ports[2].outpath(),self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[2].outpath(),self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string2]
         
         self.run_cmd()
 
@@ -407,7 +407,7 @@ class PerfEval2(INSTINCT_process):
 
     def run(self):
         
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.ports[1].outpath(),self.param_string]
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.ports[1].outpath(),self.param_string2]
         
         self.run_cmd()
         
@@ -420,7 +420,7 @@ class PerfEval2DL(INSTINCT_process):
 
     def run(self):
         
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]
         
         self.run_cmd()
 
@@ -433,7 +433,7 @@ class TrainModel_RF_CV(INSTINCT_process):
 
     def run(self):
         
-        self.cmd_args=[self.input()[0].path,self.input()[1].path,self.input()[2].path,self.outpath(),"NULL","CV",self.arguments['cpu'],self.param_string]
+        self.cmd_args=[self.input()[0].path,self.input()[1].path,self.input()[2].path,self.outpath(),"NULL","CV",self.arguments['cpu'],self.param_string2]
         
         self.run_cmd()
 
@@ -446,7 +446,7 @@ class TrainModel_RF_obj(INSTINCT_process):
 
     def run(self):
 
-        self.cmd_args=[self.input()[0].path,self.input()[1].path,self.input()[2].path,self.outpath(),"NULL","train",self.arguments['cpu'],self.param_string]
+        self.cmd_args=[self.input()[0].path,self.input()[1].path,self.input()[2].path,self.outpath(),"NULL","train",self.arguments['cpu'],self.param_string2]
         
         self.run_cmd()
 
@@ -460,7 +460,7 @@ class TrainModel_RF_apply(INSTINCT_process):
     def run(self):
         #import code
         #code.interact(local=locals())
-        self.cmd_args=["NULL",self.input()[1].path,self.input()[2].path,self.outpath(),self.input()[0].path,"apply",self.arguments['cpu'],self.param_string]
+        self.cmd_args=["NULL",self.input()[1].path,self.input()[2].path,self.outpath(),self.input()[0].path,"apply",self.arguments['cpu'],self.param_string2]
         
         self.run_cmd()
         
@@ -533,7 +533,7 @@ class QueryData(INSTINCT_process):
 
     def run(self):
 
-        self.cmd_args=[self.outpath(),PARAMSET_GLOBALS['SF_raw'],self.outfile,self.param_string]
+        self.cmd_args=[self.outpath(),PARAMSET_GLOBALS['SF_raw'],self.outfile,self.param_string2]
         
         self.run_cmd()
 
@@ -548,7 +548,7 @@ class GraphDETx(INSTINCT_process):
 
     def run(self):
 
-        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outfilegen(),self.ports[1].parameters['file_groupID'],self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outfilegen(),self.ports[1].parameters['file_groupID'],self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -565,7 +565,7 @@ class PublishDets(INSTINCT_process):#
         #import code
         #code.interact(local=locals())
 
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -581,7 +581,7 @@ class CompareAndPublishDets(INSTINCT_process):#
         #import code
         #code.interact(local=locals())
 
-        self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -633,7 +633,7 @@ class FormatGT(INSTINCT_process):
             #import code
             #code.interact(local=locals())
 
-            self.cmd_args=[self.outfilegen(),self.ports[0].parameters['file_groupID'],get_param_names(self.parameters),self.param_string]
+            self.cmd_args=[self.outfilegen(),self.ports[0].parameters['file_groupID'],get_param_names(self.parameters),self.param_string2]
 
             self.run_cmd()
 
@@ -671,7 +671,7 @@ class FormatFG(INSTINCT_process):
 
             temppath = self.outpath()+"/tempFG.csv.gz"
 
-            self.cmd_args=[temppath,self.parameters['file_groupID'],get_param_names(self.parameters),self.param_string]
+            self.cmd_args=[temppath,self.parameters['file_groupID'],get_param_names(self.parameters),self.param_string2]
 
             self.run_cmd()
 
@@ -784,7 +784,7 @@ class GenBigSpec(INSTINCT_process):#
         #code.interact(local=locals())
 
         self.cmd_args=[self.ports[0].outpath(),self.outpath(),PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,0),
-                       self.ports[0].parameters['file_groupID'],self.param_string]#,self.arguments['transfer_loc']
+                       self.ports[0].parameters['file_groupID'],self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
         
@@ -800,7 +800,7 @@ class MakeModel_bins(INSTINCT_process):#
         #import code
         #code.interact(local=locals())
 
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -814,7 +814,7 @@ class TrainModel_dl(INSTINCT_process):
 
     def run(self):
         
-        self.cmd_args=[self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outpath(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[2].outfilegen(),self.ports[1].outpath(),self.ports[0].outfilegen(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -832,9 +832,9 @@ class DLmodel_Train(INSTINCT_process):
         arg_tlist= sorted(self.arguments.items())
         arg_vals = [arg_tlist[x][1] for x in range(len(arg_tlist))]
         arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
-        arg_string = ' '.join(arg_vals_sort)
+        arg_string = os.environ["INS_ARG_SEP"].join(arg_vals_sort)
         
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),"NULL","train",self.param_string,arg_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),"NULL","train",self.param_string2,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -852,12 +852,12 @@ class DLmodel_Test(INSTINCT_process):
         arg_tlist= sorted(self.arguments.items())
         arg_vals = [arg_tlist[x][1] for x in range(len(arg_tlist))]
         arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
-        arg_string = ' '.join(arg_vals_sort)
+        arg_string = os.environ["INS_ARG_SEP"].join(arg_vals_sort)
 
         #import code
         #code.interact(local=dict(globals(), **locals()))
         
-        self.cmd_args=[self.ports[4].outfilegen(),self.ports[3].outpath(),self.ports[2].outpath(),self.ports[1].outpath(),self.outpath(),self.ports[0].outfilegen(),"test",self.param_string,arg_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[4].outfilegen(),self.ports[3].outpath(),self.ports[2].outpath(),self.ports[1].outpath(),self.outpath(),self.ports[0].outfilegen(),"test",self.param_string2,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -875,9 +875,9 @@ class DLmodel_Inf(INSTINCT_process):
         arg_tlist= sorted(self.arguments.items())
         arg_vals = [arg_tlist[x][1] for x in range(len(arg_tlist))]
         arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
-        arg_string = ' '.join(arg_vals_sort)
+        arg_string = os.environ["INS_ARG_SEP"].join(arg_vals_sort)
         
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),"NULL",self.outpath(),self.ports[0].outpath(),"inf",self.param_string,arg_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),"NULL",self.outpath(),self.ports[0].outpath(),"inf",self.param_string2,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()
         
@@ -889,7 +889,7 @@ class ScoresToDETx(INSTINCT_process):
     outfile = "DETx.csv.gz"
     
     def run(self):
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string]
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2]
         
         self.run_cmd()
 
@@ -904,7 +904,7 @@ class ModelEval_NN(INSTINCT_process):
     
     def run(self):
 
-        self.cmd_args=[self.ports[0].outpath(),self.outfilegen(),self.param_string]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[0].outpath(),self.outfilegen(),self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 
@@ -920,7 +920,7 @@ class LabelTensor(INSTINCT_process):
         #import code
         #code.interact(local=locals())
         
-        self.cmd_args=[self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.ports[2].parameters['file_groupID'],self.param_string]
+        self.cmd_args=[self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.ports[2].parameters['file_groupID'],self.param_string2]
         
         self.run_cmd()
 
@@ -933,6 +933,6 @@ class SplitTensor(INSTINCT_process):
     
     def run(self):
 
-        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.ports[1].parameters['file_groupID'],self.param_string]
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.ports[1].parameters['file_groupID'],self.param_string2]
 
         self.run_cmd()

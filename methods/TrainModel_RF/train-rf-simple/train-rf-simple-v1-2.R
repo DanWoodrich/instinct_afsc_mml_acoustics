@@ -55,7 +55,8 @@ args<-"C:/Apps/INSTINCT_2/Cache/15825/46174/678589/828293//DETx.csv.gz C:/Apps/I
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 dataPath<-args[1]
 FGpath<-args[2]

@@ -5,7 +5,8 @@ args="C:/Apps/INSTINCT/Cache/770628/777608/DETx.csv.gz test.csv Comments SignalC
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 outpath <-args[1]
 FG <- args[2]

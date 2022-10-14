@@ -47,7 +47,9 @@ args="C:/Temp //161.55.120.117/NMML_AcousticsData/Audio_Data AFSC_pull2.csv //nm
 
 args<-strsplit(args,split=" ")[[1]]
 
-#args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
+
 
 resultPath<- args[1]
 

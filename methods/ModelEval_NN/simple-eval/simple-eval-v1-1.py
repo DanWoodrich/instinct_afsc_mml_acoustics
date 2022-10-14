@@ -11,6 +11,9 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import sys
 
+sys.path.append(os.getcwd())
+from user.misc import arg_loader
+
 #import sklearn
 
 #######import params###########
@@ -18,7 +21,7 @@ import sys
 #args="first C:/Apps/INSTINCT/Cache/394448/527039 C:/Apps/INSTINCT/Cache/394448/628717/947435/DETx.csv.gz C:/Apps/INSTINCT/Cache/394448/628717/947435/909093/summary.png 0.80 train-simple-dl-v1-0"
 #args=args.split()
 
-args=sys.argv
+args=arg_loader()
 
 model_path = args[1]
 result_path = args[2]

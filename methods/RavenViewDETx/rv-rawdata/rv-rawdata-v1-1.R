@@ -42,7 +42,9 @@ formatToDets<-function(data,data2){
 args="C:/Apps/INSTINCT/Cache/185f51d2b03a/e11fbd/76189a/b29207/33493e C:/Apps/INSTINCT/Cache/185f51d2b03a C:/Apps/INSTINCT/Cache/185f51d2b03a/e11fbd/76189a/b29207/33493e/1e471e //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 F"
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
+
 
 DETpath <- args[1]
 FGpath <-args[2]

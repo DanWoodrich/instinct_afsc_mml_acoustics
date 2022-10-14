@@ -170,7 +170,8 @@ SfRoot<- "//161.55.120.117/NMML_AcousticsData/Audio_Data"
 fileName <- "LMyes.csv" 
 statement <- "StartDateTime > '2016-10-04 21:13:45' AND StartDateTime < '2017-10-10 21:13:45' AND MooringSite = 'BS01' LIMIT 150"
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 resultPath<- args[1]
 

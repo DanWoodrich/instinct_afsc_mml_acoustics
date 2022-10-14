@@ -28,14 +28,16 @@ from tensorflow.keras.callbacks import CSVLogger
 #import sklearn
 print(tf.version.VERSION)
 
-
+sys.path.append(os.getcwd())
+from user.misc import arg_loader
 
 #######import params###########
 
 #args="C:/Apps/INSTINCT/Cache/491386/235062/FileGroupFormat.csv.gz C:/Apps/INSTINCT/Cache/491386/159690/295444 C:/Apps/INSTINCT/Cache/491386/756342/508664/182373 C:/Apps/INSTINCT/Cache/117419/673303/707058/700613 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200/295543 C:/Apps/INSTINCT/Cache/251579/121916/587840/248952/527200/model.keras test RW EffecientNetB0 151 31 0.97 0.03 5 n 1.4834 2 224 248 train-win-slide-dl-v1-3 175 y 1"
 #args=args.split()
 
-args=sys.argv
+args=arg_loader()
+
 
 FGpath = args[1] #may not end up needing this. 
 spec_path=args[2]

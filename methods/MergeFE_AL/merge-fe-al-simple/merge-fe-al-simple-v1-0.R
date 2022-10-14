@@ -6,9 +6,8 @@ MethodName<-"merge-fe-al-simple-v1-0"
 #DETwFEpath <- "C:/instinct_dt/Cache/2bf717aef81044ab2e655e4351d4342cc08de10a/8a757bbec32b5b6a56bc98ac2748d2df64deaa0f/0eb9f6fb7a54dd3ac00c2725cc728a1325b5facd/"
 #DETwALpath <- "C:/instinct_dt/Cache/2bf717aef81044ab2e655e4351d4342cc08de10a/8a757bbec32b5b6a56bc98ac2748d2df64deaa0f/2cc09ef5daa22a410caf96a2b15d10537bd1a4b5/"
 #resultPath<- "C:/instinct_dt/Cache/2bf717aef81044ab2e655e4351d4342cc08de10a/8a757bbec32b5b6a56bc98ac2748d2df64deaa0f/2cc09ef5daa22a410caf96a2b15d10537bd1a4b5/c50f93ed982bc9fc3da1074b5c4db3ffac3420a8"
-
-args<-commandArgs(trailingOnly = TRUE)
-
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 DETwFEpath <- args[1]
 DETwALpath <- args[2]
 resultPath <- args[3]

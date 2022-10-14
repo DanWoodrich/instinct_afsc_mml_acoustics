@@ -48,7 +48,8 @@ set.seed(5)
 
 #load in params #don't care about CV and datasplit params for making single model. 
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 dataPath<-args[1]
 FGpath<-args[2]

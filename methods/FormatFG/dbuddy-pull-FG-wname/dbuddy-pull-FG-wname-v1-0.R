@@ -7,7 +7,8 @@ args = "C:/Apps/INSTINCT/Cache/652882/tempFG.csv.gz BS16_AU_PM02-a_files_1-175_r
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #docker values
 FGpath <- args[1]

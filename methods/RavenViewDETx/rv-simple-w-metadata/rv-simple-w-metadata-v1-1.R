@@ -6,7 +6,8 @@ args="C:/Apps/INSTINCT_2/Cache/747219/371652 C:/Apps/INSTINCT_2/Cache/747219 C:/
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 DETpath <- args[1]
 FGpath <-args[2]

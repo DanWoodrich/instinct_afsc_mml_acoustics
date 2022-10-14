@@ -6,6 +6,24 @@
 #signal
 #tuneR
 
+commandIngest<-function(){
+  #uses env variable which should be in system.
+  
+  args_ = commandArgs(trailingOnly = TRUE)
+  
+  sepvar = Sys.getenv("INS_ARG_SEP")
+  
+  if(sepvar!=" "){
+  #means that we need to split
+    
+    args_<-strsplit(args_,split=Sys.getenv("INS_ARG_SEP"))[[1]]
+  
+  }
+  
+  return(args_)
+
+}
+
 #start parallel processing
 
 #calculate files in FG format (or Catherine output format) which are consecutive with each other

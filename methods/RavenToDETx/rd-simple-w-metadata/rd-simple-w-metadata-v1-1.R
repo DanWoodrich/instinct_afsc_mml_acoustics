@@ -6,7 +6,9 @@ args="C:/Apps/INSTINCT/Outputs/EditGTwRaven/cc8590 C:/Apps/INSTINCT/Cache/c4a852
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
+
 
 RAVpath <- args[1]
 FGpath <-args[2]

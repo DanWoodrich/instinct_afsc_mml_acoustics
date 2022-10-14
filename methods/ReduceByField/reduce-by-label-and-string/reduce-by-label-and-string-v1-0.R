@@ -7,7 +7,8 @@ args="C:/Apps/INSTINCT/Outputs/EditGTwRaven/cc8590/740837 C:/Apps/INSTINCT/Cache
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 GTpath <- args[1]
 FGpath <-args[2]

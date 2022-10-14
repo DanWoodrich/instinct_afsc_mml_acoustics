@@ -1,7 +1,8 @@
 library(PRROC)
 library(flux)
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #dataPath<-"C:/instinct_dt/Cache/2bf717aef81044ab2e655e4351d4342cc08de10a/8a757bbec32b5b6a56bc98ac2748d2df64deaa0f/2cc09ef5daa22a410caf96a2b15d10537bd1a4b5/9b83e604c10167e92547431790a3008f3db64157"
 #resultPath<-"C:/instinct_dt/Cache/9b83e604c10167e92547431790a3008f3db64157/testOut"

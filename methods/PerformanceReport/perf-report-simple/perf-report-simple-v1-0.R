@@ -4,7 +4,8 @@ args<-"C:/Apps/INSTINCT/Cache/4ed47b/6f7ebc C:/Apps/INSTINCT/Outputs/ModelPerfEv
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 EDstatsPath<-args[1]
 ModelstatsPath<-args[2]

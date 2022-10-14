@@ -6,7 +6,8 @@ args="C:/Apps/INSTINCT/Cache/394448 C:/Apps/INSTINCT/Cache/394448/test2 15 1 mak
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 FG= read.csv(paste(args[1],"/FileGroupFormat.csv.gz",sep=""))
 resultpath = args[2]

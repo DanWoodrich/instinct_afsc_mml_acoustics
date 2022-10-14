@@ -6,7 +6,8 @@ args="//161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache/5
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 EditDataPath <-args[1]
 resultPath <- args[2]

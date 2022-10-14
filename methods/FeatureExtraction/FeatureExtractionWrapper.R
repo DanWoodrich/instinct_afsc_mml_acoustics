@@ -7,7 +7,8 @@ args<-"C:/Apps/INSTINCT/ C:/Apps/INSTINCT/Cache/368058 C:/Apps/INSTINCT/Cache/36
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 ProjectRoot<-args[1]
 FGpath <- args[2]

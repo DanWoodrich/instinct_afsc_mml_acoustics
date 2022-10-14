@@ -9,6 +9,8 @@ args<-"C:/Apps/INSTINCT_2/Cache/132288/FileGroupFormat.csv.gz C:/Apps/INSTINCT_2
 
 args<-strsplit(args,split=" ")[[1]]
 
+
+
 #test folder
 #FGpath<-"C:/Apps/INSTINCT/Cache/2e77bc96796a/"
 #GTpath<-"C:/Apps/INSTINCT/Cache/2e77bc96796a/50ae7a/"
@@ -17,7 +19,8 @@ args<-strsplit(args,split=" ")[[1]]
 #IoUThresh<-0.15
 #SignalCode="LM"
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #docker values
 FGpath <- args[1]

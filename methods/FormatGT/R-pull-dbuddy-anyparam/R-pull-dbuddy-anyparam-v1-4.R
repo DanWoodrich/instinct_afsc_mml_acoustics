@@ -6,7 +6,8 @@ args="C:/Apps/INSTINCT/Cache/394448/643567/DETx.csv.gz round1_pull1_reduce.csv A
 
 args<-strsplit(args,split=" ")[[1]]
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 outpath <-args[1]
 FG <- args[2]

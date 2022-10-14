@@ -6,6 +6,8 @@ Global:
   SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
+  #seperate string by ' ' 
+  custom_argument_seperator: ' '
   parameters:
 #    decimate: y #don't do this as global, BC formatFG is hardcoded in the process to look for 'yes'. 
 Job:
@@ -19,10 +21,10 @@ Job:
         methodvers2m: V1s0
         target_samp_rate: 2048
         file_groupID:
-          - XP14_UK_KO01_sample1.csv
-          - XP15_UK_KO01_sample1.csv
+          #- XP14_UK_KO01_sample1.csv
+          #- XP15_UK_KO01_sample1.csv
           - round1_pull1_reduce.csv
-          - round1_pull2.csv
+          #- round1_pull2.csv
       arguments:
         hard_rerun: n
       descriptors:
@@ -35,7 +37,7 @@ Job:
       methodID: R-pull-dbuddy-anyparam
       methodvers: v1-3
       UseFG: y
-      LastAnalyst: MW
+      LastAnalyst: MW,JMH
       #multiple can be specified with "," (no space) 
       #SignalCode: [signal_codes]
     arguments: 

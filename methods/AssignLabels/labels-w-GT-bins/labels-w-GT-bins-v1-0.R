@@ -19,7 +19,8 @@ args<-strsplit(args,split=" ")[[1]]
 #IoUThresh<-0.15
 #SignalCode="LM"
 
-args<-commandArgs(trailingOnly = TRUE)
+source(paste(getwd(),"/user/R_misc.R",sep="")) 
+args<-commandIngest()
 
 #docker values
 FGpath <- args[1]

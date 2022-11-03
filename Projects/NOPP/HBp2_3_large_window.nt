@@ -1,7 +1,8 @@
 #this is the params file for training a model for HB phrase detection. 
 #second version of the model
 
-#testing pe1
+#This test concerns introducing TP weight in a new version of model training v1-5. Also, lowers the max brightness in the augmentation. Also, increases the tp criteria by a touch. And, increase shuffle size within 1-5
+
 Global:
   cache_root: C:/Apps/INSTINCT/Cache
   #cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
@@ -17,13 +18,14 @@ Global:
     freq_size: 530
     native_height: 134
     npps: 48
-    native_window_size: 480
+    native_window_size: 720
     model_window_size: 240
     model_name: EffecientNet
     inf_batch_size: 175
-    msp_inf: 96
+    msp_inf: 24
     split_prot: within_file
-    cutoff: 0.82
+    cutoff_vals: 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9
+    cutoff: 0.82 
     #difftime_limit: 3600
 Job:
   ModelEval_NN:
@@ -39,14 +41,14 @@ Job:
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-16
+      methodvers: v1-13
       augstr: 0.20,0.55,1
       gt_depth: [signal_codes]
       model_name: [model_name]
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      only_labs: n
       stride_pix: [msp_inf]
+      only_labs: n
       win_size: [model_window_size]
       win_size_native: [native_window_size]
     arguments: 
@@ -68,7 +70,7 @@ Job:
       #target_samp_rate: 4096
       target_samp_rate: 2048
       file_groupID:
-        - XP14_UK_KO01_sample1.csv
+        #- XP14_UK_KO01_sample1.csv
         - XP15_UK_KO01_sample1.csv
         #- round1_pull1_reduce.csv
         #- round1_pull2.csv
@@ -131,7 +133,7 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-16
+          methodvers: v1-15
           addnoise_mean: 0.5
           addnoise_stddev: 0.25
           augstr: 0.20,0.55,1
@@ -142,9 +144,9 @@ Job:
           native_pix_per_sec: [npps]
           perc_fp: 1.00
           #perc_tp: 0.10
-          perc_tp: 0.30
+          perc_tp: 0.40
           prop_fp: 0.75
-          prop_tp: 0.25
+          prop_tp: 0.25	
           shuf_size: 0.015
           #shuf_size: 0.00015
           stride_pix: 48
@@ -156,10 +158,12 @@ Job:
         arguments: 
           batch_size: 75
           batch_size_inf: [inf_batch_size]
-          epoch: 20
-          epoch_steps: 6000
+          epoch: 10
+          epoch_steps: 3000
           #epoch: 1
           hard_rerun: y
+          #test to see if env change broke it or large window broke it. 
+          #rerun_key: 2
         descriptors:
           runtype: lib
           language: Python
@@ -273,8 +277,8 @@ Job:
   AssignLabels:
     parameters: 
       methodID: labels-w-iou-simple
-      methodvers: v1-7
-      iou_thresh: 0.2
+      methodvers: v1-4
+      iou_thresh: 0.01
       write_GT: y
     arguments: 
       hard_rerun: n
@@ -286,6 +290,7 @@ Job:
       methodID: pe2dl-simple
       methodvers: v1-2
       cexmod: 2
+      cutoffs: [cutoff_vals]
     arguments: 
       hard_rerun: n
     descriptors:
@@ -327,13 +332,12 @@ Job:
       #group output scores by # of pixels(can be different to original step to 'smooth')
       methodID: moving-smooth
       #v1-7 for combining scores, but save this for later
-      methodvers: v1-9
+      methodvers: v1-8
       difftime_cap: 3600
       freq_low: [freq_start]
       freq_size: [freq_size]
       #group_pixels: 20
-      #group_pixels: 96
-      group_pixels: [msp_inf]
+      group_pixels: 96
       #min_det_size: 90
       mod_size_1: [native_window_size]
       mod_size_2: [model_window_size]
@@ -349,7 +353,7 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: [cutoff]
+      cutoff: 0
     arguments: 
       hard_rerun: n
     descriptors:
@@ -357,7 +361,7 @@ Job:
   stats_calc:
     ApplyCutoff:
       parameters:
-        append_cutoff: y
+        append_cutoff: n
         cutoff: 
           - 0.0
           - 0.1
@@ -374,21 +378,3 @@ Job:
         hard_rerun: n
       descriptors:
         runtype: no_method
-  PerfEval1DL:
-    parameters:
-      methodID: pe1dl-simple
-      methodvers: v1-1
-    arguments: 
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: R
-  SplitDeduce:
-    parameters:
-      methodID: sd-simple
-      methodvers: v1-0
-    arguments: 
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: R

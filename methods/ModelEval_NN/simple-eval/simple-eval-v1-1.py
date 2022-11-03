@@ -10,6 +10,7 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 import sys
+import os
 
 sys.path.append(os.getcwd())
 from user.misc import arg_loader

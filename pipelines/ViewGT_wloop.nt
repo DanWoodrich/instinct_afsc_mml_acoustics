@@ -1,4 +1,5 @@
 pipe: ViewDETx
+#loop_on: FormatFG
 ViewDETx:
   process: RavenViewDETx
   GetDETx:

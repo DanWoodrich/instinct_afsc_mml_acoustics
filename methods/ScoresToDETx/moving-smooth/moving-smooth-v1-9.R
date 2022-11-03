@@ -114,8 +114,10 @@ for(i in 1:length(unique(FGs$Name))){
     
     indFGdf$DiffTime[1]=iterator
     
-    cums = cumsum(indFGdf$SegDur)-indFGdf$SegDur[1]
-    breaks = floor(cums / (difftime_cap)) 
+    #bugfix v1-9: shouldn't subtract 1st segdur 
+    cums = cumsum(indFGdf$SegDur) #-indFGdf$SegDur[1]
+    #bugfix v1-10: in case of exact match should not be new difftime. 
+    breaks = floor((cums-0.000001) / (difftime_cap)) 
     
     time_bool = breaks[2:length(breaks)]==breaks[1:(length(breaks)-1)]
     

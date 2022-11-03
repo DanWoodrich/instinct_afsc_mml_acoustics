@@ -158,7 +158,7 @@ Job:
           epoch: 20
           epoch_steps: 3000
           #epoch: 1
-          hard_rerun: y
+          hard_rerun: n
         descriptors:
           runtype: lib
           language: Python
@@ -324,7 +324,7 @@ Job:
       #group output scores by # of pixels(can be different to original step to 'smooth')
       methodID: moving-smooth
       #v1-7 for combining scores, but save this for later
-      methodvers: v1-8
+      methodvers: v1-9
       difftime_cap: 3600
       freq_low: [freq_start]
       freq_size: [freq_size]
@@ -345,7 +345,7 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0
+      cutoff: 0.82
     arguments: 
       hard_rerun: n
     descriptors:

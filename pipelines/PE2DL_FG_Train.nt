@@ -1,5 +1,5 @@
 pipe: PerfEval2DL.pipe
-params_drop: TrainModel_paramset
+params_drop: stats_calc-TrainModel_paramset
 loop_on: FormatFG
 PerfEval2DL.pipe:
   process: PerfEval2DL
@@ -7,3 +7,7 @@ PerfEval2DL.pipe:
     pipe: AssignLabels.pipe
     pipe_link: 
       name: ScoresDL_w_AL_Train.nt
+  GetStats:
+    pipe: PerfEval1DL.pipe
+    pipe_link:
+      name: PE1DL_FG_Train.nt

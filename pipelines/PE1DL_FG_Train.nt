@@ -1,0 +1,13 @@
+pipe: PerfEval1DL.pipe
+#params_drop: TrainModel_paramset
+PerfEval1DL.pipe:
+  process: PerfEval1DL
+  GetModel_w_probs:
+    pipe: AssignLabels.pipe
+    loop_on: ApplyCutoff
+    pipe_link: 
+      name: Scores_w_cutoff_AL_Train.nt
+  GetFG:
+    pipe: FormatFG.pipe
+    FormatFG.pipe:
+      process: FormatFG

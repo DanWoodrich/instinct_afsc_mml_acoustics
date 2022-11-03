@@ -1,7 +1,8 @@
 #this is the params file for training a model for HB phrase detection. 
 #second version of the model
 
-#testing pe1
+#This test concerns introducing TP weight in a new version of model training v1-5. Also, lowers the max brightness in the augmentation. Also, increases the tp criteria by a touch. And, increase shuffle size within 1-5
+
 Global:
   cache_root: C:/Apps/INSTINCT/Cache
   #cache_root: //161.55.120.117/NMML_AcousticsData/Working_Folders/INSTINCT_cache/Cache
@@ -12,19 +13,18 @@ Global:
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
   parameters:
-    signal_codes: HB.s.p.3
-    freq_start: 80
-    freq_size: 530
-    native_height: 134
-    npps: 48
-    native_window_size: 480
+    signal_codes: RW
+    freq_start: 40
+    freq_size: 300
+    native_height: 76
+    npps: 65
+    native_window_size: 240
     model_window_size: 240
     model_name: EffecientNet
     inf_batch_size: 175
-    msp_inf: 96
+    msp_inf: 20
     split_prot: within_file
-    cutoff: 0.82
-    #difftime_limit: 3600
+    #difftime_limit: 2400
 Job:
   ModelEval_NN:
     parameters:
@@ -39,14 +39,14 @@ Job:
   DLmodel*:
     parameters:
       methodID: train-win-slide-dl
-      methodvers: v1-16
+      methodvers: v1-11
       augstr: 0.20,0.55,1
       gt_depth: [signal_codes]
       model_name: [model_name]
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      only_labs: n
       stride_pix: [msp_inf]
+      view_plots: n
       win_size: [model_window_size]
       win_size_native: [native_window_size]
     arguments: 
@@ -56,22 +56,38 @@ Job:
       runtype: lib
       language: Python
       venv: Conda
-      venv_name: tf-gpu4
+      venv_name: tf-gpu3
   FormatFG:
     parameters:
       decimate_data: y
-      difftime_limit: 3600
+      difftime_limit: 2400
       methodID: dbuddy-pull-FG-wname
       methodvers: v1-0
       methodID2m: matlabdecimate
       methodvers2m: V1s0
       #target_samp_rate: 4096
-      target_samp_rate: 2048
+      target_samp_rate: 1024
       file_groupID:
-        - XP14_UK_KO01_sample1.csv
-        - XP15_UK_KO01_sample1.csv
-        #- round1_pull1_reduce.csv
-        #- round1_pull2.csv
+        #- NOPP6_EST_20090328_files_All.csv
+        #- NOPP6_EST_20090329_files_All.csv
+        #- NOPP6_EST_20090330_files_All.csv
+        #- NOPP6_EST_20090331_files_All.csv
+        #- NOPP6_EST_20090401_files_All.csv
+        #- NOPP6_EST_20090402_files_All.csv
+        #- NOPP6_EST_20090403_files_All.csv
+        #- BS16_AU_PM02-a_files_1-175_rw_hg.csv
+        - BS16_AU_PM05_rw_hg.csv
+        - BS15_AU_PM04_files_301-417_rw_hg.csv
+        - BS15_AU_PM02-a_files_1-104_rw_hg.csv
+        - BS15_AU_PM02-b_files_All_rw_hg.csv
+        - BS14_AU_PM04_rw_hg.csv
+        - BS13_AU_PM04_files_All_rw_hg.csv
+        - BS13_AU_PM02-a_rw_hg.csv
+        - AW14_AU_BS03_files_1-160_rw_hg.csv
+        - AW14_AU_BS02_rw_hg.csv
+        - AW12_AU_BS03_rw_hg.csv
+        - AL16_AU_BS01_rw_hg.csv
+        - M8after2018first40_rw_hg.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -82,9 +98,9 @@ Job:
   TrainModel_paramset:
     FormatFG:
       parameters:
-        decimate_data: y
+        decimate_data: 
         #in seconds
-        difftime_limit: 3600
+        difftime_limit: 2400
         methodID: dbuddy-pull-FG-wname
         #methodID: dbuddy-pull-FG
         #methodID: dbuddy-pull-FG-ord
@@ -92,12 +108,28 @@ Job:
         methodID2m: matlabdecimate
         methodvers2m: V1s0
         #target_samp_rate: 4096
-        target_samp_rate: 2048
+        target_samp_rate: 1024
         file_groupID:
-          - XP14_UK_KO01_sample1.csv
-          - XP15_UK_KO01_sample1.csv
-          - round1_pull1_reduce.csv
-          - round1_pull2.csv
+          #- NOPP6_EST_20090328_files_All.csv
+          #- NOPP6_EST_20090329_files_All.csv
+          #- NOPP6_EST_20090330_files_All.csv
+          #- NOPP6_EST_20090331_files_All.csv
+          #- NOPP6_EST_20090401_files_All.csv
+          #- NOPP6_EST_20090402_files_All.csv
+          #- NOPP6_EST_20090403_files_All.csv
+          - BS16_AU_PM02-a_files_1-175_rw_hg.csv
+          - BS16_AU_PM05_rw_hg.csv
+          - BS15_AU_PM04_files_301-417_rw_hg.csv
+          - BS15_AU_PM02-a_files_1-104_rw_hg.csv
+          - BS15_AU_PM02-b_rw_hg.csv
+          - BS14_AU_PM04_rw_hg.csv
+          - BS13_AU_PM04_rw_hg.csv
+          - BS13_AU_PM02-a_rw_hg.csv
+          - AW14_AU_BS03_files_1-160_rw_hg.csv
+          - AW14_AU_BS02_rw_hg.csv
+          - AW12_AU_BS03_rw_hg.csv
+          - AL16_AU_BS01_rw_hg.csv
+          - M8after2018first40_rw_hg.csv
       arguments:
         hard_rerun: n
       descriptors:
@@ -131,9 +163,7 @@ Job:
       DLmodel*:
         parameters:
           methodID: train-win-slide-dl
-          methodvers: v1-16
-          addnoise_mean: 0.5
-          addnoise_stddev: 0.25
+          methodvers: v1-12
           augstr: 0.20,0.55,1
           gt_depth: [signal_codes]
           learn_rate: 0.00005
@@ -142,41 +172,37 @@ Job:
           native_pix_per_sec: [npps]
           perc_fp: 1.00
           #perc_tp: 0.10
-          perc_tp: 0.30
+          perc_tp: 0.03
           prop_fp: 0.75
           prop_tp: 0.25
-          shuf_size: 0.015
-          #shuf_size: 0.00015
-          stride_pix: 48
-          tp_weight: 1
+          shuf_size: 0.05
+          stride_pix: [native_window_size]
+          tp_weight: 4
           view_plots: n
           win_size: [model_window_size]
           win_size_native: [native_window_size]
-          zero_drop: 0.1
         arguments: 
           batch_size: 75
           batch_size_inf: [inf_batch_size]
-          epoch: 20
-          epoch_steps: 6000
+          epoch: 25
+          epoch_steps: 3000
           #epoch: 1
-          hard_rerun: y
+          hard_rerun: n
         descriptors:
           runtype: lib
           language: Python
-          wrapper: True
-          pass_sub_to_wrapper: True
           venv: Conda
-          venv_name: tf-gpu4
+          venv_name: tf-gpu3
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep
-      methodvers: v1-4
+      methodvers: v1-3
       crop_freq: y
       crop_freq_size: [freq_size]
       crop_freq_start: [freq_start]
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      window_length: 256
+      window_length: 250
     arguments:
       hard_rerun: n
     descriptors:
@@ -240,9 +266,9 @@ Job:
   FormatGT:
     parameters: 
       methodID: R-pull-dbuddy-anyparam
-      methodvers: v1-3
+      methodvers: v1-4
       UseFG: y
-      LastAnalyst: MW
+      Analysis_ID: 10
       #multiple can be specified with "," (no space) 
       SignalCode: [signal_codes]
     arguments: 
@@ -273,8 +299,8 @@ Job:
   AssignLabels:
     parameters: 
       methodID: labels-w-iou-simple
-      methodvers: v1-7
-      iou_thresh: 0.2
+      methodvers: v1-4
+      iou_thresh: 0.01
       write_GT: y
     arguments: 
       hard_rerun: n
@@ -284,7 +310,7 @@ Job:
   PerfEval2DL:
     parameters:
       methodID: pe2dl-simple
-      methodvers: v1-2
+      methodvers: v1-1
       cexmod: 2
     arguments: 
       hard_rerun: n
@@ -327,13 +353,11 @@ Job:
       #group output scores by # of pixels(can be different to original step to 'smooth')
       methodID: moving-smooth
       #v1-7 for combining scores, but save this for later
-      methodvers: v1-9
-      difftime_cap: 3600
+      methodvers: v1-8
+      difftime_cap: 2400
       freq_low: [freq_start]
       freq_size: [freq_size]
-      #group_pixels: 20
-      #group_pixels: 96
-      group_pixels: [msp_inf]
+      group_pixels: 20
       #min_det_size: 90
       mod_size_1: [native_window_size]
       mod_size_2: [model_window_size]
@@ -349,46 +373,6 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: [cutoff]
-    arguments: 
-      hard_rerun: n
+      cutoff: 0.99
     descriptors:
       runtype: no_method
-  stats_calc:
-    ApplyCutoff:
-      parameters:
-        append_cutoff: y
-        cutoff: 
-          - 0.0
-          - 0.1
-          - 0.2
-          - 0.5
-          - 0.9
-          - 0.25
-          - 0.55
-          - 0.99
-          - 0.999
-          - 0.9999
-          #- 1
-      arguments: 
-        hard_rerun: n
-      descriptors:
-        runtype: no_method
-  PerfEval1DL:
-    parameters:
-      methodID: pe1dl-simple
-      methodvers: v1-1
-    arguments: 
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: R
-  SplitDeduce:
-    parameters:
-      methodID: sd-simple
-      methodvers: v1-0
-    arguments: 
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: R

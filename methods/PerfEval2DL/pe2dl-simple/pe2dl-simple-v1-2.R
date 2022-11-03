@@ -3,7 +3,9 @@ library(flux)
 #library(tidyverse)
 #v1-1: make sure FG information makes it into the outputs. 
 
-args<-"C:/Apps/INSTINCT/Cache/334512/681774/757539 C:/Apps/INSTINCT/Cache/334512/681774/757539/816289 2 pe2dl-simple-v1-1"
+args<-"C:/Apps/INSTINCT/Cache/226127/237769/876680 C:/Apps/INSTINCT/Cache/226127/237769/876680/719648 C:/Apps/INSTINCT/Cache/226127/237769/113634/729921/994618 2 pe2dl-simple-v1-2"
+args<-strsplit(args,split=" ")[[1]]
+
 
 source(paste(getwd(),"/user/R_misc.R",sep="")) 
 args<-commandIngest()
@@ -16,17 +18,19 @@ args<-commandIngest()
 
 dataPath<-args[1]
 resultPath<-args[2]
-cexmod = as.numeric(args[3])
-#DataType<-args[4]
+PE1path<-args[3]
+cexmod = as.numeric(args[4])
 
 
 data<-read.csv(paste(dataPath,"DETx.csv.gz",sep="/"))
-#PE1data<-read.csv(paste(PE1path,"Stats.csv.gz",sep="/"))
+PE1data<-read.csv(paste(PE1path,"Stats.csv.gz",sep="/"))
 
 if(length(unique(data$FGID))>1){
   FGName = "All"
+  PE1data = PE1data[which(PE1data$FGID=='all'),]
 }else{
   FGName = data$FGID[1]
+  PE1data = PE1data[which(PE1data$FGID==data$FGID[1]),]
 }
 
 #drop FN labels. 
@@ -51,10 +55,13 @@ data$label<-labelVec
 png(paste(resultPath,"/PRcurve.png",sep=""),width=1000,height = 1000)
 
 curves = list()
+pe1_ref_points = list()
 
 for(i in 1:3){
   
-  datasub = data[which(data$splits==i),]
+  datasub = data[which(data$splits==i),] #either subset
+  
+  statssub = PE1data[which(PE1data$split == i),]
   
   if(nrow(datasub)!=0){
     curve<-pr.curve(scores.class0=datasub$probs,weights.class0 = datasub$label,curve=TRUE)
@@ -63,7 +70,8 @@ for(i in 1:3){
   }
   
   curves[[i]]=curve
-  
+  pe1_ref_points[[i]]=data.frame(statssub$Recall,statssub$Precision,statssub$cutoff_)
+    
 }
 
 #so I can compute the curve and plot. right now it plot above the PR curve, which I don't like. 
@@ -75,10 +83,13 @@ par(cex.main=2*cexmod,cex.lab=2*cexmod,cex.axis=1.5*cexmod)
 cols = c("Sky blue","Orange","Black")
 
 plot(curves[[unique(data$splits)[1]]], auc.main=FALSE, main =FGName,legend=FALSE,col=cols[unique(data$splits)[1]],cex.axis=1.8*cexmod,lwd = 3*cexmod)
+points(pe1_ref_points[[unique(data$splits)[1]]]$statssub.Recall,pe1_ref_points[[unique(data$splits)[1]]]$statssub.Precision, main ="",legend=FALSE,col=cols[[unique(data$splits)[1]]],cex.axis=1.8*cexmod,lwd = 3*cexmod)
 
 if(length(unique(data$splits))>1){
   for(i in unique(data$splits)[2:length(unique(data$splits))]){
     plot(curves[[i]], auc.main=FALSE, main ="",legend=FALSE,col=cols[[i]],cex.axis=1.8*cexmod,lwd = 3*cexmod,add=TRUE)
+    points(pe1_ref_points[[i]]$statssub.Recall,pe1_ref_points[[i]]$statssub.Precision, main ="",legend=FALSE,col=cols[[i]],cex.axis=1.8*cexmod,lwd = 3*cexmod)
+    
   }
 }
 

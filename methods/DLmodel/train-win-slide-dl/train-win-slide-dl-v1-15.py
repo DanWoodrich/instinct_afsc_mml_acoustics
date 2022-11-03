@@ -1,4 +1,7 @@
 
+
+#import code
+#code.interact(local=dict(globals(), **locals()))
 #v1-1: do away with 'offset', replace with what the concept evolved into, which is stride. 
 #v1-2: update parameters to get rid of stuff that doesn't matter, add stuff that does. 
 #v1-3: read filepaths instead of assume them 
@@ -17,6 +20,9 @@
 #change training behavior so that only one dataset is used (dropout based on random number generated)
 #remove augmentation during inference
 
+#v1-15 is meant to solve the memory leak issue during traing.
+#1: first trying to remove tf.functions. 
+
 #import pandas as pd
 import tensorflow as tf
 import sys
@@ -27,6 +33,8 @@ import pathlib
 import matplotlib.pyplot as plt
 import csv
 import gzip
+import pandas as pd
+from time import time
 #import math
 
 #from tensorflow import keras
@@ -65,9 +73,8 @@ if stage !="train":
     model_name = args[10]
     native_img_height = int(args[11])
     native_pix_per_sec = int(args[12])
-    only_labs = args[13]
-    stride_pix_inf = int(args[14]) 
-    #view_plots = args[15]
+    stride_pix_inf = int(args[13]) 
+    view_plots = args[14]
     model_win_size = int(args[15])
     win_size_native = int(args[16])
     
@@ -78,14 +85,9 @@ if stage !="train":
     batch_size = int(args[18])
 
     #dummy vars
-
     tp_weights=1.
-    fp_perc = 1
-    if only_labs=='y':
-        tp_perc = float(input("tp_perc? #"))
-
-
-    view_plots = 'n'
+    fp_perc = 0.5
+    tp_perc = 0.5
 
     prop_tp = 0.
     prop_fp = 0.
@@ -121,8 +123,6 @@ else:
     batch_size = int(args[29])
     epochs = int(args[30])
     epoch_steps = int(args[31])
-
-    only_labs = 'n'
 
 #calculate this based on given dimensions
 win_t_factor = model_win_size/win_size_native
@@ -231,8 +231,7 @@ lab_files_sub = [lab_files[i] for i in index]
 bigfiles_sub = [bigfiles[i] for i in index]
 split_files_sub = [split_files[i] for i in index]
 
-#import code
-#code.interact(local=dict(globals(), **locals()))
+
 
 TP_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(bigfiles_sub),
                                   tf.data.Dataset.from_tensor_slices(lab_files_sub),
@@ -554,6 +553,9 @@ if stage=="train":
     print(estbins)
     #for now, hardcode that shuffle buffer will be 1/20th the size of total dataset
 
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+
     shuffle_size_all = round(estbins*shuf_size)
     #shuffle_size_all = round(estbins/len(bigfiles))
 
@@ -566,9 +568,6 @@ if stage=="train":
 
     #do_shuffle = 'initial'
     do_shuffle = shuffle_size_all
-
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
 
     #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,\
     #               addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,is_rgb=True,zero_drop_=None):
@@ -606,10 +605,6 @@ elif stage=="test":
     wh_default = model_win_size
     wl_default = model_win_size
 
-    shuffle_size_all=1000 #hard code...
-
-    batch_size_train = batch_size
-
 if view_plots =='y':
     do_plot =True
 else:
@@ -631,8 +626,6 @@ if do_plot:
         addnoise_ = input("Add noise? (y/n)")
         if addnoise_=="y":
             addnoise_="high_reduce"
-        else:
-            addnoise_ = None
         offset_ = input("Add offset? (y/n)")
         if offset_=='y':
             offset_=True
@@ -641,8 +634,6 @@ if do_plot:
         do_augment = input("augment? (y/n)")
         if do_augment=="y":
             do_augment=True
-        else:
-            do_augment=False
         do_filter = input("filter? (y/n)")
         if do_filter=="y":
             do_filter=True
@@ -659,9 +650,6 @@ if do_plot:
 
     #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,addnoise=None,
     #            augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True):
-
-    #MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,\
-    #            addnoise=None,augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True,is_rgb=True,zero_drop_=None):
 
         iter_obj = iter(MakeDataset(full_dataset,wh_default,wl_default,custom_stride,offset_,_split,batch_size_train,shuffle_,False,addnoise_,do_augment,do_filter,only_pos))
 
@@ -736,84 +724,157 @@ if do_plot:
 
 if stage=="train":
 
-    #select correct loss function for multi or single class:
+    #determine if model exists or needs to be compiled.
+    #if log exists, assume model has been created an one epoch has been run.
 
-    if GT_depth >1:
-        loss_fxn = "categorical_crossentropy"
-        loss_metric ="categorical_accuracy"
-    else:
-        loss_fxn = "binary_crossentropy"
-        loss_metric = "binary_accuracy" #accuracy bugged for some reason...?
-        #loss_metric = "accuracy" 
+    logpath = resultpath + "/model_history_log.csv"
 
-    def KerasModel(constructor=model_con):
-      return tf.keras.Sequential([
-        tf.keras.Input(shape=(model_win_size, model_win_size, 3)),
-        #tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]), #turn these on or off depending if limiation is in CPU or GPU
-        #tf.keras.layers.RandomContrast(factor=[0,contrast_high]), 
-        constructor(include_top=False, weights=None, pooling="max"),
-        tf.keras.layers.ReLU(),
-        tf.keras.layers.Dense(128, activation="relu"),
-        tf.keras.layers.Dense(GT_depth),
-        tf.keras.layers.Activation("sigmoid"),
-      ])
+    if not os.path.isfile(resultpath + "/model.keras"):
 
-    model = KerasModel(model_con)
+        if os.path.isfile(logpath):
+            os.remove(logpath)
+    
+        #define and compile model
 
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
+        #select correct loss function for multi or single class:
 
-    opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+        if GT_depth >1:
+            loss_fxn = "categorical_crossentropy"
+            loss_metric ="categorical_accuracy"
+        else:
+            loss_fxn = "binary_crossentropy"
+            loss_metric = "binary_accuracy" #accuracy bugged for some reason...?
+            #loss_metric = "accuracy" 
 
-    #experimenting with these. Ideally, weights could be provided per label, and correspond with the % of label inclusion so more 'on target' windows are higher weighted!
-    #if this is working well, make this into a parameter. 
-    #weights = [1,tp_weights]
+        def KerasModel(constructor=model_con):
+          return tf.keras.Sequential([
+            tf.keras.Input(shape=(model_win_size, model_win_size, 3)),
+            #tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]), #turn these on or off depending if limiation is in CPU or GPU
+            #tf.keras.layers.RandomContrast(factor=[0,contrast_high]), 
+            constructor(include_top=False, weights=None, pooling="max"),
+            tf.keras.layers.ReLU(),
+            tf.keras.layers.Dense(128, activation="relu"),
+            tf.keras.layers.Dense(GT_depth),
+            tf.keras.layers.Activation("sigmoid"),
+          ])
 
-    model.compile(
-        optimizer=opt,
-        loss=loss_fxn,
-        #loss_weights=weights,
-        #weighted_metrics = "accuracy",
-        metrics=[
-            loss_metric,
-            tf.keras.metrics.AUC(name="rocauc"),
-            tf.keras.metrics.AUC(curve="pr", name="ap"),
-            tf.keras.metrics.Precision(),
-            tf.keras.metrics.Recall()
-        ],
-    )
+        model = KerasModel(model_con)
+
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
+
+        opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+
+        #experimenting with these. Ideally, weights could be provided per label, and correspond with the % of label inclusion so more 'on target' windows are higher weighted!
+        #if this is working well, make this into a parameter. 
+        #weights = [1,tp_weights]
+
+        model.compile(
+            optimizer=opt,
+            loss=loss_fxn,
+            #loss_weights=weights,
+            #weighted_metrics = "accuracy",
+            metrics=[
+                loss_metric,
+                tf.keras.metrics.AUC(name="rocauc"),
+                tf.keras.metrics.AUC(curve="pr", name="ap"),
+                tf.keras.metrics.Precision(),
+                tf.keras.metrics.Recall()
+            ],
+        )
 
     #def MakeDataset(dataset,wh,wl,stride_pix,do_offset=False,split=None,batchsize=None,shuffle_size=None,drop_assignment=True,addnoise=None,
     #            augment=False,filter_splits=True,label=None,repeat_perma=False,weights=True):
     
-    logpath = resultpath + "/model_history_log.csv"
 
-    if os.path.isfile(logpath):
-        os.remove(logpath)
+    #
+    #    os.remove(logpath)
+
+        cur_epoch = 0
+
+        #loaded=False
+
+    else:
+
+        #determine current epoch by counting # of previous epochs
+        log = pd.read_csv(logpath)
+
+        cur_epoch = len(log.index)
+
+        model = keras.models.load_model(resultpath + "/model.keras")
+
+        print("On epoch " + str(cur_epoch) + " of " + str(epochs)) 
+
+        #loaded=True
         
     csv_logger = CSVLogger(logpath, append=True)
+    class TimingCallback(keras.callbacks.Callback):
+        def __init__(self, cur_epoch, end_epoch,logs={}):
+            self.logs=[]
+            self.cur_epoch=cur_epoch
+            self.end_epoch=end_epoch
+        def on_epoch_begin(self, epoch, logs={}):
+            self.starttime = time()
+
+        def on_epoch_end(self, epoch, logs={}):
+            self.logs.append(time()-self.starttime)
+
+            #print(self.cur_epoch)
+            #print(epoch)
+
+            if self.cur_epoch == self.end_epoch:
+                #if the epoch= the total , communicate to outer loop to stop next time. 
+                with open(resultpath + '/stop.txt', 'w') as f:
+                    f.write('stop')
+
+                #also, stop the current training
+                self.model.stop_training = True  
+
+            self.cur_epoch = self.cur_epoch +1
+
+            if len(self.logs)>1:
+                #if self.logs[-1] / self.logs[0] > 0.5: #just for testing... 
+                if self.logs[-1] / self.logs[0] > 1: #once exceeds original runtime (which is always slower than next few epochs)
+                    #, cease training
+
+                #for a shuffle buffer fill time of 12 minutes, starts to become faster to restart compared to running
+                #another epoch
+                #if self.logs[-1] - self.logs[0] > 720:
+
+                    #import code
+                    #code.interact(local=dict(globals(), **locals()))
+                    self.model.stop_training = True                    
+
+    tc = TimingCallback(cur_epoch,epochs-1) #-1 is cause python counts from 0
 
     #iter_obj  =iter(MakeDataset(full_dataset,win_height,win_length,split=1,batchsize=batch_size_train))
     #next(iter_obj)
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
+
     try:
-      model.fit(
-          train_dataset,
-          steps_per_epoch=epoch_steps,
-          validation_data=val_dataset,
-          epochs=epochs,
-          callbacks=[csv_logger]
-      )
+        model.fit(
+                    train_dataset,
+                    steps_per_epoch=epoch_steps,
+                    validation_data=val_dataset, #temporarily disable to make it faster
+                    epochs=epochs,
+                    callbacks=[csv_logger,tc]
+                    )
     except KeyboardInterrupt:
-      pass
+        with open(resultpath + '/stop.txt', 'w') as f:
+                    f.write('stop')
+        #pass
 
     model.save(resultpath + "/model.keras")
 
+    #if loaded:
+
+        #stop here- make sure log is stable and no errors thus far. 
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
+        
+
 #run prediction on full FG data. 
 #scores = []
-#import code
-#code.interact(local=dict(globals(), **locals()))
+
 
 
 #if stage=="train":
@@ -835,25 +896,7 @@ if stage=="test":
 
     #scores1 = []
     #for i in range(5):
-    labels=[]
-    if only_labs == 'y':
-        
-        #counter = 1
-        for _,labs,_ in ds:
-            labels.append(labs.numpy())
-            #print(counter)
-            #counter +=1 
-            #if counter == 3:
-            #    break
-
-        #call it scores, but it is labels
-        scores = np.vstack(labels)
-            
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
-        
-    else:
-        scores = model.predict(ds)
+    scores = model.predict(ds)
     #scores1.append(scores)
 
     #take max of scores

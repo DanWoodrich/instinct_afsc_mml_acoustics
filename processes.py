@@ -348,6 +348,13 @@ class ApplyCutoff(INSTINCT_process):
         DETwProbs = pd.read_csv(self.ports[0].outpath() + '/DETx.csv.gz',compression='gzip')
 
         DwPcut = DETwProbs[DETwProbs.probs>=float(self.parameters['cutoff'])]
+
+        if 'append_cutoff' in self.parameters:
+            if self.parameters['append_cutoff']=='y':
+                #import code
+                #code.interact(local=locals())
+                DwPcut["cutoff"]=float(self.parameters['cutoff'])
+        
         DwPcut.to_csv(self.outfilegen(),index=False,compression='gzip')
     
 class AssignLabels(INSTINCT_process):
@@ -410,17 +417,17 @@ class PerfEval2(INSTINCT_process):
         self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.ports[1].outpath(),self.param_string2]
         
         self.run_cmd()
-        
+
 class PerfEval2DL(INSTINCT_process):
 
-    pipeshape = OneUpstream
-    upstreamdef = ["GetModel_w_probs"]
+    pipeshape = TwoUpstream_noCon
+    upstreamdef = ["GetStats","GetModel_w_probs"]
     
     outfile = 'PE2ball.tgz'
 
     def run(self):
         
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.ports[1].outpath(),self.param_string2]
         
         self.run_cmd()
 
@@ -935,4 +942,30 @@ class SplitTensor(INSTINCT_process):
 
         self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.ports[1].parameters['file_groupID'],self.param_string2]
 
+        self.run_cmd()
+
+class SplitDeduce(INSTINCT_process):
+    #this is probably depreciated...
+    pipeshape = TwoUpstream
+    upstreamdef = ["GetFG","GetDets"]
+
+    outfile = 'FGsplits.csv'
+
+    def run(self):
+
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2]
+
+        self.run_cmd()
+
+class PerfEval1DL(INSTINCT_process):
+
+    pipeshape = TwoUpstream
+    upstreamdef = ["GetFG","GetModel_w_probs"]
+    
+    outfile = 'Stats.csv.gz'
+
+    def run(self):
+        
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2]
+        
         self.run_cmd()

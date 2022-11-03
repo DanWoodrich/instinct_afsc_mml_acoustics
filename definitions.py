@@ -4,7 +4,7 @@ jobs = {
 "TTplus":["PE2_FG_novel","PE2all","PerfEval_MPE_TT","PE2_FG","PE2all_novel","Graph_RFNwAL_AC","ViewRFN"],
 "NewJob":["ViewGT","ViewED"],
 "MPE_DL_SS":["DLModelTrain_Eval_SS","PE2DL_all_SS","PE2DL_FG_SS"], #Training/test: assumes splits from same set of FGs. 
-"MPE_DL_Train": ["DLModelTrain_Eval_Train","PE2DL_all_Train","PE2DL_FG_Train"], #Training: assumes test split sourced from different data than FGs
+"MPE_DL_Train": ["DLModelTrain_Eval_Train","PE2DL_all_Train","PE2DL_FG_Train","ViewScoresDL_w_AL_Train"], #to do: make these into one stat table out"PE1DL_all_Train","PE1DL_FG_Train"], #Training: assumes test split sourced from different data than FGs
 "Test_DL_novel":["MPE_DL_Train","PE2DL_all_novel","PE2DL_FG_novel"] #add MPE_DL_TT when complete #Test: assumes test split sourced from different data than FGs
 }
 

@@ -1,0 +1,13 @@
+pipe: StatsTableCombine_DL.pipe
+params_drop: TrainModel_paramset
+StatsTableCombine_DL.pipe:
+  process: StatsTableCombine_DL
+  PE1All:
+    pipe: PerfEval1DL.pipe
+    pipe_link: 
+      name: PE1DL_all_Train.nt
+  PE1FG:
+    pipe: PerfEval1DL.pipe
+    loop_on: FormatFG
+    pipe_link:
+      name: PE1DL_FG_Train.nt

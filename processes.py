@@ -969,3 +969,29 @@ class PerfEval1DL(INSTINCT_process):
         self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2]
         
         self.run_cmd()
+
+class StatsTableCombine_DL(INSTINCT_process):
+
+    pipeshape = TwoUpstream_noCon
+    upstreamdef = ["PE1All","PE1FG"]
+
+    #this one's hardcoded, no elegant way I could find to extract the pipeline history in an elegant/readible way. 
+    outfile = "Stats.csv.gz"
+
+    #stagename = 'ED/AM'
+        
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+    
+        #import datasets, tag with new ID column, rbind them. 
+        Stats1 = pd.read_csv(self.ports[0].outfilegen(),compression='gzip') 
+        Stats2 = pd.read_csv(self.ports[1].outfilegen(),compression='gzip') 
+
+        #Stats1[self.stagename] = self.upstreamdef[1]
+        #Stats2[self.stagename] = self.upstreamdef[0]
+
+        StatsOut = pd.concat([Stats2,Stats1])
+
+        StatsOut.to_csv(self.outfilegen(),index=False,compression='gzip')

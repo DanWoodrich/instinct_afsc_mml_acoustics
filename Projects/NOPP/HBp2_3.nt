@@ -23,13 +23,13 @@ Global:
     inf_batch_size: 175
     msp_inf: 96
     split_prot: within_file
-    cutoff: 0.82
+    #cutoff: 0.82
     #difftime_limit: 3600
 Job:
   ModelEval_NN:
     parameters:
       methodID: simple-eval
-      methodvers: v1-1
+      methodvers: v1-2
       gt_depth: [signal_codes]
     arguments: 
       hard_rerun: n
@@ -159,7 +159,7 @@ Job:
           epoch: 20
           epoch_steps: 6000
           #epoch: 1
-          hard_rerun: y
+          hard_rerun: n
         descriptors:
           runtype: lib
           language: Python
@@ -273,7 +273,7 @@ Job:
   AssignLabels:
     parameters: 
       methodID: labels-w-iou-simple
-      methodvers: v1-7
+      methodvers: v1-8
       iou_thresh: 0.2
       write_GT: y
     arguments: 
@@ -349,7 +349,7 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: [cutoff]
+      cutoff: 0.82
     arguments: 
       hard_rerun: n
     descriptors:

@@ -1,5 +1,5 @@
 pipe: PerfEval2DL.pipe
-params_drop: stats_calc-TrainModel_paramset
+params_drop: TrainModel_paramset
 loop_on: FormatFG
 PerfEval2DL.pipe:
   process: PerfEval2DL

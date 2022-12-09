@@ -16,7 +16,7 @@ MethodID<-"labels-w-iou-simple-v1-3"
 #retain splits if present. May be buggy if outlong is not dense. 
 #v1-6: retain cutoff if present. Leapfrogged 1-5, which I am not sure if it is in use. 
 
-args<-"C:/Apps/INSTINCT/Cache/226127 C:/Apps/INSTINCT/Cache/226127/397036 C:/Apps/INSTINCT/Cache/226127/650103/432968/75307/857422 C:/Apps/INSTINCT/Cache/226127/397036/212300 0.0001 y labels-w-iou-simple-v1-6"
+args<-"C:/Apps/INSTINCT/Cache/461006 C:/Apps/INSTINCT/Cache/461006/693500 C:/Apps/INSTINCT/Cache/461006/499797/419216/146437/654610/860790/279236 C:/Apps/INSTINCT/Cache/461006/693500/682276 0.2 y labels-w-iou-simple-v1-8"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -44,6 +44,12 @@ WriteGT<-args[6]
 
 GTdata<-read.csv(paste(GTpath,"DETx.csv.gz",sep="/"))
 FGdata<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))
+
+#just for testing: 
+
+#if("round1_pull1_reduce.csv" %in% FGdata$Name){
+#  stop()
+#}
 
 
 
@@ -89,6 +95,8 @@ GTdata$EndFile<-as.character(GTdata$EndFile)
 
 
 FGdata$cumsum<- c(0,cumsum(FGdata$Duration)[1:(nrow(FGdata)-1)])
+#stealth fix v1-8
+FGdataOrd$cumsum<-c(0,cumsum(FGdataOrd$Duration)[1:(nrow(FGdataOrd)-1)])
 
 
 #convert each dataset into time from FG start instead of offset 
@@ -98,9 +106,10 @@ GTlong<-GTdata
 if(nrow(GTlong)>0){
   
   #v1-7: do with indexes instead
+  #stealth fix v1-8
   
-  GTlong$StartTime = GTlong$StartTime + FGdata[match(GTlong$StartFile,FGdata$FileName),"cumsum"]
-  GTlong$EndTime = GTlong$EndTime + FGdata[match(GTlong$EndFile,FGdata$FileName),"cumsum"]
+  GTlong$StartTime = GTlong$StartTime + FGdataOrd[match(GTlong$StartFile,FGdataOrd$FileName),"cumsum"]
+  GTlong$EndTime = GTlong$EndTime + FGdataOrd[match(GTlong$EndFile,FGdataOrd$FileName),"cumsum"]
 #these steps are long... could make much faster with a merge. To do
 #for(i in 1:nrow(GTlong)){
 #  GTlong$StartTime[i]<-GTlong$StartTime[i]+FGdata$cumsum[which(FGdata$FileName==GTlong$StartFile[i])]
@@ -125,9 +134,10 @@ outLong<-outData
 if(nrow(outData)>0){
   
   #v1-7 do this based on matching indeces instead of in loop: 
+  #stealth fix v1-8
   
-  outLong$StartTime = outLong$StartTime + FGdata[match(outLong$StartFile,FGdata$FileName),"cumsum"]
-  outLong$EndTime = outLong$EndTime + FGdata[match(outLong$EndFile,FGdata$FileName),"cumsum"]
+  outLong$StartTime = outLong$StartTime + FGdataOrd[match(outLong$StartFile,FGdataOrd$FileName),"cumsum"]
+  outLong$EndTime = outLong$EndTime + FGdataOrd[match(outLong$EndFile,FGdataOrd$FileName),"cumsum"]
   
   #for(i in 1:10000){
   #  print(i)

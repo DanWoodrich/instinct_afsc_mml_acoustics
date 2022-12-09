@@ -12,10 +12,10 @@ Global:
   #True of False: indicates if job will have an output (False) or just populates Cache (True). Luigi style 'wrapper'.
   Wrapper: False
   parameters:
-    signal_codes: HB.s.p.4
+    signal_codes: HB.s.p.2
     freq_start: 80
-    freq_size: 920
-    native_height: 256
+    freq_size: 530
+    native_height: 134
     npps: 48
     native_window_size: 480
     model_window_size: 240
@@ -68,8 +68,8 @@ Job:
       file_groupID:
         - XP14_UK_KO01_sample1.csv
         - XP15_UK_KO01_sample1.csv
-        #- round1_pull1_reduce.csv
-        #- round1_pull2.csv
+        - round1_pull1_reduce.csv
+        - round1_pull2.csv
     arguments:
       hard_rerun: n
     descriptors:
@@ -92,10 +92,10 @@ Job:
         #target_samp_rate: 4096
         target_samp_rate: 2048
         file_groupID:
-          - XP14_UK_KO01_sample1.csv
           - XP15_UK_KO01_sample1.csv
           - round1_pull1_reduce.csv
           - round1_pull2.csv
+          - XP14_UK_KO01_sample1.csv
       arguments:
         hard_rerun: n
       descriptors:
@@ -135,21 +135,20 @@ Job:
           augstr: 0.20,0.55,1
           do_aug: y
           do_spec_averaging: y
-          do_val: n
+          do_val: y
           do_weight: y
           gt_depth: [signal_codes]
           learn_rate: 0.00005
-          #learn_rate: 0.00001
           model_name: [model_name]
           native_height: [native_height]
           native_pix_per_sec: [npps]
           perc_fp: 1.00
           #perc_tp: 0.10
-          perc_tp: 0.05
+          perc_tp: 0.30
           prop_fp: 0.75
           prop_tp: 0.25
-          #shuf_size: 0.015
-          shuf_size: 0.00015
+          shuf_size: 0.015
+          #shuf_size: 0.00015
           stride_pix: 48
           tp_weight: 1
           view_plots: n
@@ -159,10 +158,10 @@ Job:
         arguments: 
           batch_size: 75
           batch_size_inf: [inf_batch_size]
-          #epoch: 20
-          #epoch_steps: 6000
-          epoch: 3
-          epoch_steps: 10
+          epoch: 20
+          epoch_steps: 6000
+          #epoch: 3
+          #epoch_steps: 10
           hard_rerun: n
         descriptors:
           runtype: lib
@@ -174,13 +173,13 @@ Job:
   GenBigSpec:
     parameters:
       methodID: con_bright_no_rep
-      methodvers: v1-5
+      methodvers: v1-4
       crop_freq: y
       crop_freq_size: [freq_size]
       crop_freq_start: [freq_start]
       native_height: [native_height]
       native_pix_per_sec: [npps]
-      window_length: 512
+      window_length: 256
     arguments:
       hard_rerun: n
     descriptors:
@@ -248,7 +247,10 @@ Job:
       UseFG: y
       LastAnalyst: MW
       #multiple can be specified with "," (no space) 
-      SignalCode: [signal_codes]
+      #SignalCode: [signal_codes]
+      #LastAnalyst: 
+      #  - MW
+      #  - JMH
     arguments: 
       hard_rerun: n
     descriptors:
@@ -280,17 +282,6 @@ Job:
       methodvers: v1-8
       iou_thresh: 0.2
       write_GT: y
-    arguments: 
-      hard_rerun: n
-    descriptors:
-      runtype: lib
-      language: R
-  PerfEval2DL:
-    parameters:
-      methodID: pe2dl-simple
-      methodvers: v1-3
-      cexmod: 2
-      suppress_test: y
     arguments: 
       hard_rerun: n
     descriptors:
@@ -354,7 +345,7 @@ Job:
       language: R
   ApplyCutoff:
     parameters:
-      cutoff: 0.01
+      cutoff: 0.82
     arguments: 
       hard_rerun: n
     descriptors:
@@ -366,14 +357,14 @@ Job:
         cutoff: 
           - 0.0
           - 0.1
-          #- 0.2
-          #- 0.5
-          #- 0.9
-          #- 0.25
-          #- 0.55
-          #- 0.99
-          #- 0.999
-          #- 0.9999
+          -  0.2
+          - 0.5
+          - 0.9
+          - 0.25
+          - 0.55
+          - 0.99
+          - 0.999
+          - 0.9999
           #- 1
       arguments: 
         hard_rerun: n
@@ -383,7 +374,18 @@ Job:
     parameters:
       methodID: pe1dl-simple
       methodvers: v1-2
-      suppress_test: y
+      suppress_test: n
+    arguments: 
+      hard_rerun: n
+    descriptors:
+      runtype: lib
+      language: R
+  PerfEval2DL:
+    parameters:
+      methodID: pe2dl-simple
+      methodvers: v1-3
+      cexmod: 2
+      suppress_test: n
     arguments: 
       hard_rerun: n
     descriptors:

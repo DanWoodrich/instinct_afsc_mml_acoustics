@@ -1,5 +1,5 @@
 pipe: PerfEval1DL.pipe
-#params_drop: TrainModel_paramset
+params_drop: stats_calc
 PerfEval1DL.pipe:
   process: PerfEval1DL
   GetModel_w_probs:

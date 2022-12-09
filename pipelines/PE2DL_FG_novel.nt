@@ -6,3 +6,7 @@ PerfEval2DL.pipe:
     pipe: AssignLabels.pipe
     pipe_link: 
       name: ScoresDL_w_AL_novel.nt
+  GetStats:
+    pipe: PerfEval1DL.pipe
+    pipe_link:
+      name: PE1DL_FG_novel.nt

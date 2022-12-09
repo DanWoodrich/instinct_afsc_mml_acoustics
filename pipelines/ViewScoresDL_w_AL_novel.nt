@@ -1,6 +1,6 @@
 pipe: ViewDETx
 loop_on: FormatFG
-params_drop: TrainModel_paramset
+#params_drop: TrainModel_paramset
 ViewDETx:
   process: RavenViewDETx
   GetDETx:

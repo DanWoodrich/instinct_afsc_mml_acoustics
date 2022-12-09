@@ -250,6 +250,20 @@ Job:
     descriptors:
       runtype: lib
       language: R
+  get_gt_all:
+    FormatGT:
+      parameters: 
+        methodID: R-pull-dbuddy-anyparam
+        methodvers: v1-5
+        UseFG: y
+        LastAnalyst: MW
+        #multiple can be specified with "," (no space) 
+        #SignalCode: [signal_codes] get all of them
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
   RavenViewDETx:
     parameters: 
       methodID: rv-simple-w-metadata

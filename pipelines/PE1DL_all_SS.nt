@@ -8,7 +8,7 @@ PerfEval1DL.pipe:
       - FormatFG
       - ApplyCutoff
     pipe_link: 
-      name: Scores_w_cutoff_AL_Train.nt
+      name: Scores_w_cutoff_AL_SS.nt
   GetFG:
     pipe: FormatFG.pipe
     loop_on: FormatFG

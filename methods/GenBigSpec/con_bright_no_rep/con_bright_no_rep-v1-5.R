@@ -2,6 +2,7 @@
 #v1-1: implement a behavior where odd samples (ends in 99 instead of 100) create errors later in DL training. 
 #v-2: remove brightness and contrast(implemented in tensorflow data augmentation instead
 #v-3: export filepaths instead of receipt. 
+#v1-5: remove rerence to overlap and contrast from gen_spec_image (surprised it was working at all w/o these vars) 
 library(tuneR)
 library(signal)
 library(imager)
@@ -9,8 +10,8 @@ library(doParallel)
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))
 
-#spectrogram generation. #sounddata,windowLength,overlap,contrast_mod,brightness_mod,crop_freq,crop_freq_start,crop_freq_size
-gen_spec_image <-function(x,wl,ovlp,contrast,brightness,do_crop,crop_start,crop_size){
+#gen_spec_image(sounddata,windowLength,overlap,crop_freq,crop_freq_start,crop_freq_size)
+gen_spec_image <-function(x,wl,ovlp,do_crop,crop_start,crop_size){
   
   spectrogram = specgram(x = x@left,
            Fs = x@samp.rate,
@@ -135,7 +136,7 @@ foreach(i=1:length(bigfiles),.packages=c("tuneR","signal","imager")) %dopar% {
   
   overlap = windowLength/xbins + windowLength- (length(sounddata@left)/xbins)  
   
-  spec_img<- gen_spec_image(sounddata,windowLength,overlap,contrast_mod,brightness_mod,crop_freq,crop_freq_start,crop_freq_size)
+  spec_img<- gen_spec_image(sounddata,windowLength,overlap,crop_freq,crop_freq_start,crop_freq_size)
   if(i ==1){
   print("initial dimensions:")
   print(paste(dim(spec_img)[1]/round(length(sounddata@left)/sounddataheader$sample.rate),dim(spec_img)[2])) #initial dimenions

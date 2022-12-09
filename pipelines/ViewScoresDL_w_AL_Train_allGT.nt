@@ -1,0 +1,27 @@
+pipe: ViewDETx
+params_drop: TrainModel_paramset
+ViewDETx:
+  process: RavenViewDETx
+  GetDETx:
+    pipe: Combine_DETx.pipe
+    Combine_DETx.pipe:
+      process: Combine_DETx
+      DETx1: 
+        pipe: FormatGT.pipe
+        loop_on: FormatFG
+        params_drop: get_gt_all
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG:
+            process: FormatFG
+      DETx2:
+        pipe: AssignLabels.pipe
+        loop_on: FormatFG
+        #params_drop: Job-TrainModel_paramset
+        pipe_link: 
+          name: Scores_w_cutoff_AL_Train.nt
+  GetFG:
+    pipe: FormatFG.pipe
+    loop_on: FormatFG
+    FormatFG.pipe:
+      process: FormatFG

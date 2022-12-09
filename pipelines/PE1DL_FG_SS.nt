@@ -4,13 +4,10 @@ PerfEval1DL.pipe:
   process: PerfEval1DL
   GetModel_w_probs:
     pipe: AssignLabels.pipe
-    loop_on: 
-      - FormatFG
-      - ApplyCutoff
+    loop_on: ApplyCutoff
     pipe_link: 
-      name: Scores_w_cutoff_AL_Train.nt
+      name: Scores_w_cutoff_AL_SS.nt
   GetFG:
     pipe: FormatFG.pipe
-    loop_on: FormatFG
     FormatFG.pipe:
       process: FormatFG

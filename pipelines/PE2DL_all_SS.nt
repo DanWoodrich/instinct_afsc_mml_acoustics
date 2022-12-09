@@ -7,3 +7,7 @@ PerfEval2DL.pipe:
     loop_on: FormatFG
     pipe_link: 
       name: ScoresDL_w_AL_SS.nt
+  GetStats:
+    pipe: PerfEval1DL.pipe
+    pipe_link:
+      name: PE1DL_all_SS.nt

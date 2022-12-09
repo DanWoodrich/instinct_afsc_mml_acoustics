@@ -1,0 +1,11 @@
+pipe: StatsTableCombine_DL.pipe
+StatsTableCombine_DL.pipe:
+  process: StatsTableCombine_DL
+  PE1All:
+    pipe: StatsTableCombine_DL.pipe
+    pipe_link: 
+      name: Model_Stats_novel.nt
+  PE1FG:
+    pipe: StatsTableCombine_DL.pipe
+    pipe_link:
+      name: Model_Stats_Train.nt

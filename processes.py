@@ -346,13 +346,14 @@ class ApplyCutoff(INSTINCT_process):
         #code.interact(local=locals())
         
         DETwProbs = pd.read_csv(self.ports[0].outpath() + '/DETx.csv.gz',compression='gzip')
-
+        #print(self.parameters['cutoff'])
         DwPcut = DETwProbs[DETwProbs.probs>=float(self.parameters['cutoff'])]
 
         if 'append_cutoff' in self.parameters:
             if self.parameters['append_cutoff']=='y':
                 #import code
                 #code.interact(local=locals())
+                
                 DwPcut["cutoff"]=float(self.parameters['cutoff'])
         
         DwPcut.to_csv(self.outfilegen(),index=False,compression='gzip')
@@ -995,3 +996,31 @@ class StatsTableCombine_DL(INSTINCT_process):
         StatsOut = pd.concat([Stats2,Stats1])
 
         StatsOut.to_csv(self.outfilegen(),index=False,compression='gzip')
+
+class Combine_DETx(INSTINCT_process):
+
+    pipeshape = TwoUpstream_noCon
+    upstreamdef = ["DETx1","DETx2"]
+
+    #this one's hardcoded, no elegant way I could find to extract the pipeline history in an elegant/readible way. 
+    outfile = "DETx.csv.gz"
+        
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+    
+        #import datasets, tag with new ID column, rbind them. 
+        Tab1 = pd.read_csv(self.ports[0].outfilegen(),compression='gzip') 
+        Tab2 = pd.read_csv(self.ports[1].outfilegen(),compression='gzip') 
+
+        #Stats1[self.stagename] = self.upstreamdef[1]
+        #Stats2[self.stagename] = self.upstreamdef[0]
+
+        #import code
+        #code.interact(local=locals())
+
+        #keep all unique columns
+        TabOut = pd.concat([Tab1,Tab2],join='outer', ignore_index=True)
+
+        TabOut.to_csv(self.outfilegen(),index=False,compression='gzip')

@@ -1,0 +1,16 @@
+pipe: ViewDETx
+loop_on: FormatFG
+ViewDETx:
+  process: RavenViewDETx
+  GetDETx:
+    pipe: ApplyCutoff.pipe
+    ApplyCutoff.pipe: 
+      process: ApplyCutoff
+      GetDETx:
+        #pipe: DLmodel_Test.pipe
+        pipe: ScoresToDETx.pipe
+        pipe_link: 
+          #name: train_seperate_DL2_nl.nt
+          name: EvalScores_novel.nt
+  GetFG:
+    process: FormatFG

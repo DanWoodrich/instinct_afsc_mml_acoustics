@@ -1,10 +1,6 @@
-MethodID<-"rv-simple-w-metadata-v1-8"
+MethodID<-"rv-simple-w-metadata-v1-9"
 
-#1-6: be more tolerant of extra detection data
-#add argument for placeholder detections to be inserted to see every soundFile. Need it when formatting for GT, may not need it for browsing detections.
-#make formatToDets function to let this be general to either placeholder or not considered types.
-
-#1-8 fix bug where EFFP was reordering differently than DetsFG (didn't use FG order)
+#this is going to merge branch with rawdata to give this functionality to disregard whether the data is decimated or not.
 
 library(foreach)
 
@@ -38,7 +34,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="C:/Apps/INSTINCT/Cache/675821/2998 C:/Apps/INSTINCT/Cache/675821 C:/Apps/INSTINCT/Cache/675821/2998/91956 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 T n 1 rv-simple-w-metadata-v1-8 //161.55.120.117/NMML_AcousticsData/Audio_Data"
+args="C:/Apps/INSTINCT/Cache/675821/799828 C:/Apps/INSTINCT/Cache/675821 C:/Apps/INSTINCT/Cache/675821/799828/720921 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 T n n 1 rv-simple-w-metadata-v1-10 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))
@@ -50,6 +46,12 @@ FGpath <-args[2]
 Resultpath <- args[3]
 dataPath <- args[4]
 fillDat <- args[5]
+
+#test if supposed to ignore decimation, and then repath dataPath:
+if(args[length(args)-3]=="n"){
+  dataPath=paste(args[length(args)],"Waves",sep="/")
+
+}
 
 #stop()
 
@@ -82,7 +84,7 @@ FGfull<-FG
 FG<-FG[which(!duplicated(FG$FileName)),]
 
 #if true, populate Dets for every file in FG which is not already present
-if(fillDat=="T"){
+if(fillDat=="y"){
   if(any(!FGfull$FileName %in% allFiles)){
     files<-FGfull$FileName[!FGfull$FileName %in% allFiles]
     rows<-foreach(n=1:length(files)) %do% {

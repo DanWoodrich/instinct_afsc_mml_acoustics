@@ -681,6 +681,9 @@ class FormatFG(INSTINCT_process):
 
             self.cmd_args=[temppath,self.parameters['file_groupID'],get_param_names(self.parameters),self.param_string2]
 
+            #import code
+            #code.interact(local=dict(globals(), **locals()))
+            
             self.run_cmd()
 
             FG_dict = file_peek(temppath,fn_type = object,fp_type = object,st_type = object,dur_type = 'float64')

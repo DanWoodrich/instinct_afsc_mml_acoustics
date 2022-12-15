@@ -1,0 +1,64 @@
+Global:
+    cache_root: C:/Apps/INSTINCT/Cache
+    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    Wrapper: False
+    parameters:
+        queryfg1: 
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'IP18_AU_CH01'
+          > AND bins.type = 2 and soundfiles.datetime between '2019-10-01' and '2019-10-07'"
+        queryfg2: 
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'IP18_AU_CH01'
+          > AND bins.type = 2"
+        query1:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND bins.id IN {FG}"
+        querygt2:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.label IN (0,1) AND bins.id IN {FG}"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: n
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-0
+            methodID2m: matlabdecimate
+            methodvers2m: V1s0
+            target_samp_rate: 2048
+            file_groupID: 
+              - [queryfg2]
+              #- queryfg002a
+              #- [queryfg003]
+              #- [test1]
+              #- [test2]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-0
+            query: [querygt2]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-10
+        arguments:
+            fg_fill: n
+            hard_rerun: n
+            ignore_decimated: n
+        descriptors:
+            runtype: lib
+            language: R

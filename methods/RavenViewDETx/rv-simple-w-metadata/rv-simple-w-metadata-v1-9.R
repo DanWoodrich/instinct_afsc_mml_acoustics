@@ -1,6 +1,6 @@
 MethodID<-"rv-simple-w-metadata-v1-9"
 
-#this is going to merge branch with rawdata to give this functionality to disregard whether the data is decimated or not. 
+#this is going to merge branch with rawdata to give this functionality to disregard whether the data is decimated or not.
 
 library(foreach)
 
@@ -9,35 +9,35 @@ formatToDets<-function(data,data2){
   colnames(data)[7]<-'label'
   colnames(data)[8]<-'SignalCode'
   colnames(data)[9]<-'Type'
-  
+
   dropCols<-c("label","SignalCode","Type") #drops any that aren't present in Dets
-  
+
   if(any(!colnames(Dets) %in% dropCols)){
     dropColsDo<-dropCols %in% colnames(Dets)
     data<-data[,which(!colnames(data) %in% dropCols[!dropColsDo])]
   }
-  
+
   data$StartTime<-as.numeric(data$StartTime)
   data$EndTime<-as.numeric(data$EndTime)
   data$LowFreq<-as.numeric(data$LowFreq)
   data$HighFreq<-as.numeric(data$HighFreq)
-  
+
   #add dummy cols to outNeg to match Dets
   if(length(colnames(data2))>length(colnames(data))){
-    
+
     addCols<-colnames(data2)[!(colnames(data2) %in% colnames(data))]
     dummy<-setNames(data.frame(matrix(ncol = length(addCols), nrow = nrow(data))),addCols)
     dummy[1:nrow(data),1:length(addCols)]<-NA
     data<-cbind(data,dummy)
-    
+
   }
   return(data)
 }
 
-args="C:/Apps/INSTINCT/Cache/380195/375313 C:/Apps/INSTINCT/Cache/380195 C:/Apps/INSTINCT/Cache/380195/375313/199660 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 y n 1 y y rv-simple-w-metadata-v1-9 //161.55.120.117/NMML_AcousticsData/Audio_Data"
+args="C:/Apps/INSTINCT/Cache/675821/2998 C:/Apps/INSTINCT/Cache/675821 C:/Apps/INSTINCT/Cache/675821/2998/91956 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 T y n 1 rv-simple-w-metadata-v1-8 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
-source(paste(getwd(),"/user/R_misc.R",sep="")) 
+source(paste(getwd(),"/user/R_misc.R",sep=""))
 args<-commandIngest()
 
 
@@ -47,14 +47,14 @@ Resultpath <- args[3]
 dataPath <- args[4]
 fillDat <- args[length(args)-2]
 
-#test if supposed to ignore decimation, and then repath dataPath: 
+#test if supposed to ignore decimation, and then repath dataPath:
 if(args[length(args)-3]=="n"){
   dataPath=args[length(args)]
 }
 
 #stop()
 
-#transform into Raven formatted data, retain data in other columns besides mandated 6. 
+#transform into Raven formatted data, retain data in other columns besides mandated 6.
 
 Dets<-read.csv(paste(DETpath,"DETx.csv.gz",sep="/"),stringsAsFactors = FALSE) #add this in 1.3 for better backwards compatability with R
 FG<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"),stringsAsFactors = FALSE)
@@ -82,7 +82,7 @@ FGfull<-FG
 
 FG<-FG[which(!duplicated(FG$FileName)),]
 
-#if true, populate Dets for every file in FG which is not already present 
+#if true, populate Dets for every file in FG which is not already present
 if(fillDat=="y"){
   if(any(!FGfull$FileName %in% allFiles)){
     files<-FGfull$FileName[!FGfull$FileName %in% allFiles]
@@ -93,20 +93,20 @@ if(fillDat=="y"){
     placeHolderRows<-data.frame(do.call("rbind",rows))
 
     if(nrow(placeHolderRows)>0){
-      
+
       placeHolderRows<-formatToDets(placeHolderRows,Dets)
       Dets<-rbind(Dets,placeHolderRows)
-      
+
     }
-    
+
     allFiles<-unique(c(Dets$StartFile,Dets$EndFile))
-    
+
   }
 }
 
-#need to do the following: 
+#need to do the following:
 #make sure script still works with old FG
-#add functionality that blacks out not considered GT data when viewing in Raven. 
+#add functionality that blacks out not considered GT data when viewing in Raven.
 
 
 
@@ -118,8 +118,8 @@ FG$StartTime<-NULL
 FG$cumsum=c(0,cumsum(FG$Duration)[1:(nrow(FG)-1)])
 
 #stick the null space data onto dets, so it gets formatted the same way!
-#calculate the empty spaces in each file. 
-#can't think of a more elegant way to do this, so do a big ugly loop 
+#calculate the empty spaces in each file.
+#can't think of a more elegant way to do this, so do a big ugly loop
 
 
 outNeg<-foreach(i=1:length(allFiles)) %do% {
@@ -128,41 +128,41 @@ outNeg<-foreach(i=1:length(allFiles)) %do% {
   if(nrow(segs)>1){
     for(p in 2:nrow(segs)){
       segVec<-c(segVec,segs$SegStart[p],segs$SegStart[p]+segs$SegDur[p])
-    }    
+    }
   }
   segVec<-c(0,segVec,segs$Duration[1])
   segVec<-segVec[which(!(duplicated(segVec)|duplicated(segVec,fromLast = TRUE)))]
-  
+
   if(length(segVec)>0){
     outs<-foreach(f=seq(1,length(segVec),2)) %do% {
       segsRow<-c(segVec[f],segVec[f+1],0,5000,segs$FileName[1],segs$FileName[1],NA,"Not Considered",NA)
       return(segsRow)
     }
-    
+
     outs<-do.call("rbind",outs)
   }else{
     outs<-NULL
   }
 
-  
+
   return(outs)
-  #chop up by 2s, write as negative space and rbind to outputs. 
-  
+  #chop up by 2s, write as negative space and rbind to outputs.
+
 }
 
 outNeg<-do.call("rbind",outNeg)
 outNeg<-data.frame(outNeg)
 
 if(nrow(outNeg)>0){
-  
+
   outNeg<-formatToDets(outNeg,Dets)
   Dets<-rbind(Dets,outNeg)
-  
+
 }
 
 
 
-#test if Dets have labels, or not. 
+#test if Dets have labels, or not.
 
 FG$order<-1:nrow(FG)
 
@@ -190,11 +190,11 @@ DetsFG<-rbind(DetsFGSameFile,DetsFGdiffFile)
 
 DetsFG$FileOffset<-DetsFG$StartTime
 
-#Raven friendly start and end times. 
+#Raven friendly start and end times.
 DetsFG$StartTime<-DetsFG$FileOffset+DetsFG$cumsum
 DetsFG$EndTime<-DetsFG$StartTime+DetsFG$DeltaTime
 
-#calculate fullpath for the end file as well 
+#calculate fullpath for the end file as well
 
 colnames(FG)[which(colnames(FG)=="StartFile")]<-"EndFile"
 EFFP<-merge(Dets,FG,by="EndFile")
@@ -203,7 +203,7 @@ EFFP<-EFFP[order(EFFP$order),]
 
 if(nrow(DetsFG)>=1){
   DetsFG$StartFile<-paste(dataPath,DetsFG$FullPath,DetsFG$StartFile,sep="")
-  DetsFG$EndFile<-paste(dataPath,EFFP$FullPath,DetsFG$EndFile,sep="") 
+  DetsFG$EndFile<-paste(dataPath,EFFP$FullPath,DetsFG$EndFile,sep="")
 }
 
 #strike several metadata fields

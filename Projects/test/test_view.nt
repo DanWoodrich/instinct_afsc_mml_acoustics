@@ -4,20 +4,37 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        queryfg1: 
+        queryfg1:
           > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'IP18_AU_CH01'
-          > AND bins.type = 2 and soundfiles.datetime between '2019-10-01' and '2019-10-07'"
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE (data_collection.name = 'AL16_AU_BS01' OR data_collection.name = 'AL16_AU_BS02') 
+          > AND bins.type = 2"
         queryfg2: 
           > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'IP18_AU_CH01'
-          > AND bins.type = 2"
-        query1:
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          > JOIN bin_label_wide ON bins.id = bin_label_wide.id WHERE bins.type = 2 AND bin_label_wide.fw IN (1,21)  
+          > ORDER BY random() LIMIT 100"
+        queryfg3: 
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          > JOIN bin_label_wide ON bins.id = bin_label_wide.id WHERE bins.type = 2 AND bin_label_wide.fw = 1"
+        #this one pulls from fw negative data, ignoring effort with airgun presence, randomly with a limit of 500 and only with sampling rate of 16384
+        queryfg4: 
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          > JOIN bin_label_wide ON bins.id = bin_label_wide.id WHERE data_collection.sampling_rate = 16384 AND bins.type = 2 
+          > AND bin_label_wide.fw = 20 AND bin_label_wide.ag = 99 ORDER BY random() LIMIT 5000"
+        queryfg5: 
+          > "WITH fw_samples AS (SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.*,
+          > row_number() over(partition by date_trunc('month', soundfiles.datetime),data_collection.name order by random()) as random_sort 
+          > FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE bins.type = 1) 
+          > SELECT * FROM fw_samples WHERE random_sort <=5"
+        querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
           > WHERE detections.status = 1 AND bins.id IN {FG}"
+        #only pulls 100 of highest probability negatives
         querygt2:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.label IN (0,1) AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.label IN (0,20) AND detections.procedure = 6 AND bins.id IN {FG} ORDER BY probability DESC LIMIT 500"
 Job:
     FormatFG:
         parameters:
@@ -29,7 +46,8 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 2048
             file_groupID: 
-              - [queryfg2]
+              #- [queryfg2]
+              - [queryfg5]
               #- queryfg002a
               #- [queryfg003]
               #- [test1]
@@ -45,7 +63,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-0
-            query: [querygt2]
+            query: [querygt1]
         arguments:
             hard_rerun: n
         descriptors:
@@ -57,8 +75,8 @@ Job:
             methodvers: v1-10
         arguments:
             fg_fill: n
-            hard_rerun: n
-            ignore_decimated: n
+            hard_rerun: y
+            ignore_decimated: y
         descriptors:
             runtype: lib
             language: R

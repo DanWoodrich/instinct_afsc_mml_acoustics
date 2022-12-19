@@ -50,7 +50,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="query")])){
   #load in filegroup
 
 
-  FG = read.csv(paste(dirname(dirname("C:/Apps/INSTINCT/Cache/675821/2998/DETx.csv.gz")),"FileGroupFormat.csv.gz",sep="/"))
+  FG = read.csv(paste(dirname(dirname(GTpath)),"FileGroupFormat.csv.gz",sep="/"))
 
   #determine ids based on bin parameters.
 

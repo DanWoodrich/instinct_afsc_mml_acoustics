@@ -13,7 +13,9 @@ for(n in Packages){
     }else{
       stop(paste("could not install",n))
     }
-    
+
   }
-  
+
 }
+
+install.packages("//nmfs/akc-nmml/CAEP/Acoustics/Matlab Code/Other code/R/pgpamdb/pgpamdb_0.1.1.tar.gz", source = TRUE, repos=NULL)

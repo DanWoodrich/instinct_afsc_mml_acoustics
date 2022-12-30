@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "C:/Apps/INSTINCT/Cache/652882/tempFG.csv.gz BS16_AU_PM02-a_files_1-175_rw_hg.csv decimate_data file_groupID methodID2m methodvers2m target_samp_rate y BS16_AU_PM02-a_files_1-175_rw_hg.csv matlabdecimate V1s0 1024 dbuddy-pull-FG-wname-v1-0"
+args = "C:/Apps/INSTINCT/Cache/112194/tempFG.csv.gz [queryfg2] decimate_data difftime_limit file_groupID methodID2m methodvers2m target_samp_rate y 3600"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -55,8 +55,14 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
 
   if(FGname %in% FGnames){
     #pull FG from effort
+    query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+          bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id
+          JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort on bins_effort.effort_id = effort.id 
+          WHERE effort.name = '",FGname,"'",sep="")
+    
+    query = gsub("[\r\n]", "", query)
 
-
+    FGdata =dbFetch(dbSendQuery(con,query))
 
   }else{
 

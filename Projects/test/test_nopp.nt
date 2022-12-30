@@ -47,12 +47,10 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 1024
             file_groupID: 
-              #- [queryfg2]
-              #- [queryfg4]
-              - BS15_AU_PM02-a_files_1-104_rw_hg
-              #- [queryfg003]
-              #- [test1]
-              #- [test2]
+              - round1_pull1_reduce
+              - XP15_UK_KO01_sample1
+              - XP14_UK_KO01_sample1
+              - round1_pull2
         arguments:
             hard_rerun: n
         descriptors:

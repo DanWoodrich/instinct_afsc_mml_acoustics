@@ -1,6 +1,7 @@
 library(pgpamdb)
+library(DBI)
 
-args="C:/Cache/345509/431110/801901/607909/763564 C:/Cache/345509/431110/801901/817521 C:/Cache/345509/431110/801901/607909/763564/715719  pgpamdb-default-compare-publish-v1-0"
+args="C:/Cache/484693/879197/683323/913932/807316 C:/Cache/484693/879197/683323/315812 C:/Cache/484693/879197/683323/913932/807316/900863  pgpamdb-default-compare-publish-v1-1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -24,6 +25,12 @@ EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
 PriorData$comments[is.na(PriorData$comments)]<-""
 EditData$comments[is.na(EditData$comments)]<-""
 
+#make sure that all of the placeholders etc are cleared:
+#search for 'na' label (cant exist)
+
+PriorData = PriorData[which(!is.na(PriorData$label)),]
+EditData = EditData[which(!is.na(EditData$label)),]
+
 #check columns are the same.
 if(any(!colnames(EditData)==colnames(PriorData))){
   stop("edited data columns do not match database standard")
@@ -39,6 +46,9 @@ mod_keys = EditData$id[which(EditData$id %in% PriorData$id)]
 new_data = EditData[-which(EditData$id %in% PriorData$id),]
 del_keys= PriorData$id[-which(PriorData$id %in% EditData$id)]
 
+#make sure this doesn't contain blank or na values
+#mod_keys = mod_keys[which(!is.na(EditData$id))]
+
 operations = as.vector(rep("",3),mode='list')
 names(operations)<-c("Modify","Insert","Delete")
 
@@ -51,8 +61,22 @@ if(length(mod_keys)>0){
     stop("ERROR: redundant IDs present in df")
   }
 
+  #compare based on diffs since raven rounding rules are unclear.
+
+  diffs = EditMod[,1:4]-PriorMod[,1:4]
+
+  #.1 precision on frequency, .01 precision on time
+  diffs[,3:4]= abs(diffs[,3:4])>0.1
+  diffs[,1:2]= abs(diffs[,1:2])>0.01
+
+  #if diffs are false, and the file end time has been modified, revert to original.
+  #fix for the behavior where raven uses exact samples and rewrites end file (I round to 2 decimal for sf on db)
+  ids_rev_et =EditMod[which(rowSums(diffs,na.rm=TRUE)==0 & EditMod$EndFile != PriorMod$EndFile),"id"]
+  EditMod[which(EditMod$id %in% ids_rev_et),"EndFile"] = PriorMod[which(PriorMod$id %in% ids_rev_et),"EndFile"]
+
   #reduce this set to only rows which were modified
-  testdf = EditMod!=PriorMod
+  testdf = EditMod[,5:length(EditMod)]!=PriorMod[,5:length(PriorMod)]
+  testdf = cbind(diffs,testdf)
   sums = rowSums(testdf,na.rm=TRUE)
 
   EditMod = EditMod[sums>0,]
@@ -102,8 +126,17 @@ if(nrow(new_data)>0){
   new_data$start_file = filelookup$id[match(new_data$start_file,filelookup$name)]
   new_data$end_file = filelookup$id[match(new_data$end_file,filelookup$name)]
 
-  #remove modified field so that it defaults to when it is submitted.
+  #remove modified and id fields so that it defaults to when it is submitted.
   new_data$modified=NULL
+  new_data$id = NULL
+  new_data$original_id=NULL
+  new_data$status=NULL
+
+  if(any(new_data$analyst=="",na.rm=TRUE)){
+
+      new_data[which(new_data$analyst==""),"analyst"]=NA
+
+  }
 
   dbAppendTable(con,'detections',new_data)
 

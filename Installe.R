@@ -18,4 +18,4 @@ for(n in Packages){
 
 }
 
-install.packages("//nmfs/akc-nmml/CAEP/Acoustics/Matlab Code/Other code/R/pgpamdb/pgpamdb_0.1.1.tar.gz", source = TRUE, repos=NULL)
+install.packages("//nmfs/akc-nmml/CAEP/Acoustics/Matlab Code/Other code/R/pgpamdb/pgpamdb_0.1.2.tar.gz", source = TRUE, repos=NULL)

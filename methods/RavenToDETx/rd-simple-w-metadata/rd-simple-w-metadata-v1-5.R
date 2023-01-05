@@ -3,11 +3,11 @@ MethodID<-"rd-simple-w-metadata-v1-5"
 #1.1: make it so any extra metadata is retained
 #1.2: include a filename arg
 
-args="C:/Apps/INSTINCT/Cache/587676/869751/419712/843629/733076/831400/914402/599940/744239 C:/Apps/INSTINCT/Cache/737376 C:/Apps/INSTINCT/Cache/587676/869751/419712/843629/733076/831400/914402/599940/744239/812782 RAVENx.txt"
+args="C:/Cache/345509/431110/801901 C:/Cache/345509 C:/Cache/345509/431110/801901/817521 RAVENx.txt"
 
 args<-strsplit(args,split=" ")[[1]]
 
-source(paste(getwd(),"/user/R_misc.R",sep="")) 
+source(paste(getwd(),"/user/R_misc.R",sep=""))
 args<-commandIngest()
 
 
@@ -19,10 +19,10 @@ fileName <- args[4]#RAVENx.txt
 RavGT<-read.delim(paste(RAVpath,fileName,sep="/"))
 FG<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))
 
-#throw out the segment info. 
+#throw out the segment info.
 FG<-FG[which(!duplicated(FG$FileName)),]
 
-#reduce RavGT files to just names, not locations. 
+#reduce RavGT files to just names, not locations.
 
 RavGT<-RavGT[which(RavGT$View!="Waveform 1"),]
 
@@ -69,12 +69,12 @@ RaVGTFG$StartTime<-RaVGTFG$FileOffset
 #end becomes file offset + delta time
 RaVGTFG$EndTime<-RaVGTFG$StartTime+RaVGTFG$DeltaTime
 
-#at the end, do a check if any end times are > duration (from FG). If so, subtract them by FG duration. 
+#at the end, do a check if any end times are > duration (from FG). If so, subtract them by FG duration.
 RaVGTFG$EndTime[which(RaVGTFG$EndTime>RaVGTFG$Duration)]<-RaVGTFG$EndTime[which(RaVGTFG$EndTime>RaVGTFG$Duration)]-RaVGTFG$Duration[which(RaVGTFG$EndTime>RaVGTFG$Duration)]
 
-#remove unnecessary non metadata columns. 
+#remove unnecessary non metadata columns.
 
-#1-3: we define unnecessary columns by name, allowing for others to be retained. 
+#1-3: we define unnecessary columns by name, allowing for others to be retained.
 
 out<-data.frame(RaVGTFG[,2:5],RaVGTFG[,1],RaVGTFG[,6:ncol(RaVGTFG)])
 colnames(out)[5]<-c("StartFile")

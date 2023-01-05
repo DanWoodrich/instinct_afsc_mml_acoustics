@@ -1,0 +1,86 @@
+Global:
+    cache_root: C:/Cache
+    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    Wrapper: False
+    parameters:
+        queryfg1:
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS15_AU_PM04' 
+          > AND bins.type = 2"
+        querygt1:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.signal_code = 10 AND bins.id IN {FG}"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: n
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-0
+            methodID2m: matlabdecimate
+            methodvers2m: V1s0
+            target_samp_rate: 2048
+            file_groupID: 
+              #- round1_pull1_reduce
+              #- XP15_UK_KO01_sample1
+              #- XP14_UK_KO01_sample1
+              #- round1_pull2
+              - AW13_AU_CL01_files_124-360_bn_hg
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-0
+            query: [querygt1]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-10
+        arguments:
+            fg_fill: n
+            hard_rerun: n
+            ignore_decimated: y
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+      parameters: 
+        methodID: rd-simple-w-metadata
+        methodvers: v1-5
+      descriptors:
+        runtype: lib
+        language: R
+    EditRAVENx:
+      #this process always has an instructions parameter. changing these will change hash
+      parameters: 
+        instructions:
+          > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+          > Review the contents for correctness, adding, modifying, or deleting as necessary.
+          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+      arguments: 
+        #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+        rerun_key: 0
+        hard_rerun: n
+      descriptors:
+        runtype: no_method
+    CompareAndPublishDets:
+      parameters:
+        methodID: pgpamdb-default-compare-publish
+        methodvers: v1-1
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib

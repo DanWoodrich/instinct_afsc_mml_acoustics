@@ -10,7 +10,11 @@ Global:
           > AND bins.type = 2"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.signal_code = 1 AND detections.procedure = 10 AND bins.id IN {FG}"
+        #get the original detections, using the minimum date modified by original id. figure this out next time!
+        querygt_original_set: 
+          > "SELECT DISTINCT ON (original_id) detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE bins.id IN {FG} AND procedure = 10 AND signal_code = 1 ORDER BY original_id,modified ASC"
 Job:
     FormatFG:
         parameters:
@@ -20,13 +24,13 @@ Job:
             methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 512
+            target_samp_rate: 1024
             file_groupID: 
               #- round1_pull1_reduce
               #- XP15_UK_KO01_sample1
               #- XP14_UK_KO01_sample1
               #- round1_pull2
-              - oneHRonePerc
+              - DFO_upcall_y_rev_wbuffer
         arguments:
             hard_rerun: n
         descriptors:
@@ -37,10 +41,10 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-0
-            query: [querygt1]
+            methodvers: v1-1
+            query: [querygt_original_set]
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R

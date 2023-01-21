@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "D:/Cache/862107/633463/DETx.csv.gz XB17_AM_OG01 query temp pampgdb-standard-pullgt-v1-0"
+args = "D:/Cache/336045/485580/DETx.csv.gz BS12_AU_PM04_files_241-315_rb_hg query ins pampgdb-standard-pullgt-v1-1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -51,35 +51,46 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="query")])){
 
 
   FG = read.csv(paste(dirname(dirname(GTpath)),"FileGroupFormat.csv.gz",sep="/"))
-
+  
   #determine ids based on bin parameters.
-
-  FGred = data.frame(FG$Deployment,as.POSIXct(FG$StartTime,tz='utc'),FG$SegStart,FG$SegDur+FG$SegStart)
-
-  colnames(FGred)=c("data_collection.name","soundfiles.datetime","bins.seg_start","bins.seg_end")
-
-  bins =table_dataset_lookup(con,
-                       "SELECT DISTINCT ON (soundfiles.datetime,data_collection.name,bins.seg_start,bins.seg_end) bins.id FROM bins JOIN soundfiles ON soundfiles.id = bins.soundfiles_id JOIN data_collection ON soundfiles.data_collection_id = data_collection.id",
-                       FGred,
-                       c("character varying","timestamp","DOUBLE PRECISION","DOUBLE PRECISION"))
-
-  #print("1st query done")
-  bins_format = paste("(",paste(as.integer(bins$id),collapse=",",sep=""),")",sep="")
-
-  query = gsub("\\{FG\\}", bins_format, query)
-
+  
+  if(grepl('bins.id ',ParamArgs[which(ParamNames=="query")])){
+    
+    FGred = data.frame(FG$Deployment,as.POSIXct(FG$StartTime,tz='utc'),FG$SegStart,FG$SegDur+FG$SegStart)
+    
+    colnames(FGred)=c("data_collection.name","soundfiles.datetime","bins.seg_start","bins.seg_end")
+    
+    bins =table_dataset_lookup(con,
+                               "SELECT DISTINCT ON (soundfiles.datetime,data_collection.name,bins.seg_start,bins.seg_end) bins.id FROM bins JOIN soundfiles ON soundfiles.id = bins.soundfiles_id JOIN data_collection ON soundfiles.data_collection_id = data_collection.id",
+                               FGred,
+                               c("character varying","timestamp","DOUBLE PRECISION","DOUBLE PRECISION"))
+    
+    #print("1st query done")
+    bins_format = paste("(",paste(as.integer(bins$id),collapse=",",sep=""),")",sep="")
+    
+    query = gsub("\\{FG\\}", bins_format, query)
+    
+  #determine based on soundfile
+  }else if(grepl('detections.start_file ',ParamArgs[which(ParamNames=="query")])){
+    
+    FGred = data.frame(FG$Deployment,as.POSIXct(FG$StartTime,tz='utc'))
+    
+    colnames(FGred)=c("data_collection.name","soundfiles.datetime")
+    
+    sfs = table_dataset_lookup(con,
+                               "SELECT DISTINCT ON (soundfiles.datetime,data_collection.name) soundfiles.id FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id",
+                               FGred,
+                               c("character varying","timestamp"))
+    
+    sfs_format = paste("(",paste(as.integer(sfs$id),collapse=",",sep=""),")",sep="")
+    
+    query = gsub("\\{FG\\}", sfs_format, query)
+    
+  }
+  
   GTdata = dbFetch(dbSendQuery(con,query))
 
-  #print("2nd query done")
-
-  #print(str(GTdata))
-
-  #print(head(GTdata))
-
-
-
-
-  #now just need to format it with INSTINCT naming (camel case and expected order)
+ # print("2nd query done")
 
   GTdata$id_ = GTdata$id
 
@@ -89,11 +100,16 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="query")])){
   colnames(GTdata)[length(GTdata)]="id"
 
   #trade in soundfile ids for soundfile names.
+  
+  if(nrow(GTdata)>0){
+    
 
   sf_names = dbFetch(dbSendQuery(con,paste("SELECT id,name FROM soundfiles WHERE id IN (",paste(unique(c(GTdata$StartFile,GTdata$EndFile)),collapse=",",sep=""),")",sep="")))
 
   GTdata$StartFile =sf_names$name[match(GTdata$StartFile,sf_names$id)]
   GTdata$EndFile = sf_names$name[match(GTdata$EndFile,sf_names$id)]
+  
+  }
 
   #print("3rd query done")
   #print(str(GTdata))

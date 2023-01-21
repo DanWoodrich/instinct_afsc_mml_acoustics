@@ -116,7 +116,13 @@ colnames(FG)[which(colnames(FG)=="FileName")]<-"StartFile"
 
 FG$StartTime<-NULL
 
-FG$cumsum=c(0,cumsum(FG$Duration)[1:(nrow(FG)-1)])
+if(nrow(FG)>1){
+  
+  FG$cumsum=c(0,cumsum(FG$Duration)[1:(nrow(FG)-1)])
+  
+}else{
+  FG$cumsum=0
+}
 
 #stick the null space data onto dets, so it gets formatted the same way!
 #calculate the empty spaces in each file.

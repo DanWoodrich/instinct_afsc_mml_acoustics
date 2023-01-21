@@ -10,11 +10,19 @@ Global:
           > AND bins.type = 2"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure = 13 AND bins.id IN {FG}"
+        #use this to look at lm 5 by fg
+        querygt1_5:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure = 5 AND bins.id IN {FG}"
+        #use this to look at lm 5 by deployment
+        querygt2:
+          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND procedure = 5 AND detections.start_file IN {FG}"
 Job:
     FormatFG:
         parameters:
             decimate_data: y
+            #decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-0
@@ -26,7 +34,8 @@ Job:
               #- XP15_UK_KO01_sample1
               #- XP14_UK_KO01_sample1
               #- round1_pull2
-              - oneHRonePerc
+              - LMyesSample_1
+              #- AW14_AU_BS03
         arguments:
             hard_rerun: n
         descriptors:
@@ -37,10 +46,10 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-0
+            methodvers: v1-1
             query: [querygt1]
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R
@@ -49,9 +58,10 @@ Job:
             methodID: rv-simple-w-metadata
             methodvers: v1-10
         arguments:
-            fg_fill: n
+            fg_fill: y
             hard_rerun: n
             ignore_decimated: n
+            #ignore_decimated: y
         descriptors:
             runtype: lib
             language: R

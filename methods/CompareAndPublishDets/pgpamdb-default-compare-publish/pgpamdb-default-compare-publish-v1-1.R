@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="C:/Cache/484693/879197/683323/913932/807316 C:/Cache/484693/879197/683323/315812 C:/Cache/484693/879197/683323/913932/807316/900863  pgpamdb-default-compare-publish-v1-1"
+args="D:/Cache/617791/461628/415041/912987/223764 D:/Cache/617791/461628/415041/723635 D:/Cache/617791/461628/415041/912987/223764/282637  pgpamdb-default-compare-publish-v1-1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -93,6 +93,10 @@ if(length(mod_keys)>0){
 
     #remove modified field so that it defaults to when it is submitted.
     EditMod$modified=NULL
+    
+    #remove analyst field so that it defaults to current user when submitted.
+    #stealth change, want this as normal behavior. 
+    EditMod$analyst=as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name = current_user"))$id)
 
     table_update(con,'detections',EditMod)
 
@@ -159,7 +163,7 @@ if(length(del_keys)>0){
 
   table_delete(con,'detections',del_keys)
 
-  operations[[2]]=paste(length(del_keys),"rows DELETED")
+  operations[[3]]=paste(length(del_keys),"rows DELETED")
 
   #filepath = paste(resultPath,"DelKeysTemp.csv",sep="/")
   #logpath = paste(resultPath,"temp3.txt",sep="/")

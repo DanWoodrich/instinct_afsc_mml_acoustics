@@ -10,7 +10,7 @@ Global:
           > AND bins.type = 2"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.signal_code IN (SELECT id FROM signals WHERE fills_which_bin = 'hb') AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
@@ -20,13 +20,13 @@ Job:
             methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 512
+            target_samp_rate: 1024
             file_groupID: 
               #- round1_pull1_reduce
               #- XP15_UK_KO01_sample1
               #- XP14_UK_KO01_sample1
               #- round1_pull2
-              - oneHRonePerc
+              - HB_s_ns_sample1
         arguments:
             hard_rerun: n
         descriptors:
@@ -49,7 +49,7 @@ Job:
             methodID: rv-simple-w-metadata
             methodvers: v1-10
         arguments:
-            fg_fill: n
+            fg_fill: y
             hard_rerun: n
             ignore_decimated: n
         descriptors:

@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "C:/Apps/INSTINCT/Cache/112194/tempFG.csv.gz [queryfg2] decimate_data difftime_limit file_groupID methodID2m methodvers2m target_samp_rate y 3600"
+args = "D:/Cache/862107/tempFG.csv.gz XB17_AM_OG01 decimate_data difftime_limit file_groupID methodID2m methodvers2m target_samp_rate n 3600 XB17_AM_OG01 matlabdecimate V1s0 1024 pampgdb-standard-pullfg-v1-0"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -73,10 +73,25 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
     if(FGname %in% depnames_new){
       #pull FG from new deployment name
 
+      query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end
+                    FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id 
+                    WHERE data_collection.name='",FGname,"'",sep="")
+      
+      query = gsub("[\r\n]", "", query)
+      
+      FGdata =dbFetch(dbSendQuery(con,query))
 
 
     }else if(FGname %in% depnames_old){
       #pull FG from old deployment name
+      
+      query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles_duration AS seg_end
+                    FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id 
+                    WHERE data_collection.historic_name='",FGname,"'",sep="")
+      
+      query = gsub("[\r\n]", "", query)
+      
+      FGdata =dbFetch(dbSendQuery(con,query))
 
     }else{
       stop("cannot locate underlying effort of named FG or query")

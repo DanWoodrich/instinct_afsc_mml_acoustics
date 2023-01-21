@@ -4,13 +4,24 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        queryfg1:
-          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS15_AU_PM04' 
-          > AND bins.type = 2"
+        ph_and_cl_sub:
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN 
+          > data_collection ON data_collection.id = soundfiles.data_collection_id join bins_effort ON 
+          > bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id WHERE effort.name = 'fw_gen1_ag' AND data_collection.location_code IN ('CL01','PH01')"
+        2012yr_fg:
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN 
+          > data_collection ON data_collection.id = soundfiles.data_collection_id join bins_effort ON 
+          > bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id WHERE effort.name = 'Ildiko_alldep' AND soundfiles.datetime < '2014-01-01' "
+        conflicts:
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN 
+          > data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bin_label_wide ON bins.id = bin_label_wide.id 
+          > WHERE bins.type = 1 AND fw = 98"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.procedure IN (6,7,8) AND detections.label IN (1,21) AND bins.id IN {FG}"
+        querygt2:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
@@ -26,9 +37,12 @@ Job:
               #- XP15_UK_KO01_sample1
               #- XP14_UK_KO01_sample1
               #- round1_pull2
-              - oneHRonePerc
+              #- Ildiko_alldep
+              #- [small_fg]
+              #- [ph_and_cl_sub]
+              - [conflicts]
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R
@@ -37,20 +51,20 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-0
-            query: [querygt1]
+            methodvers: v1-1
+            query: [querygt2]
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-10
+            methodvers: v1-11
         arguments:
             fg_fill: n
-            hard_rerun: n
+            hard_rerun: y
             ignore_decimated: n
         descriptors:
             runtype: lib

@@ -8,25 +8,25 @@ Global:
           > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
           > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS15_AU_PM04' 
           > AND bins.type = 2"
+        #can't query by bins since whole mooring is not a FG
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.procedure =10 AND detections.signal_code = 23 AND bins.id IN {FG}"
+        #only works for full mooring deployments. 
+        querygt2:
+          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.signal_code = 23 AND detections.start_file IN {FG}"
 Job:
     FormatFG:
         parameters:
-            decimate_data: y
+            decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 512
+            target_samp_rate: 1024
             file_groupID: 
-              #- round1_pull1_reduce
-              #- XP15_UK_KO01_sample1
-              #- XP14_UK_KO01_sample1
-              #- round1_pull2
-              - oneHRonePerc
+              - RW10_EA_BS02_files_All_rb_hg
         arguments:
             hard_rerun: n
         descriptors:
@@ -37,7 +37,7 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-0
+            methodvers: v1-1
             query: [querygt1]
         arguments:
             hard_rerun: n
@@ -50,8 +50,8 @@ Job:
             methodvers: v1-10
         arguments:
             fg_fill: n
-            hard_rerun: n
-            ignore_decimated: n
+            hard_rerun: y
+            ignore_decimated: y
         descriptors:
             runtype: lib
             language: R

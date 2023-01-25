@@ -40,7 +40,7 @@ Job:
             methodvers: v1-1
             query: [querygt1]
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R

@@ -30,7 +30,7 @@ Job:
               #- AW13_AU_PH01
               #- BS12_AU_PM08
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R

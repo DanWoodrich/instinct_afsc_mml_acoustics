@@ -34,7 +34,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="D:/Cache/699848/137102 D:/Cache/699848 D:/Cache/699848/137102/496023 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/4096 n n n 1 rv-simple-w-metadata-v1-10 //161.55.120.117/NMML_AcousticsData/Audio_Data"
+args="D:/Cache/818311/911342 D:/Cache/818311 D:/Cache/818311/911342/911834 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/1024 y y y 1 rv-simple-w-metadata-v1-11 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))

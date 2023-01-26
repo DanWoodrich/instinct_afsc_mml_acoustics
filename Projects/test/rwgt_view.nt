@@ -26,7 +26,8 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 1024
             file_groupID: 
-              - NOPP6_EST_20090328_files_All
+              #- NOPP6_EST_20090328_files_All
+              - BS15_AU_PM02-a_files_1-104_rw_hg
         arguments:
             hard_rerun: n
         descriptors:
@@ -50,7 +51,7 @@ Job:
             methodvers: v1-10
         arguments:
             fg_fill: n
-            hard_rerun: y
+            hard_rerun: n
             ignore_decimated: y
         descriptors:
             runtype: lib
@@ -78,7 +79,7 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-1
+        methodvers: v1-2
       arguments: 
         hard_rerun: n
       descriptors:

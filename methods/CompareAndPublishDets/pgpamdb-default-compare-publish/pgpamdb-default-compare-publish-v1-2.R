@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/359411/119603/206411/469561/979600 D:/Cache/359411/119603/206411/55319 D:/Cache/359411/119603/206411/469561/979600/312741  pgpamdb-default-compare-publish-v1-2"
+args="D:/Cache/849075/206140/220715/502077/871560 D:/Cache/849075/206140/220715/1265 D:/Cache/849075/206140/220715/502077/871560/133096  pgpamdb-default-compare-publish-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -185,6 +185,7 @@ if(length(affected_ids_total)>0){
                 = bins.id JOIN effort ON effort.id = bins_effort.effort_id JOIN effort_procedures ON 
                 (effort_procedures.effort_id = effort.id AND detections.procedure = effort_procedures.procedures_id 
                 AND detections.signal_code = effort_procedures.signal_code) WHERE effproc_assumption = 'i_neg'
+                AND effort_procedures.completed = 'y'
                 AND detections.id IN (",paste(affected_ids_total,collapse=",",sep=""),")",sep="")
   
   query <- gsub("[\r\n]", "", query)

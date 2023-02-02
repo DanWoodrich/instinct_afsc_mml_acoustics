@@ -342,11 +342,13 @@ class ApplyCutoff(INSTINCT_process):
 
     def run(self):
 
-        #import code
-        #code.interact(local=locals())
+        
         
         DETwProbs = pd.read_csv(self.ports[0].outpath() + '/DETx.csv.gz',compression='gzip')
         #print(self.parameters['cutoff'])
+        #make it work for 'probability' too. 
+        #import code
+        #code.interact(local=locals())
         DwPcut = DETwProbs[DETwProbs.probs>=float(self.parameters['cutoff'])]
 
         if 'append_cutoff' in self.parameters:
@@ -621,7 +623,7 @@ class FormatGT(INSTINCT_process):
             _dir,path = self.infile()
             
             if not os.path.exists(path): #if GT file doesn't exist, create an empty file
-                GT = pd.DataFrame(columns = ["StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","label","Type","SignalCode"])
+                GT = pd.DataFrame(columns = ["StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","label","Type","f"])
                 #import code
                 #code.interact(local=locals())
                 os.makedirs(_dir,exist_ok=True)

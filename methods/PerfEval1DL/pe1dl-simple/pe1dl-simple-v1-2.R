@@ -2,7 +2,7 @@
 #for no unnecessary rerun when swapping out fg. 
 
 
-args<-"C:/Apps/INSTINCT/Cache/226127 C:/Apps/INSTINCT/Cache/226127/894219/214644/165905 C:/Apps/INSTINCT/Cache/226127/894219/214644/165905/300803 n pe1dl-simple-v1-2"
+args<-"D:/Cache/445295/492425 D:/Cache/680082/922262/357474/48463 D:/Cache/680082/922262/357474/48463/427863 y pe1dl-simple-v1-2"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep="")) 
@@ -73,6 +73,10 @@ if(length(unique(data$FGID))>1){
   FGname = "all"
 }else{
   FGname =  data$FGID[1]
+}
+
+if('signal_code' %in% colnames(data)){
+  colnames(data)[which(colnames(data)=='signal_code')]="SignalCode"
 }
 
 datanotp = data[which(data$SignalCode=="out"),]

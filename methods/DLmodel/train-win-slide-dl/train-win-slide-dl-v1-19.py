@@ -107,7 +107,13 @@ if stage !="train":
     do_weight = 'n'
     do_val = 'n'
 
+    val_tp_heavy = 'n'
+    val_steps = 0
+
 else:
+
+    #print(args)
+    #print(len(args))
     addnoise_mean = float(args[8])
     addnoise_stddev = float(args[9])
     augstr = args[10].split(",")
@@ -134,13 +140,23 @@ else:
     model_win_size = int(args[28])
     win_size_native = int(args[29])
     zero_drop = float(args[30])
-    #arguments: 
-    batch_size_train = int(args[32])
-    batch_size = int(args[33])
-    epochs = int(args[34])
-    epoch_steps = int(args[35])
+    #arguments:
+    val_steps = int(args[32])
+    val_tp_heavy = args[33]
+    batch_size_train = int(args[34])
+    batch_size = int(args[35])
+    epochs = int(args[36])
+    epoch_steps = int(args[37])
+
+
+
+
 
     only_labs = 'n'
+
+
+if val_steps == 0:
+    val_steps = None
 
 #calculate this based on given dimensions
 win_t_factor = model_win_size/win_size_native
@@ -583,6 +599,7 @@ if stage=="train":
 
     print(sum(FGdurs))
     print(estbins)
+    
     #for now, hardcode that shuffle buffer will be 1/20th the size of total dataset
 
     shuffle_size_all = round(estbins*shuf_size)
@@ -632,18 +649,20 @@ if stage=="train":
 
     if do_weight_ == True:
         train_dataset = train_dataset.map(lambda x,y,z2: (tf.image.grayscale_to_rgb(x),y,z2))
+        if do_aug == "y":
+            train_dataset = train_dataset.map(lambda x,y,z2: (data_augmentation(x),y,z2))            
+
     else:
         train_dataset = train_dataset.map(lambda x,y: (tf.image.grayscale_to_rgb(x),y))
-    
-    if do_aug == "y" and do_weight_ == True:
-        train_dataset = train_dataset.map(lambda x,y,z2: (data_augmentation(x),y,z2))
-    elif do_aug == "y" and do_weight_ == False:
-        train_dataset = train_dataset.map(lambda x,y: (data_augmentation(x),y))
+        if do_aug == "y":
+            train_dataset = train_dataset.map(lambda x,y: (data_augmentation(x),y))
         
     train_dataset = train_dataset.batch(batch_size_train)
 
-    if do_val=='y':
-        val_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,False,2,batch_size_train,None,True,None,False,True,None,False,False) #different wh and wl avoid the random crop
+    if do_val=='y' and val_tp_heavy == 'y':
+        val_dataset = MakeDataset(tf.data.Dataset.sample_from_datasets([TP_dataset,full_dataset],weights=[.75,.25],seed=1),model_win_size,model_win_size,stride_pix_train,False,2,batch_size_train,None,True,None,False,True,None,False,False) #different wh and wl avoid the random crop
+    elif do_cal=='y':
+        val_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,False,2,batch_size_train,None,True,None,False,True,None,False,False)
     else:
         val_dataset = None
     
@@ -804,19 +823,35 @@ if stage=="train":
         else:
             loss_fxn = "binary_crossentropy"
             loss_metric = "binary_accuracy" #accuracy bugged for some reason...?
-            #loss_metric = "accuracy" 
+            #loss_metric = "accuracy"
+
+        if do_aug != 'on_gpu':
         
-        def KerasModel(constructor=model_con):
-          return tf.keras.Sequential([
-            tf.keras.Input(shape=(model_win_size, model_win_size, 3)),
-            #tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]), #turn these on or off depending if limiation is in CPU or GPU
-            #tf.keras.layers.RandomContrast(factor=[0,contrast_high]), 
-            constructor(include_top=False, weights=None, pooling="max"),
-            tf.keras.layers.ReLU(),
-            tf.keras.layers.Dense(128, activation="relu"),
-            tf.keras.layers.Dense(GT_depth),
-            tf.keras.layers.Activation("sigmoid"),
-          ])
+            def KerasModel(constructor=model_con):
+              return tf.keras.Sequential([
+                tf.keras.Input(shape=(model_win_size, model_win_size, 3)),
+                #tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]), #turn these on or off depending if limiation is in CPU or GPU
+                #tf.keras.layers.RandomContrast(factor=[0,contrast_high]), 
+                constructor(include_top=False, weights=None, pooling="max"),
+                tf.keras.layers.ReLU(),
+                tf.keras.layers.Dense(128, activation="relu"),
+                tf.keras.layers.Dense(GT_depth),
+                tf.keras.layers.Activation("sigmoid"),
+              ])
+
+        else:
+
+            def KerasModel(constructor=model_con):
+              return tf.keras.Sequential([
+                tf.keras.Input(shape=(model_win_size, model_win_size, 3)),
+                tf.keras.layers.RandomBrightness(factor=[-brightness_low,brightness_high]), #turn these on or off depending if limiation is in CPU or GPU
+                tf.keras.layers.RandomContrast(factor=[0,contrast_high]), 
+                constructor(include_top=False, weights=None, pooling="max"),
+                tf.keras.layers.ReLU(),
+                tf.keras.layers.Dense(128, activation="relu"),
+                tf.keras.layers.Dense(GT_depth),
+                tf.keras.layers.Activation("sigmoid"),
+              ])
 
         model = KerasModel(model_con)
 
@@ -914,7 +949,8 @@ if stage=="train":
         model.fit(
                     train_dataset,
                     steps_per_epoch=epoch_steps,
-                    validation_data=val_dataset, #temporarily disable to make it faster
+                    validation_data=val_dataset,
+                    validation_steps = val_steps,
                     epochs=epochs,
                     callbacks=[csv_logger,tc]
                     )

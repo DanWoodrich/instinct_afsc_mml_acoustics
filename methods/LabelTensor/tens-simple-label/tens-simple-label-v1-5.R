@@ -35,9 +35,17 @@ source(paste(getwd(),"/user/R_misc.R",sep=""))
 
 bigfiles = unique(FG$DiffTime)
 
-GT_depth = length(unique(GTref$SignalCode))
+#v1-5, crude fix for different gt file
+if(!any("SignalCode" %in% colnames(GTref))){
+  
+  colnames(GTref)[which(colnames(GTref)=='signal_code')]= "SignalCode"
+  
+}
 
+GT_depth = length(unique(GTref$SignalCode))
 GT_unq = sort(unique(GTref$SignalCode)) #sort arranges alphabetically- do the same later when 'unpacking' results
+
+
 
 dir.create(paste(resultpath,"/labeltensors",sep=""))
 
@@ -56,8 +64,13 @@ filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr")) %dopar% 
     summarise(SegStart = min(SegStart), SegDur = sum(SegDur))
   )
   
+  #v1-5... does it not work because length 1, or because needs to be c(0,cumsum(...)) instead?
+  #if(nrow(fileFG)>1){
   fileFG$mod = cumsum(fileFG$SegDur)-fileFG$SegDur-fileFG$SegStart
-  
+  #}else{
+  #  fileFG$mod = 0
+  #}
+
   fileFG_start = data.frame(fileFG$fileFG.FileName,fileFG$mod)
   colnames(fileFG_start)=c("StartFile","mod_start")
   

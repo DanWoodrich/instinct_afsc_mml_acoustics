@@ -7,7 +7,7 @@ library(signal)
 library(dplyr)
 library(doParallel)
 
-args="D:/Cache/337141 D:/Cache/337141/126895 D:/Cache/337141/679211 D:/Cache/337141/679211/303216 lm2gen_oddtp 2 256 0 256 48 tens-simple-label-v1-4"
+args="D:/Cache/862679 D:/Cache/862679/321415 D:/Cache/862679/639563 D:/Cache/862679/639563/806550 BS13_AU_PM04 2 128 0 256 16 tens-simple-label-v1-5"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -43,6 +43,11 @@ if(!any("SignalCode" %in% colnames(GTref))){
 }
 
 GT_depth = length(unique(GTref$SignalCode))
+#one, at minimum
+if(GT_depth==0){
+  GT_depth = 1
+}
+
 GT_unq = sort(unique(GTref$SignalCode)) #sort arranges alphabetically- do the same later when 'unpacking' results
 
 
@@ -76,7 +81,7 @@ filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr")) %dopar% 
   
   fileFG_end = data.frame(fileFG$fileFG.FileName,fileFG$mod)
   colnames(fileFG_end)=c("EndFile","mod_end")
-  
+
   GT = merge(GTref,fileFG_start)
   GT = merge(GT,fileFG_end)
   

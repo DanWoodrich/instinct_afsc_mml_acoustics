@@ -181,10 +181,6 @@ with gzip.open(FGpath, mode="rt") as f:
         FGnames.append(row.split(",")[idx].replace('"', ''))
         FGdurs.append(float(row.split(",")[cols.index("SegDur")].replace('"', '')))
 
-
-#import code
-#code.interact(local=dict(globals(), **locals()))
-
 usedFG = set()
 uniqueFG = [x for x in FGnames if x not in usedFG and (usedFG.add(x) or True)]
 
@@ -996,6 +992,9 @@ if stage=="test":
         #code.interact(local=dict(globals(), **locals()))
         
     else:
+        
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
         scores = model.predict(ds)
     #scores1.append(scores)
 

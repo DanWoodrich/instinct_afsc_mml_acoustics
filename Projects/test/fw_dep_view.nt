@@ -4,29 +4,42 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        queryfg1:
-          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS15_AU_PM04' 
-          > AND bins.type = 2"
-        #can't query by bins since whole mooring is not a FG
-        querygt1:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.procedure =10 AND detections.signal_code IN (5,6) AND bins.id IN {FG}"
-        #only works for full mooring deployments. 
-        querygt2:
-          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND detections.start_file IN {FG}"
+      queryfg1:
+        > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN bin_label_wide ON bin_label_wide.id = bins.id JOIN soundfiles ON 
+        > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.location_code = 'CL01' 
+        > AND bins.type = 1 AND bin_label_wide.fw = 99"
+      #this one is effort for high latitude fw
+      queryfg2:
+        > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+        > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bin_label_wide ON bin_label_wide.id = bins.id
+        >  WHERE data_collection.latitude > 69.75 AND bins.type = 1 AND bin_label_wide.fw IN (1,21)"
+      queryfg3:
+        > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN bin_label_wide ON bin_label_wide.id = bins.id JOIN soundfiles ON 
+        > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN 
+        > effort ON bins_effort.effort_id = effort.id WHERE effort.name = 'AW12_AU_CL01_files_1-23_bb_hg' AND bins.type = 1"
+      #can't query by bins since whole mooring is not a FG
+      querygt1:
+        > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+        > WHERE detections.status = 1 AND detections.procedure =10 AND detections.signal_code IN (5,6) AND bins.id IN {FG}"
+      #only works for full mooring deployments. 
+      querygt2:
+        > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND detections.start_file IN {FG}"
+      querygt3:
+        > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+        > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
-            decimate_data: n
+            decimate_data: y
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 1024
+            target_samp_rate: 2048
             file_groupID: 
-              - AW15_AU_NM01
+              - [queryfg3]
+              #- [queryfg1]
               #- AW13_AU_PH01
               #- BS12_AU_PM08
         arguments:
@@ -39,8 +52,9 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-1
-            query: [querygt2]
+            methodvers: v1-2
+            query: [querygt3]
+            remove_proc_ovlp: n
         arguments:
             hard_rerun: y
         descriptors:
@@ -53,7 +67,7 @@ Job:
         arguments:
             fg_fill: y
             hard_rerun: y
-            ignore_decimated: y
+            ignore_decimated: n
         descriptors:
             runtype: lib
             language: R

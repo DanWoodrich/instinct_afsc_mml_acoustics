@@ -6,11 +6,11 @@ Global:
     parameters:
         queryfg1:
           > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS15_AU_PM04' 
-          > AND bins.type = 1"
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS13_AU_PM04' 
+          > AND bins.type = 2"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND label = 1 AND procedure IN (10,13,12) AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.signal_code = 3 AND label != 20 AND procedure = 21 AND bins.id IN {FG}"
         querygt3:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
           > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure IN (5,10,13,12) AND modified = (SELECT MAX(modified) FROM detections WHERE signal_code = 3) AND bins.id IN {FG}"
@@ -34,12 +34,7 @@ Job:
             target_samp_rate: 512
             #target_samp_rate: 8192
             file_groupID: 
-              #- lm2gen_og_train
-              #- lm2gen_train_pos_set_no_olvp
-              #- lm2gen_train_rand_set_no_ovlp
-              #- lm2gen_hardneg_ds
-              #- lm2gen_oddtp
-              - BS15_AU_PM04
+              - [queryfg1]
         arguments:
             hard_rerun: n
         descriptors:
@@ -51,7 +46,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-2
-            query: [querygt2]
+            query: [querygt1]
             remove_proc_ovlp: n
         arguments:
             hard_rerun: y
@@ -64,7 +59,7 @@ Job:
             methodvers: v1-10
         arguments:
             fg_fill: n
-            hard_rerun: y
+            hard_rerun: n
             #ignore_decimated: n
             ignore_decimated: y
         descriptors:

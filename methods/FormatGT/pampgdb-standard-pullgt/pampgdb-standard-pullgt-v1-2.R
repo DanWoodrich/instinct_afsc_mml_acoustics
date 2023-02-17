@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "D:/Cache/517297/375929/DETx.csv.gz lm2gen_train_pos_set_no_olvp query here pampgdb-standard-pullgt-v1-2"
+args = "D:/Cache/862679/639563/DETx.csv.gz BS13_AU_PM04 query remove_proc_ovlp querybody y pampgdb-standard-pullgt-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -63,12 +63,25 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="query")])){
     bins =table_dataset_lookup(con,
                                "SELECT DISTINCT ON (soundfiles.datetime,data_collection.name,bins.seg_start,bins.seg_end) bins.id FROM bins JOIN soundfiles ON soundfiles.id = bins.soundfiles_id JOIN data_collection ON soundfiles.data_collection_id = data_collection.id",
                                FGred,
-                               c("character varying","timestamp","DOUBLE PRECISION","DOUBLE PRECISION"))
+                               c("character varying","timestamp","DOUBLE PRECISION","DOUBLE PRECISION"),return_anything = TRUE)
+    if(nrow(bins)==0){
+      
+      #this means that perhaps, the FG is on soundfiles and this is being called to produce an empty set. 
+      is_empty = TRUE
+      
+      query = "SELECT * FROM detections LIMIT 0"
+      
+    }else{
+      
+      is_empty = FALSE
+      
+      #print("1st query done")
+      bins_format = paste("(",paste(as.integer(bins$id),collapse=",",sep=""),")",sep="")
+      
+      query = gsub("\\{FG\\}", bins_format, query)
+    }
     
-    #print("1st query done")
-    bins_format = paste("(",paste(as.integer(bins$id),collapse=",",sep=""),")",sep="")
-    
-    query = gsub("\\{FG\\}", bins_format, query)
+   
     
   #determine based on soundfile
   }else if(grepl('detections.start_file ',ParamArgs[which(ParamNames=="query")])){

@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/849075/206140/220715/502077/871560 D:/Cache/849075/206140/220715/1265 D:/Cache/849075/206140/220715/502077/871560/133096  pgpamdb-default-compare-publish-v1-2"
+args="D:/Cache/402326/450685/972318/461129/418533 D:/Cache/402326/450685/972318/981362 D:/Cache/402326/450685/972318/461129/418533/99203  pgpamdb-default-compare-publish-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -24,6 +24,12 @@ EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
 #make sure comments which are na are instead set to blank:
 PriorData$comments[is.na(PriorData$comments)]<-""
 EditData$comments[is.na(EditData$comments)]<-""
+
+#remove unneeded columns, if they exist
+PriorData$Name.x= NULL
+PriorData$Name.y= NULL
+EditData$Name.x= NULL
+EditData$Name.y= NULL
 
 #make sure that all of the placeholders etc are cleared:
 #search for 'na' label (cant exist)

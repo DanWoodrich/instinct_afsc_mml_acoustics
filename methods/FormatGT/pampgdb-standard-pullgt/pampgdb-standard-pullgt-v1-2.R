@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "D:/Cache/862679/639563/DETx.csv.gz BS13_AU_PM04 query remove_proc_ovlp querybody y pampgdb-standard-pullgt-v1-2"
+args = "D:/Cache/697284/885086/DETx.csv.gz [queryfg2] query remove_proc_ovlp querybody n pampgdb-standard-pullgt-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -25,7 +25,7 @@ ParamArgs<-args[(3+argsSep):(length(args)-1)]
 
 #param string holds the actual query value, FGname is the query name.
 
-source(Sys.getenv('DBSECRETSPATH')) #populates connection paths which contain connection variables.
+source(Sys.getenv('DBSECRETSPATH')) #source("C:/Users/daniel.woodrich/Desktop/cloud_sql_db/paths.R")#populates connection paths which contain connection variables.
 
 con=pamdbConnect("poc_v2",keyscript,clientkey,clientcert)
 

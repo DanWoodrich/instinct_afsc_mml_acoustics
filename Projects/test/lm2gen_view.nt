@@ -8,6 +8,12 @@ Global:
           > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
           > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS15_AU_PM04' 
           > AND bins.type = 1"
+        #this one returns soundfiles which contain signal to be analyzed
+        queryfg2:
+          > "SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bins_detections ON bins_detections.bins_id = bins.id JOIN 
+          > detections ON detections.id = bins_detections.detections_id WHERE detections.status = 1 AND detections.procedure = 23 AND detections.label = 99 AND bins.type = 1 AND data_collection.sampling_rate = 16384
+          > AND data_collection.name IN ('BS15_AU_PM04','BS10_AU_PM02-a','AL19_AU_UN01-b','AL19_AU_UM01','AL19_AU_UN01-a')"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
           > WHERE detections.status = 1 AND detections.signal_code = 3 AND label = 1 AND procedure IN (10,13,12) AND bins.id IN {FG}"
@@ -18,9 +24,18 @@ Global:
         querygt1_5:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
           > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure = 5 AND bins.id IN {FG}"
+        querygt1_6:
+          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure = 5 AND detections.start_file IN {FG}"
         #use this to look at lm 5 by deployment
         querygt2:
-          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND procedure = 5 AND detections.start_file IN {FG}"
+          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND procedure = 23 AND label = 99 AND detections.start_file IN {FG}"
+        #bins vers of this for grouped review
+        querygt4:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND procedure = 23 AND label = 99 AND bins.id IN {FG}"
+        querygt_odd_dets:
+          > "SELECT DISTINCT detections.* FROM detections JOIN soundfiles ON detections.end_file = soundfiles.id 
+          > WHERE detections.status = 1 AND procedure = 5 AND detections.start_file = detections.end_file AND detections.end_time > soundfiles.duration AND detections.start_file IN {FG}"
 Job:
     FormatFG:
         parameters:
@@ -39,9 +54,12 @@ Job:
               #- lm2gen_train_rand_set_no_ovlp
               #- lm2gen_hardneg_ds
               #- lm2gen_oddtp
-              - BS15_AU_PM04
+              #- CX12_AU_WT02
+              #- BS15_AU_PM04
+              #below is useful if revieweing a lot at the same sampling rate. 
+              - [queryfg2]
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R
@@ -51,7 +69,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-2
-            query: [querygt2]
+            query: [querygt4]
             remove_proc_ovlp: n
         arguments:
             hard_rerun: y
@@ -87,13 +105,13 @@ Job:
       arguments: 
         #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
         rerun_key: 0
-        hard_rerun: n
+        hard_rerun: y
       descriptors:
         runtype: no_method
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-2
+        methodvers: v1-3
       arguments: 
         hard_rerun: n
       descriptors:

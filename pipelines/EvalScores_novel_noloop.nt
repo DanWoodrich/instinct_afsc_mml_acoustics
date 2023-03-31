@@ -1,0 +1,36 @@
+#use this to build out performance eval for ground truth data. 
+pipe: ScoresToDETx.pipe
+#params_drop: TrainModel_paramset-test1
+ScoresToDETx.pipe:
+  process: ScoresToDETx
+  GetFG:
+    pipe: FormatFG.pipe
+    #loop_on: FormatFG
+    FormatFG.pipe:
+      process: FormatFG
+  GetScores:
+    pipe: DLmodel_Test.pipe
+    #params_drop: TrainModel_paramset-test1
+    pipe_link: 
+      name: test_seperate_DL2_noloop.nt 
+  GetImg:
+    pipe: GenBigSpec.pipe
+    #loop_on: FormatFG
+    GenBigSpec.pipe:
+      process: GenBigSpec
+      GetFG:
+        process: FormatFG
+  GetSplits:
+    pipe: SplitTensor.pipe
+    params_drop: Job-seperate_ds_test
+    #loop_on: FormatFG
+    SplitTensor.pipe:
+      process: SplitTensor
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            process: FormatFG
+      GetFG:
+        process: FormatFG

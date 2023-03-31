@@ -579,6 +579,22 @@ class PublishDets(INSTINCT_process):#
 
         self.run_cmd()
 
+class PublishDetswFG(INSTINCT_process):#
+
+    pipeshape = TwoUpstream
+    upstreamdef = ['GetFG','GetData']
+
+    outfile = 'receipt.txt' #record of the database transaction
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
 class CompareAndPublishDets(INSTINCT_process):#
 
     pipeshape = TwoUpstream_noCon
@@ -902,7 +918,13 @@ class ScoresToDETx(INSTINCT_process):
     outfile = "DETx.csv.gz"
     
     def run(self):
-        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2]
+        
+        arg_tlist= sorted(self.arguments.items())
+        arg_vals = [arg_tlist[x][1] for x in range(len(arg_tlist))]
+        arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
+        arg_string = os.environ["INS_ARG_SEP"].join(arg_vals_sort)
+        
+        self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2,arg_string]
         
         self.run_cmd()
 

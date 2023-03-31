@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "D:/Cache/130603/FileGroupFormat.csv.gz D:/Cache/445295/509681/885071/274696/715747/614684 D:/Cache/130603/381011 D:/Cache/130603/381011/468674 D:/Cache/130603/381011/468674/908832 3600 0 128 240 240 240 16 mean within_file 48 moving-smooth-v1-9"
+args = "D:/Cache/115019/FileGroupFormat.csv.gz D:/Cache/445295/509681/885071/274696/114045/381918 D:/Cache/115019/712692 D:/Cache/115019/712692/252715 D:/Cache/115019/712692/252715/516480 3600 0 128 240 240 240 16 mean within_file 48 moving-smooth-v1-10 y y 1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -40,6 +40,9 @@ native_pix_per_sec= as.integer(args[12])
 smooth_method= eval(parse(text=args[13]))
 split_protocol= args[14]
 stride_pix= as.integer(args[15])
+
+#argument for inference to remove images if no longer needed: 
+remove_spec= args[18]
 
 time_expand = model_win_size/win_size_native
 
@@ -287,8 +290,12 @@ if(vertical_bins==1){
       
       splits = read.csv(filetabs[datachunk,"splitfile"])
       
-      #downsample splits to the level of scores
-      splits2 = approx(splits, n=new_size)$y
+      if(length(splits)>1){
+        #downsample splits to the level of scores
+        splits2 = approx(splits, n=new_size)$y
+      }else{
+        splits2 = 3
+      }
       
       detx$splits = splits2
       
@@ -306,5 +313,14 @@ if(vertical_bins==1){
 #finally, tie this back to splits. 
 
 write.csv(data_all,gzfile(paste(resultPath,"/DETx.csv.gz",sep="")),row.names = FALSE)
+
+#remove the spectrograms if argument is set: 
+
+if(remove_spec=="y"){
+  
+  file.remove(SpecTab$filename)
+  file.remove(paste(SpecPath,"/filepaths.csv",sep=""))
+  
+}
 
   

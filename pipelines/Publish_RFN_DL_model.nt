@@ -1,0 +1,16 @@
+pipe: PublishDetswFG.pipe
+loop_on: FormatFG
+PublishDetswFG.pipe: 
+  process: PublishDetswFG
+  GetData:
+    pipe: ApplyCutoff.pipe
+    ApplyCutoff.pipe: 
+      process: ApplyCutoff
+      GetDETx:
+        #pipe: DLmodel_Test.pipe
+        pipe: ScoresToDETx.pipe
+        pipe_link: 
+          #name: train_seperate_DL2_nl.nt
+          name: EvalScores_novel_noloop.nt
+  GetFG:
+    process: FormatFG

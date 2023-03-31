@@ -76,7 +76,7 @@ img_print <-function(object,xbins,pix_height,path){
   
   plot(object, axes = 0)
 
-  dev.off()
+  invisible(dev.off())
   
 }
 
@@ -122,9 +122,30 @@ foreach(i=1:length(bigfiles),.packages=c("tuneR","signal","imager")) %dopar% {
   
   #read in the files in chunks
   for(n in 1:nrow(fileFG)){
+  
+    #stealth edit: add in a while loop that catches errors and tries again in case of read failure. num tries prevents infinite lop
+    #this is necessary due to very rare and unpredictable read error to NAS
+    it_worked = FALSE
+    num_tries = 0
     
-    sounddata[[n]]= readWave(paste(SFroot,fileFG$FullPath[n],fileFG$FileName[n],sep=""),from=fileFG$SegStart[n],to = fileFG$SegStart[n]+fileFG$SegDur[n],units = "seconds")@left
+    while(!it_worked & num_tries < 10){
     
+      num_tries = num_tries + 1
+      
+      try({         
+      sounddata[[n]]= readWave(paste(SFroot,fileFG$FullPath[n],fileFG$FileName[n],sep=""),from=fileFG$SegStart[n],to = fileFG$SegStart[n]+fileFG$SegDur[n],units = "seconds")@left
+      
+      it_worked = TRUE
+      })
+      
+      if(!it_worked){
+        Sys.sleep(1) #add small delay between attempts. 
+        #statement to help debug
+        print(paste("attempt to read file failed, trying again...",fileFG$FullPath[n])) 
+      }
+      
+      }
+
   }
   
   sounddata = do.call("c",sounddata)

@@ -34,7 +34,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="D:/Cache/699848/137102 D:/Cache/699848 D:/Cache/699848/137102/496023 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/4096 n n n 1 rv-simple-w-metadata-v1-10 //161.55.120.117/NMML_AcousticsData/Audio_Data"
+args="D:/Cache/304443/277451 D:/Cache/304443 D:/Cache/304443/277451/525585 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/512 n y y 1 rv-simple-w-metadata-v1-10 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))
@@ -58,6 +58,7 @@ if(args[length(args)-3]=="y"){
 #transform into Raven formatted data, retain data in other columns besides mandated 6.
 
 Dets<-read.csv(paste(DETpath,"DETx.csv.gz",sep="/"),stringsAsFactors = FALSE) #add this in 1.3 for better backwards compatability with R
+
 FG<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"),stringsAsFactors = FALSE)
 
 #v1-7: right off the bat- if the detection is not within the effort (both begin and end file), remove it!

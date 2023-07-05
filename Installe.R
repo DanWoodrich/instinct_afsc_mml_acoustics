@@ -1,6 +1,6 @@
 options(timeout=1800)
 
-Packages<-c("doParallel","dplyr","tuneR","signal","foreach","imager","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres") #"Rtools"?
+Packages<-c("doParallel","dplyr","tuneR","signal","foreach","imager","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
 
 for(n in Packages){
   if(require(n,character.only=TRUE)){
@@ -18,4 +18,4 @@ for(n in Packages){
 
 }
 
-install.packages("//nmfs/akc-nmml/CAEP/Acoustics/Matlab Code/Other code/R/pgpamdb/pgpamdb_0.1.3.tar.gz", source = TRUE, repos=NULL)
+install.packages("//nmfs/akc-nmml/CAEP/Acoustics/Matlab Code/Other code/R/pgpamdb/pgpamdb_0.1.15.tar.gz", source = TRUE, repos=NULL)

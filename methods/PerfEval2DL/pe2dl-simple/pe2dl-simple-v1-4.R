@@ -3,7 +3,7 @@ library(flux)
 #library(tidyverse)
 #v1-1: make sure FG information makes it into the outputs. 
 
-args<-"C:/Apps/INSTINCT/Cache/226127/237769/876680 C:/Apps/INSTINCT/Cache/226127/237769/876680/719648 C:/Apps/INSTINCT/Cache/226127/237769/113634/729921/994618 2 pe2dl-simple-v1-2"
+args<-"D:/Cache/348728/295513/905503 D:/Cache/348728/295513/905503/129693 D:/Cache/348728/295513/631525/915668/238485 2 y pe2dl-simple-v1-4"
 args<-strsplit(args,split=" ")[[1]]
 
 

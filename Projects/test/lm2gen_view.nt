@@ -12,8 +12,8 @@ Global:
         queryfg2:
           > "SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
           > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bins_detections ON bins_detections.bins_id = bins.id JOIN 
-          > detections ON detections.id = bins_detections.detections_id WHERE detections.status = 1 AND detections.procedure = 23 AND detections.label = 99 AND bins.type = 1 AND data_collection.sampling_rate = 16384
-          > AND data_collection.name IN ('BS15_AU_PM04','BS10_AU_PM02-a','AL19_AU_UN01-b','AL19_AU_UM01','AL19_AU_UN01-a')"
+          > detections ON detections.id = bins_detections.detections_id WHERE detections.status = 1 AND detections.procedure = 23 AND detections.label = 99 AND bins.type = 1 AND data_collection.sampling_rate = 16384 LIMIT 250"
+          #> AND data_collection.name IN ('BS15_AU_PM04','BS10_AU_PM02-a','AL19_AU_UN01-b','AL19_AU_UM01','AL19_AU_UN01-a')"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
           > WHERE detections.status = 1 AND detections.signal_code = 3 AND label = 1 AND procedure IN (10,13,12) AND bins.id IN {FG}"
@@ -36,10 +36,29 @@ Global:
         querygt_odd_dets:
           > "SELECT DISTINCT detections.* FROM detections JOIN soundfiles ON detections.end_file = soundfiles.id 
           > WHERE detections.status = 1 AND procedure = 5 AND detections.start_file = detections.end_file AND detections.end_time > soundfiles.duration AND detections.start_file IN {FG}"
+        query_fins:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.signal_code IN (5,6) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        query_fins2:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND label IN (0,1,21) AND procedure IN (6,10) AND bins.id IN {FG}"
+        query_fins3:
+          > "SELECT DISTINCT detections.* FROM detections WHERE status = 1 AND signal_code IN (4,5,6) AND label IN (0,1,21) AND procedure IN (6,10) AND detections.start_file IN {FG}"
+        #params for boxing of fin for second gen training. 
+        query_fins4:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.signal_code = 4 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        #this is for hardneg- shows the original detections, but these detections will not be part of the output (assumed to be incorrect). 
+        query_fins5:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.procedure = 10 AND label = 1 AND bins.id IN {FG}"
+        query_fins6:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
-            decimate_data: n
+            decimate_data: y
             #decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
@@ -57,9 +76,18 @@ Job:
               #- CX12_AU_WT02
               #- BS15_AU_PM04
               #below is useful if revieweing a lot at the same sampling rate. 
-              - [queryfg2]
+              #- [queryfg2]
+              #- fw_og_train
+              #- fw1difficult
+              #- fw2gen_oddtp
+              #- AW12_AU_CL01_files_441-516_bb_hg
+              #- fw2gen_strat_pos_fewfin1
+              #- fw2gen_strat_pos_somefin1
+              #- fw2gen_strat_pos_manyfin1
+              - fw2gen_hardneg_ds
+              #- BS09_AU_PM02-a
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R
@@ -69,7 +97,8 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-2
-            query: [querygt4]
+            #query: [query_fins2]
+            query: [query_fins6]
             remove_proc_ovlp: n
         arguments:
             hard_rerun: y
@@ -81,10 +110,10 @@ Job:
             methodID: rv-simple-w-metadata
             methodvers: v1-10
         arguments:
-            fg_fill: n
-            hard_rerun: y
-            #ignore_decimated: n
-            ignore_decimated: y
+            fg_fill: y
+            hard_rerun: n
+            ignore_decimated: n
+            #ignore_decimated: y
         descriptors:
             runtype: lib
             language: R
@@ -92,6 +121,8 @@ Job:
       parameters: 
         methodID: rd-simple-w-metadata
         methodvers: v1-5
+      arguments:
+        hard_rerun: n
       descriptors:
         runtype: lib
         language: R
@@ -105,7 +136,7 @@ Job:
       arguments: 
         #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
         rerun_key: 0
-        hard_rerun: y
+        hard_rerun: n
       descriptors:
         runtype: no_method
     CompareAndPublishDets:

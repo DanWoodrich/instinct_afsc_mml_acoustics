@@ -6,6 +6,7 @@
 #1-6: will shorten single label segments (0s) to a single zero instead of taking the time and 
 #cpu to compress a large file only full of 0s. 
 
+library(png)
 library(signal)
 library(dplyr)
 library(doParallel)
@@ -59,9 +60,9 @@ dir.create(paste(resultpath,"/labeltensors",sep=""))
 
 crs<-detectCores()
 
-startLocalPar(crs,"FG","bigfiles","GTref","native_img_height","native_pix_per_sec","resultpath","dimensions","freq_size","freq_start","GT_depth","GT_unq")
+startLocalPar(crs,"FG","bf_path","bigfiles","GTref","native_img_height","native_pix_per_sec","resultpath","dimensions","freq_size","freq_start","GT_depth","GT_unq")
 
-filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr")) %dopar% {
+filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr","png")) %dopar% {
   
   #combine GT with FG
   fileFG = FG[which(FG$DiffTime==bigfiles[i]),,drop = FALSE]
@@ -94,15 +95,23 @@ filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr")) %dopar% 
   FGsecs = sum(fileFG$SegDur)
   #needs testing!
   
-  #how we get dims- possibly there is a ligher way out there. 
-  #image = load.image(paste(bf_path,"/bigfile",i,".png",sep=""))
+  #Revert to just reading in image- more resistant to rounding errors on odd sized sfs
+  image = readPNG(paste(bf_path,"/bigfile",i,".png",sep=""))
+  
+  i_dims = dim(image)
   
   dim_x = native_img_height
-  dim_y =(FGsecs*native_pix_per_sec) #(750 second bigfile at 40 pix per seconds)
+  dim_y =i_dims[2] 
   
   pix_per_sec = dim_y/FGsecs
   
   total_pixels = dim_x * dim_y * GT_depth
+  
+  #correct total pixels to match that of the spectrogram. Use the ratio, and use that same
+  #ratio to correct the GT timestamps. 
+  
+  
+  
   
   if(dimensions==2){
   

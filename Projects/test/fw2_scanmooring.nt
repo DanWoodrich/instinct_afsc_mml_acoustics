@@ -1,0 +1,105 @@
+Global:
+    cache_root: D:/Cache
+    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    Wrapper: False
+    parameters:
+        #work around limitation where NAS doesn't allow 20,000+ concurrent reads by Raven. 
+        queryfg_trunc:
+          > "SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS09_AU_PM05' 
+          > LIMIT 10000 OFFSET 10000" 
+        query_fins_all:
+          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND procedure =6 AND detections.start_file IN {FG}"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: y
+            #decimate_data: n
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-0
+            methodID2m: matlabdecimate
+            methodvers2m: V1s0
+            target_samp_rate: 512
+            #target_samp_rate: 8192
+            file_groupID: 
+              #- lm2gen_og_train
+              #- lm2gen_train_pos_set_no_olvp
+              #- lm2gen_train_rand_set_no_ovlp
+              #- lm2gen_hardneg_ds
+              #- lm2gen_oddtp
+              #- CX12_AU_WT02
+              #- BS15_AU_PM04
+              #below is useful if revieweing a lot at the same sampling rate. 
+              #- [queryfg2]
+              #- fw_og_train
+              #- XA07_HA_PM02-b
+              - [queryfg_trunc]
+              #- AW12_AU_CL01_files_441-516_bb_hg
+              #- fw2gen_strat_pos_fewfin1
+              #- fw2gen_strat_pos_somefin1
+              #- fw2gen_strat_pos_manyfin1
+              #- fw2gen_hardneg_ds
+              #- BS09_AU_PM02-a
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-2
+            query: [query_fins_all]
+            remove_proc_ovlp: n
+        arguments:
+            hard_rerun: y
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-10
+        arguments:
+            fg_fill: y
+            hard_rerun: n
+            ignore_decimated: n
+            #ignore_decimated: y
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+      parameters: 
+        methodID: rd-simple-w-metadata
+        methodvers: v1-5
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
+    EditRAVENx:
+      #this process always has an instructions parameter. changing these will change hash
+      parameters: 
+        instructions:
+          > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+          > Review the contents for correctness, adding, modifying, or deleting as necessary.
+          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+      arguments: 
+        #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+        rerun_key: 0
+        hard_rerun: n
+      descriptors:
+        runtype: no_method
+    CompareAndPublishDets:
+      parameters:
+        methodID: pgpamdb-default-compare-publish
+        methodvers: v1-3
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib

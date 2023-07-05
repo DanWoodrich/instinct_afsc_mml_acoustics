@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/697284/806748/585983/896107/535470 D:/Cache/697284/806748/585983/151132 D:/Cache/697284/806748/585983/896107/535470/878401  pgpamdb-default-compare-publish-v1-3"
+args="D:/Cache/710071/812617/438652/397719/719326 D:/Cache/710071/812617/438652/171584 D:/Cache/710071/812617/438652/397719/719326/59890  pgpamdb-default-compare-publish-v1-3"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -20,6 +20,17 @@ resultPath <- args[3]
 
 PriorData<-read.csv(paste(PriorDataPath,"DETx.csv.gz",sep="/"))
 EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
+
+#bugfix: if raven conversion resulted in case where a detection did not have an endfile, remove from 
+#editdata and remove id from priordata (ignore it)
+
+if(any(EditData$EndFile=="")){
+  ids = EditData[which(EditData$EndFile==""),"id"]
+  EditData= EditData[-which(EditData$EndFile==""),]
+  PriorData = PriorData[-which(PriorData$id==ids),]
+}
+
+
 
 #make sure comments which are na are instead set to blank:
 PriorData$comments[is.na(PriorData$comments)]<-""
@@ -118,12 +129,23 @@ if(length(mod_keys)>0){
 
   EditMod= EditData[which(EditData$id %in% mod_keys),]
   PriorMod= PriorData[which(PriorData$id %in% mod_keys),]
+  
+  #stealth change v1-3: move up here. remove from both editmod and modified so changes are not
+  #counted
+  EditMod$modified=NULL
+  PriorMod$modified = NULL
 
   if(nrow(EditMod)!=nrow(PriorMod)){
     stop("ERROR: redundant IDs present in df")
   }
-
+  
+  #stealth change: sort by id. bug occured where maintaining order couldn't be assumed: 
+  EditMod = EditMod[order(EditMod$id),]
+  PriorMod = PriorMod[order(PriorMod$id),]
   #compare based on diffs since raven rounding rules are unclear.
+  
+  colnames(EditMod)[1:6]=c("start_time","end_time","low_freq","high_freq","start_file","end_file")
+  colnames(PriorMod)[1:6]=c("start_time","end_time","low_freq","high_freq","start_file","end_file") #add, test
 
   diffs = EditMod[,1:4]-PriorMod[,1:4]
 
@@ -134,7 +156,7 @@ if(length(mod_keys)>0){
   #if diffs are false, and the file end time has been modified, revert to original.
   #fix for the behavior where raven uses exact samples and rewrites end file (I round to 2 decimal for sf on db)
   ids_rev_et =EditMod[which(rowSums(diffs,na.rm=TRUE)==0 & EditMod$EndFile != PriorMod$EndFile),"id"]
-  EditMod[which(EditMod$id %in% ids_rev_et),"EndFile"] = PriorMod[which(PriorMod$id %in% ids_rev_et),"EndFile"]
+  EditMod[which(EditMod$id %in% ids_rev_et),"end_file"] = PriorMod[which(PriorMod$id %in% ids_rev_et),"end_file"]
 
   #reduce this set to only rows which were modified
   testdf = EditMod[,5:length(EditMod)]!=PriorMod[,5:length(PriorMod)]
@@ -142,16 +164,11 @@ if(length(mod_keys)>0){
 
   if(nrow(EditMod)>0){
     
-    colnames(EditMod)[1:6]=c("start_time","end_time","low_freq","high_freq","start_file","end_file")
-    
     #lookup file names
     filelookup =lookup_from_match(con,'soundfiles',unique(c(EditMod$start_file,EditMod$end_file)),"name")
     
     EditMod$start_file = filelookup$id[match(EditMod$start_file,filelookup$name)]
     EditMod$end_file = filelookup$id[match(EditMod$end_file,filelookup$name)]
-    
-    #remove modified field so that it defaults to when it is submitted.
-    EditMod$modified=NULL
     
     #remove analyst field so that it defaults to current user when submitted.
     #stealth change, want this as normal behavior. 
@@ -171,102 +188,107 @@ if(length(mod_keys)>0){
     bn_added = 0 #running count of bin negatives added
     bn_removed = 0 
     all_bn_proc = c()
-    for(i in 1:length(unique(EditMod$procedure))){
-      
-      EditMod_proc = EditMod[which(EditMod$procedure==unique(EditMod$procedure)[i]),]
-      
-      testdf_reduce_proc = testdf_reduce[which(EditMod$procedure==unique(EditMod$procedure)[i]),]
-      
-      check_row = procedure_assumption_lookup[which(procedure_assumption_lookup$id == unique(EditMod$procedure)[i]),]
-      
-      if(nrow(check_row)==0){
-        stop("Procedure not found in database. Aborting. Enter procedure on db to allow for assumption checking")
-      }
-      
-      if(check_row$id %in% c(6,7,8,9)){
-        stop("Editing tools not yet supported for original fin procedure due to more complex assumptions. Aborting")
-      }
-      
-      
-      #perform this if procedure fits assumption. 
-      if(!is.null(check_row$negative_bin)){
+    if(nrow(EditMod)>0){
+      for(i in 1:length(unique(EditMod$procedure))){
         
-        all_bn_proc = c(all_bn_proc,as.integer(check_row$id))
-        #this means that this is a deployment. if this is the case, changes here will affect bin negatives. 
+        EditMod_proc = EditMod[which(EditMod$procedure==unique(EditMod$procedure)[i]),]
         
-        #determine which of these specifically had the label changed. 
+        testdf_reduce_proc = testdf_reduce[which(EditMod$procedure==unique(EditMod$procedure)[i]),]
         
-        EditMod_proc_labelchange =EditMod_proc[testdf_reduce_proc$label,]
+        check_row = procedure_assumption_lookup[which(procedure_assumption_lookup$id == unique(EditMod$procedure)[i]),]
+        
+        if(nrow(check_row)==0){
+          stop("Procedure not found in database. Aborting. Enter procedure on db to allow for assumption checking")
+        }
+        
+        if(check_row$id %in% c(6,7,8,9)){
+          stop("Editing tools not yet supported for original fin procedure due to more complex assumptions. Aborting")
+        }
         
         
-        #pseudo: using the changed detections, load in all affected bins, all existing detections, and those
-        #detection labels. 
-        
-        affected_bins = dbFetch(dbSendQuery(con,paste("SELECT detections.id,detections.label,bins.* FROM detections JOIN bins_detections ON detections.id = bins_detections.detections_id JOIN bins ON 
-                                                      bins.id = bins_detections.bins_id WHERE bins.id IN 
-                                                      (SELECT DISTINCT bins_detections.bins_id FROM bins JOIN bins_detections ON bins.id = bins_detections.bins_id 
-                                                      WHERE bins_detections.detections_id IN (",
-                                                      paste(EditMod_proc_labelchange$id,sep="",collapse = ","),
-                                                      ") AND type = ",check_row$negative_bin,")",
-                                                      " AND detections.procedure = ",unique(EditMod$procedure)[i],sep="")))
-        
-        #fill in the new labels for considered detections. using this table, make another table which 
-        #represents each bin, and whether it contains a 1 detection or not. 
-        
-        affected_bins$id = as.integer(affected_bins$id)
-        affected_bins$id..3 = as.integer(affected_bins$id..3)
-        
-        affected_bins$label= EditMod_proc_labelchange[match(affected_bins$id,EditMod_proc_labelchange$id),"label"]
-        
-        affected_bins_0bins_temp = affected_bins[which(affected_bins$label %in% c(0,1)),]
-        affected_bins_0bins = aggregate(affected_bins_0bins_temp$label,by=list(affected_bins_0bins_temp$id..3),mean)
-        
-        #this indicates if any 1s are present > 0 or not, 
-        
-        affected_bins_0bins$over0 = affected_bins_0bins$x>0
-        
-        if(any(affected_bins$label==20,na.rm=TRUE)){
+        #perform this if procedure fits assumption. 
+        if(!is.null(check_row$negative_bin) & !is.na(check_row$negative_bin)){
           
-          stop("new case, write out the rest of this method before continuing")
+          all_bn_proc = c(all_bn_proc,as.integer(check_row$id))
+          #this means that this is a deployment. if this is the case, changes here will affect bin negatives. 
           
-          #I will need to compare here
+          #determine which of these specifically had the label changed. 
           
-          #if the 1 bins have a matching bin negative, delete it. If the 0 bins have a matching bin negative, do nothing. 
-          #if the 0 bins don't have a matching bin negative, add one. 
+          EditMod_proc_labelchange =EditMod_proc[testdf_reduce_proc$label,]
           
-        }else{
           
-          #this is a simpler case (doesn't need to be distinct from initial condition after I write it out)
+          #pseudo: using the changed detections, load in all affected bins, all existing detections, and those
+          #detection labels. 
           
-          #if no 20s exist, I just submit each bin which has a 0 
-          if(any(!affected_bins_0bins$over0)){
+          affected_bins = dbFetch(dbSendQuery(con,paste("SELECT detections.id,detections.label,bins.* FROM detections JOIN bins_detections ON detections.id = bins_detections.detections_id JOIN bins ON 
+                                                        bins.id = bins_detections.bins_id WHERE bins.id IN 
+                                                        (SELECT DISTINCT bins_detections.bins_id FROM bins JOIN bins_detections ON bins.id = bins_detections.bins_id 
+                                                        WHERE bins_detections.detections_id IN (",
+                                                        paste(EditMod_proc_labelchange$id,sep="",collapse = ","),
+                                                        ") AND type = ",check_row$negative_bin,")",
+                                                        " AND detections.procedure = ",unique(EditMod$procedure)[i],sep="")))
+          
+          #fill in the new labels for considered detections. using this table, make another table which 
+          #represents each bin, and whether it contains a 1 detection or not. 
+          
+          affected_bins$id = as.integer(affected_bins$id)
+          affected_bins$id..3 = as.integer(affected_bins$id..3)
+          
+          affected_bins$label= EditMod_proc_labelchange[match(affected_bins$id,EditMod_proc_labelchange$id),"label"]
+          
+          affected_bins_0bins_temp = affected_bins[which(affected_bins$label %in% c(0,1)),]
+          affected_bins_0bins = aggregate(affected_bins_0bins_temp$label,by=list(affected_bins_0bins_temp$id..3),mean)
+          
+          #this indicates if any 1s are present > 0 or not, 
+          
+          affected_bins_0bins$over0 = affected_bins_0bins$x>0
+          
+          if(any(affected_bins$label==20,na.rm=TRUE)){
             
-            submitbins = affected_bins_0bins$Group.1[which(!affected_bins_0bins$over0)]
-            submitbins_frame = affected_bins[which(affected_bins$id..3 %in% submitbins),]
-            adddets = data.frame(submitbins_frame$seg_start,submitbins_frame$seg_end,0,max(PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"HighFreq"]),
-                                 submitbins_frame$soundfiles_id,submitbins_frame$soundfiles_id,NA,"",unique(EditMod$procedure)[i],20,PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"signal_code"][1],
-                                 2)
+            stop("new case, write out the rest of this method before continuing")
             
-            colnames(adddets) = c("start_time","end_time","low_freq","high_freq","start_file","end_file",
-                                  "probability","comments","procedure","label","signal_code","strength")
+            #I will need to compare here
             
-            #add the new bin negatives
-            out = dbAppendTable(con,'detections',adddets)
+            #if the 1 bins have a matching bin negative, delete it. If the 0 bins have a matching bin negative, do nothing. 
+            #if the 0 bins don't have a matching bin negative, add one. 
             
-            bn_added = bn_added + out
+          }else{
+            
+            #this is a simpler case (doesn't need to be distinct from initial condition after I write it out)
+            
+            #if no 20s exist, I just submit each bin which has a 0 
+            if(any(!affected_bins_0bins$over0)){
+              
+              submitbins = affected_bins_0bins$Group.1[which(!affected_bins_0bins$over0)]
+              submitbins_frame = affected_bins[which(affected_bins$id..3 %in% submitbins),]
+              adddets = data.frame(submitbins_frame$seg_start,submitbins_frame$seg_end,0,max(PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"HighFreq"]),
+                                   submitbins_frame$soundfiles_id,submitbins_frame$soundfiles_id,NA,"",unique(EditMod$procedure)[i],20,PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"signal_code"][1],
+                                   2)
+              
+              colnames(adddets) = c("start_time","end_time","low_freq","high_freq","start_file","end_file",
+                                    "probability","comments","procedure","label","signal_code","strength")
+              
+              #add the new bin negatives
+              out = dbAppendTable(con,'detections',adddets)
+              
+              bn_added = bn_added + out
+              
+            }
+            
+  
             
           }
           
-
-          
         }
+  
         
       }
-
       
+      table_update(con,'detections',EditMod)
+
     }
     
-    table_update(con,'detections',EditMod)
+    print(paste(nrow(EditMod),"rows UPDATED. Bin negatives inserted:",bn_added,". Bin negatives deleted:",bn_removed,". Over the following procedures:",paste(all_bn_proc,sep="",collapse=",")))
     
     operations[[1]]=paste(nrow(EditMod),"rows UPDATED. Bin negatives inserted:",bn_added,". Bin negatives deleted:",bn_removed,". Over the following procedures:",paste(all_bn_proc,sep="",collapse=","))
 
@@ -300,6 +322,8 @@ if(nrow(new_data)>0){
   }
 
   dbAppendTable(con,'detections',new_data)
+  
+  print(paste(nrow(new_data),"rows INSERTED"))
 
   operations[[2]]=paste(nrow(new_data),"rows INSERTED")
   
@@ -321,6 +345,8 @@ if(length(del_keys)>0){
   table_delete(con,'detections',del_keys)
 
   operations[[3]]=paste(length(del_keys),"rows DELETED")
+  
+  print(paste(length(del_keys),"rows DELETED"))
   
   #when I delete an id, the id changes. so, need to pull the ids of the deleted detection, 
   #which I can find with original id + signal_code + procedure

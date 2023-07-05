@@ -82,7 +82,7 @@ img_print <-function(object,xbins,pix_height,path){
 
 #needs PARAMSET_GLOBALS['SF_foc'] in process
 
-args="C:/Apps/INSTINCT/Cache/226127 C:/Apps/INSTINCT/Cache/226127/679720 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 XP14_UK_KO01_sample1.csv y 1000 80 250 48 512 con_bright_no_rep-v1-4"
+args="D:/Cache/37478 D:/Cache/37478/717883 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/512 BS16_AU_PM04 y 128 0 256 16 512 con_bright_no_rep-v1-5"
 
 args<-strsplit(args,split=" ")[[1]]
 source(paste(getwd(),"/user/R_misc.R",sep="")) 
@@ -117,8 +117,20 @@ foreach(i=1:length(bigfiles),.packages=c("tuneR","signal","imager")) %dopar% {
   fileFG = FG[which(FG$DiffTime==bigfiles[i]),,drop = FALSE]
   
   sounddata = list()
-  sounddataheader = readWave(paste(SFroot,fileFG$FullPath[1],fileFG$FileName[1],sep=""),from=fileFG$SegStart[1],to = fileFG$SegStart[1]+fileFG$SegDur[1],header=TRUE)
   
+  sounddataheader = NULL
+  
+  while(is.null(sounddataheader)){
+    
+    try({sounddataheader = readWave(paste(SFroot,fileFG$FullPath[1],fileFG$FileName[1],sep=""),from=fileFG$SegStart[1],to = fileFG$SegStart[1]+fileFG$SegDur[1],header=TRUE)
+    })
+    
+    if(is.null(sounddataheader)){
+      Sys.sleep(1) #add small delay between attempts. 
+      #statement to help debug
+      print(paste("attempt to read file failed, trying again...",fileFG$FullPath[1])) 
+    }
+  }
   
   #read in the files in chunks
   for(n in 1:nrow(fileFG)){

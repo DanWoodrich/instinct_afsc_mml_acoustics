@@ -1,3 +1,7 @@
+library(foreach)
+library(doParallel)
+
+
 #apply labels to detector outputs
 #use IoU criteria: area of overlap over area of union 
 
@@ -15,8 +19,9 @@ MethodID<-"labels-w-iou-simple-v1-3"
 #v1-4:
 #retain splits if present. May be buggy if outlong is not dense. 
 #v1-6: retain cutoff if present. Leapfrogged 1-5, which I am not sure if it is in use. 
+#v1-10: parallelize long comparison step. 
 
-args<-"D:/Cache/449513 D:/Cache/449513/215749 D:/Cache/449513/439550/156785/309952/513265/979358 D:/Cache/449513/215749/142995 0.02 y labels-w-iou-simple-v1-9"
+args<-"D:/Cache/449513 D:/Cache/449513/215749 D:/Cache/449513/439550/913601/760274/747025/942591 D:/Cache/449513/215749/805913 0.02 y labels-w-iou-simple-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -80,8 +85,12 @@ if(any(duplicated(FGdata$StartFile))){ #1-3 stealth change
   FGdataOrd=FGdata
 }
 
-outData<-merge(outData,FGdataOrd[,c("order","StartFile")],by="StartFile")
-GTdata<-merge(GTdata,FGdataOrd[,c("order","StartFile")],by="StartFile")
+outData<-merge(outData,FGdataOrd[,c("order","StartFile","DiffTime")],by="StartFile")
+#v-10: add difftime
+GTdata<-merge(GTdata,FGdataOrd[,c("order","StartFile","DiffTime")],by="StartFile")
+
+#get the relative gt per difftime, use for allocation to cores later. 
+GT_dt_table = data.frame(table(GTdata$DiffTime))
 
 GTdata<-GTdata[order(GTdata$order,GTdata$StartFile,GTdata$StartTime),]
 outData<-outData[order(outData$order,outData$StartFile,outData$StartTime),]
@@ -162,82 +171,164 @@ GTlong$Dur<-GTlong$EndTime-GTlong$StartTime
 GTlong<-GTlong[order(GTlong$StartTime),]
 outLong<-outLong[order(outLong$StartTime),]
 
+#GTlong = GTlong[which(GTlong$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
+#outLong = outLong[which(outLong$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
+#GTdata = GTdata[which(GTdata$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
+#outData = outData[which(outData$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
 
 #calculate iou GT
 if(nrow(GTlong)>0){
+  
+  crs<-detectCores()
+  
+  #allocate based on available cores
+  
+  avg_gt = nrow(GTlong)/crs
 
-for(i in 1:nrow(GTlong)){
+  GT_dt_table = GT_dt_table[order(GT_dt_table$Freq),]
+  GT_dt_table$core = 0
+  GT_dt_table_ind = 1
   
-  GTlongDur<-GTlong$EndTime[i]-GTlong$StartTime[i]
-  if(any(outLong$EndTime<(GTlong$StartTime[i]-GTlongDur))){
-    klow<-max(which((outLong$EndTime<(GTlong$StartTime[i]-GTlongDur)))) #give this a little buffer to avoid issues with small detections preventing longer det from 
-  }else{
-    klow=1
-  }
-  if(any((outLong$StartTime>(GTlong$EndTime[i]+GTlongDur)))){
-    khigh<-min(which((outLong$StartTime>(GTlong$EndTime[i]+GTlongDur)))) #fitting the criteria. if wanted to get fancy, could base the buffer length on IOU
-  }else{
-    khigh=nrow(outLong)
-  }
-  
-  k=klow
-  if(nrow(outLong)>0){
+  for(p in 1:crs){
+    cumsum_ = 0
+    while(cumsum_ < avg_gt){
+      
+      cumsum_ = cumsum_ + GT_dt_table[GT_dt_table_ind,"Freq"]
+      if(GT_dt_table_ind<nrow(GT_dt_table)){
+        GT_dt_table[GT_dt_table_ind,"core"]=p
+        
+        GT_dt_table_ind = GT_dt_table_ind + 1
+      }else{
+        GT_dt_table[GT_dt_table_ind,"core"]=crs
+      }
+
+    }
     
-    for(k in klow:khigh){
-      #while(GTlong$iou[i]<IoUThresh&k<=khigh){
-      #test for intersection
-      if((((GTlong$StartTime[i]<outLong$EndTime[k] & GTlong$StartTime[i]>=outLong$StartTime[k])| #GTstart is less than det end, and GT start is after or at start of det
-           (GTlong$EndTime[i]>outLong$StartTime[k] & GTlong$StartTime[i]<outLong$StartTime[k]))| #GTend is after det end, and GT start is before det start
-          (GTlong$EndTime[i]>=outLong$EndTime[k] & GTlong$StartTime[i]<=outLong$StartTime[k])) & #gt end is after or at det end, and gt start is at or before det start
-         (((GTlong$LowFreq[i]<outLong$HighFreq[k] & GTlong$LowFreq[i]>=outLong$LowFreq[k])|
-           (GTlong$HighFreq[i]>outLong$LowFreq[k] & GTlong$LowFreq[i]<outLong$LowFreq[k])) |
-          (GTlong$HighFreq[i]>=outLong$HighFreq[k] & GTlong$LowFreq[i]<=outLong$LowFreq[k])))
-      {
+    #readjust on the fly (since above will overshoot):
+    
+    avg_gt = avg_gt - (cumsum_ - avg_gt)/crs
+  }
+  
+  startLocalPar(crs,"GTlong","outLong","GT_dt_table")
+  
+  long_comp_out = foreach(p=1:crs) %dopar% {
+    
+    GTlongIn = GTlong[which(GTlong$DiffTime %in% as.numeric(as.character(GT_dt_table[which(GT_dt_table$core==p),"Var1"]))),]
+    outLongIn = outLong[which(outLong$DiffTime %in% as.numeric(as.character(GT_dt_table[which(GT_dt_table$core==p),"Var1"]))),]
+    
+    for(i in 1:nrow(GTlongIn)){
+      
+      GTlongInDur<-GTlongIn$EndTime[i]-GTlongIn$StartTime[i]
+      if(any(outLongIn$EndTime<(GTlongIn$StartTime[i]-GTlongInDur))){
+        klow<-max(which((outLongIn$EndTime<(GTlongIn$StartTime[i]-GTlongInDur)))) #give this a little buffer to avoid issues with small detections preventing longer det from 
+      }else{
+        klow=1
+      }
+      if(any((outLongIn$StartTime>(GTlongIn$EndTime[i]+GTlongInDur)))){
+        khigh<-min(which((outLongIn$StartTime>(GTlongIn$EndTime[i]+GTlongInDur)))) #fitting the criteria. if wanted to get fancy, could base the buffer length on IOU
+      }else{
+        khigh=nrow(outLongIn)
+      }
+      
+      k=klow
+      if(nrow(outLongIn)>0){
         
-        #test for IoU
-        #x1,y1,x2,y2
-        box1<-c(GTlong$StartTime[i],GTlong$LowFreq[i],GTlong$EndTime[i],GTlong$HighFreq[i])
-        box2<-c(outLong$StartTime[k],outLong$LowFreq[k],outLong$EndTime[k],outLong$HighFreq[k])
+        for(k in klow:khigh){
+          #while(GTlongIn$iou[i]<IoUThresh&k<=khigh){
+          #test for intersection
+          if((((GTlongIn$StartTime[i]<outLongIn$EndTime[k] & GTlongIn$StartTime[i]>=outLongIn$StartTime[k])| #GTstart is less than det end, and GT start is after or at start of det
+               (GTlongIn$EndTime[i]>outLongIn$StartTime[k] & GTlongIn$StartTime[i]<outLongIn$StartTime[k]))| #GTend is after det end, and GT start is before det start
+              (GTlongIn$EndTime[i]>=outLongIn$EndTime[k] & GTlongIn$StartTime[i]<=outLongIn$StartTime[k])) & #gt end is after or at det end, and gt start is at or before det start
+             (((GTlongIn$LowFreq[i]<outLongIn$HighFreq[k] & GTlongIn$LowFreq[i]>=outLongIn$LowFreq[k])|
+               (GTlongIn$HighFreq[i]>outLongIn$LowFreq[k] & GTlongIn$LowFreq[i]<outLongIn$LowFreq[k])) |
+              (GTlongIn$HighFreq[i]>=outLongIn$HighFreq[k] & GTlongIn$LowFreq[i]<=outLongIn$LowFreq[k])))
+          {
+            
+            #test for IoU
+            #x1,y1,x2,y2
+            box1<-c(GTlongIn$StartTime[i],GTlongIn$LowFreq[i],GTlongIn$EndTime[i],GTlongIn$HighFreq[i])
+            box2<-c(outLongIn$StartTime[k],outLongIn$LowFreq[k],outLongIn$EndTime[k],outLongIn$HighFreq[k])
+            
+            intBox<-c(max(box1[1],box2[1]),max(box1[2],box2[2]),min(box1[3],box2[3]),min(box1[4],box2[4]))
+            
+            intArea = abs(intBox[3]-intBox[1]) * abs(intBox[4]-intBox[2])
+            
+            box1Area = abs(box1[3] - box1[1]) * abs(box1[4] - box1[2])
+            box2Area = abs(box2[3] - box2[1]) * abs(box2[4] - box2[2])
+            
+            totArea = box1Area + box2Area - intArea
+            
+            iou = intArea / totArea
+            
+            #give GT the best IOU
+            if(GTlongIn$iou[i]<iou){
+              GTlongIn$iou[i]<-iou
+            }
+            #v1-8: instead of replacing iou for outLongIn, sum it. 
+            outLongIn$iou[k] = outLongIn$iou[k]+ iou
+            #if(outLongIn$iou[k]<iou){
+            #  outLongIn$iou[k]<-iou
+            #}
         
-        intBox<-c(max(box1[1],box2[1]),max(box1[2],box2[2]),min(box1[3],box2[3]),min(box1[4],box2[4]))
-        
-        intArea = abs(intBox[3]-intBox[1]) * abs(intBox[4]-intBox[2])
-        
-        box1Area = abs(box1[3] - box1[1]) * abs(box1[4] - box1[2])
-        box2Area = abs(box2[3] - box2[1]) * abs(box2[4] - box2[2])
-        
-        totArea = box1Area + box2Area - intArea
-        
-        iou = intArea / totArea
-        
-        #give GT the best IOU
-        if(GTlong$iou[i]<iou){
-          GTlong$iou[i]<-iou
+      }
+      
+          
+          #print(i)
+          
+          #plot(0,xlim=c(min(c(box1[1],box2[1]))-2,max(c(box1[3],box2[3]))+2),ylim=c(0,512),col="white")
+          #rect(box1[1],box1[2],box1[3],box1[4],col="green")
+          #Sys.sleep(0.25)
+          #rect(box2[1],box2[2],box2[3],box2[4],col="gray")
+          #Sys.sleep(0.25)
+          #rect(intBox[1],intBox[2],intBox[3],intBox[4],col="red")
+          #text(mean(c(min(c(box1[1],box2[1]))-2,max(c(box1[3],box2[3]))+2)),256,paste(iou,k))
+          #Sys.sleep(0.5)
+          
         }
-        #v1-8: instead of replacing iou for outlong, sum it. 
-        outLong$iou[k] = outLong$iou[k]+ iou
-        #if(outLong$iou[k]<iou){
-        #  outLong$iou[k]<-iou
-        #}
-    
-  }
-  
-      
-      #print(i)
-      
-      #plot(0,xlim=c(min(c(box1[1],box2[1]))-2,max(c(box1[3],box2[3]))+2),ylim=c(0,512),col="white")
-      #rect(box1[1],box1[2],box1[3],box1[4],col="green")
-      #Sys.sleep(0.25)
-      #rect(box2[1],box2[2],box2[3],box2[4],col="gray")
-      #Sys.sleep(0.25)
-      #rect(intBox[1],intBox[2],intBox[3],intBox[4],col="red")
-      #text(mean(c(min(c(box1[1],box2[1]))-2,max(c(box1[3],box2[3]))+2)),256,paste(iou,k))
-      #Sys.sleep(0.5)
+      }
       
     }
+    
+    return(list(GTlongIn,outLongIn))
+    
   }
+}
+
+stopCluster(cluz)
+
+#unpack output object 
+
+gttemp = list()
+oltemp = list()
+
+for(i in 1:crs){
+  gttemp[i] = long_comp_out[[i]][1]
+  oltemp[i]= long_comp_out[[i]][2]
   
 }
+
+GTlong = do.call("rbind",gttemp)
+GTlong = GTlong[order(GTlong$StartTime),]
+
+outLong_ =do.call("rbind",oltemp)
+
+#add back in outlong not in gt: 
+
+if(!all(unique(outLong$DiffTime) %in% unique(GTlong$DiffTime))){
+  difftimes_ = unique(outLong$DiffTime)[!unique(outLong$DiffTime) %in% unique(GTlong$DiffTime)]
+  outLong = rbind(outLong_,outLong[which(outLong$DiffTime %in% difftimes_),])
+    
+}else{
+  outLong = outLong_
+}
+
+outLong = outLong[order(outLong$StartTime),]
+   
+GTlong$DiffTime=NULL
+outLong$DiffTime = NULL
+
+if(nrow(outLong)!=nrow(outData)){
+  stop("bug detected, parallelizing not working properly with detections.")
 }
 
 if("splits" %in% colnames(outLong)){

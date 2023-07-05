@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "D:/Cache/348728/396366/FileGroupFormat.csv.gz D:/Cache/348728/407209/317440/337032/884503/470706 D:/Cache/348728/407209/123423 D:/Cache/348728/407209/317440/337032 D:/Cache/348728/407209/317440/337032/480773 3600 0 96 20 80 240 20 mean within_file 10 moving-smooth-v1-10 n n 1"
+args = "D:/Cache/449513/FileGroupFormat.csv.gz D:/Cache/449513/439550/913601/197533/438071 D:/Cache/449513/439550 D:/Cache/449513/439550/913601 D:/Cache/449513/439550/913601/217256 3600 0 96 20 80 240 20 mean within_file 10 moving-smooth-v1-11 y n 1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -224,7 +224,9 @@ if(vertical_bins==1){
       
       #v-4: need to find
       #stealth bugfix to try to fix offset seen in scores
-      end_ind = (scores_ind+floor((dur-model_s_size)*native_pix_per_sec/stride_pix))
+      
+      #v1-11: max rounding behavior same as spectogram generation so scores line up better. 
+      end_ind = (scores_ind+floor((round(dur)-model_s_size)*native_pix_per_sec/stride_pix))
       
       scores= Scores$V1[scores_ind:end_ind]
       

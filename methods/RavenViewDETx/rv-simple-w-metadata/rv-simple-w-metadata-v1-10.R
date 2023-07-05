@@ -34,7 +34,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="D:/Cache/304443/277451 D:/Cache/304443 D:/Cache/304443/277451/525585 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/512 n y y 1 rv-simple-w-metadata-v1-10 //161.55.120.117/NMML_AcousticsData/Audio_Data"
+args="D:/Cache/363854/773479 D:/Cache/363854 D:/Cache/363854/773479/274841 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/512 n n y 1 rv-simple-w-metadata-v1-10 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))
@@ -145,6 +145,12 @@ outNeg<-foreach(i=1:length(allFiles)) %do% {
   }else{
     outs<-NULL
   }
+  
+  #if(is.na(segVec[f+1])){
+    #print(i)
+    #print(segs)
+  #  stop()
+  #}
 
 
   return(outs)

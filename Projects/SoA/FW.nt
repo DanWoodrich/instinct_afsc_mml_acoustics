@@ -1,24 +1,24 @@
-#based on LM2gen3
 Global:
     cache_root: D:/Cache
     SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        signal_codes: LM
+        signal_codes: FW
         freq_start: 0
-        freq_size: 128
+        #freq_size: 128
+        freq_size: 96
         native_height: 256
-        npps: 16
-        native_window_size: 240
+        npps: 20
+        native_window_size: 80
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
-        msp_inf: 48
+        msp_inf: 10
         split_prot: within_file
         querygt1:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 3 AND label = 1 AND procedure IN (10,13,12) AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -61,7 +61,7 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 512
             file_groupID:
-                #- BS15_AU_PM04
+                - BS15_AU_PM04
                 #- AL19_AU_UM01
                 #- RW09_EA_UM01
                 #- XA17_HA_BG01
@@ -88,7 +88,7 @@ Job:
                 #- BS19_AU_PM04
                 #- BS08_HA_PM04
                 #- BS20_AU_PM04
-                - BS16_AU_PM04
+                #- BS16_AU_PM04
                 #- AL19_AU_BS09
                 #- AL19_AU_BS02
                 #- RW11_EA_BS02
@@ -101,7 +101,7 @@ Job:
                 #- BS10_AU_PM08
                 #- BS19_AU_PM08
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R
@@ -116,13 +116,15 @@ Job:
                 methodvers: v1-1
                 methodID2m: matlabdecimate
                 methodvers2m: V1s0
-                target_samp_rate: 512
+                target_samp_rate: 256
                 file_groupID:
-                    - lm2gen_og_train
-                    - lm2gen_train_pos_set_no_olvp
-                    - lm2gen_train_rand_set_no_ovlp
-                    - lm2gen_hardneg_ds
-                    - lm2gen_oddtp
+                    - fw_og_train
+                    - fw2gen_hardneg_ds
+                    - fw2gen_strat_pos_fewfin1
+                    - fw2gen_strat_pos_somefin1
+                    - fw2gen_strat_pos_manyfin1
+                    - fw1difficult
+                    - fw2gen_oddtp
             arguments:
                 hard_rerun: n
             descriptors:
@@ -134,7 +136,7 @@ Job:
             SplitTensor:
                 parameters:
                     methodID: tens-simple-split
-                    methodvers: v1-2
+                    methodvers: v1-3
                     native_pix_per_sec: [npps]
                     seed_val: 1
                     split_protocol: [split_prot]
@@ -160,16 +162,18 @@ Job:
                     do_val: y
                     do_weight: y
                     gt_depth: [signal_codes]
-                    learn_rate: 0.0002
+                    learn_rate: 0.0001
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
                     perc_fp: 1.00
-                    perc_tp: 0.01
-                    prop_fp: 0.9
-                    prop_tp: 0.1
-                    shuf_size: 0.0015
-                    stride_pix: 24
+                    perc_tp: 0.025
+                    #prop_fp: 0.9
+                    #prop_tp: 0.1
+                    prop_fp: 0.75
+                    prop_tp: 0.25
+                    shuf_size: 0.01
+                    stride_pix: 30
                     tp_weight: 2
                     view_plots: n
                     win_size: [model_window_size]
@@ -178,9 +182,13 @@ Job:
                 arguments:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
-                    epoch: 40
-                    epoch_steps: 5000
-                    a_val_steps: 7500
+                    #save these, others are for testing
+                    epoch: 15
+                    epoch_steps: 4500
+                    a_val_steps: 0
+                    #epoch: 2
+                    #epoch_steps: 30
+                    #a_val_steps: 30
                     a_val_tp_heavy: y
                     hard_rerun: n
                 descriptors:
@@ -199,7 +207,7 @@ Job:
             crop_freq_start: [freq_start]
             native_height: [native_height]
             native_pix_per_sec: [npps]
-            window_length: 512
+            window_length: 128
         arguments:
             hard_rerun: n
         descriptors:
@@ -208,7 +216,7 @@ Job:
     LabelTensor:
         parameters:
             methodID: tens-simple-label
-            methodvers: v1-6
+            methodvers: v1-7
             dimensions: 2
             freq_size: [freq_size]
             freq_start: [freq_start]
@@ -222,11 +230,11 @@ Job:
     SplitTensor:
         parameters:
             methodID: tens-simple-split
-            methodvers: v1-2
+            methodvers: v1-3
             native_pix_per_sec: [npps]
             seed_val: 1
             split_protocol: within_file
-            test_split: n
+            test_split: y
             train_test_split: 0.80
             train_val_split: 0.75
             use_seed: y    
@@ -239,7 +247,7 @@ Job:
         SplitTensor:
             parameters:
                 methodID: tens-simple-split
-                methodvers: v1-2
+                methodvers: v1-3
                 native_pix_per_sec: [npps]
                 seed_val: 1
                 split_protocol: within_file
@@ -255,8 +263,10 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-2
+            methodvers: v1-3
             query: [querygt1]
+            #below is "n" or the int signal code to standardize to
+            standardize_sig_code: 4
             remove_proc_ovlp: y
         arguments:
             hard_rerun: n
@@ -268,7 +278,7 @@ Job:
             methodID: rv-simple-w-metadata
             methodvers: v1-10
         arguments:
-            fg_fill: n
+            fg_fill: y
             hard_rerun: n
             ignore_decimated: n
         descriptors:
@@ -284,7 +294,7 @@ Job:
     AssignLabels:
         parameters:
             methodID: labels-w-iou-simple
-            methodvers: v1-9
+            methodvers: v1-10
             iou_thresh: 0.02
             write_GT: y
         arguments:
@@ -297,7 +307,7 @@ Job:
             methodID: pe2dl-simple
             methodvers: v1-4
             cexmod: 2
-            suppress_test: y
+            suppress_test: n
         arguments:
             hard_rerun: n
         descriptors:
@@ -348,11 +358,11 @@ Job:
     ScoresToDETx:
         parameters:
             methodID: moving-smooth
-            methodvers: v1-10
+            methodvers: v1-12
             difftime_cap: 3600
             freq_low: [freq_start]
             freq_size: [freq_size]
-            group_pixels: 240
+            group_pixels: 20
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
             native_pix_per_sec: [npps]
@@ -362,7 +372,7 @@ Job:
         arguments:
             hard_rerun: n
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
-            remove_spec: y
+            remove_spec: n
         descriptors:
             runtype: lib
             language: R
@@ -385,8 +395,8 @@ Job:
                     - 0.85
                     - 0.9
                     - 0.95
-                    - 0.99
-                    - 0.999
+                    #- 0.99
+                    #- 0.999
             arguments:
                 hard_rerun: n
             descriptors:
@@ -395,7 +405,7 @@ Job:
         parameters:
             methodID: pe1dl-simple
             methodvers: v1-2
-            suppress_test: y
+            suppress_test: n
         arguments:
             hard_rerun: n
         descriptors:

@@ -4,23 +4,8 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        queryfg1:
-          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS13_AU_PM04' 
-          > AND bins.type = 2"
-        querygt1:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND label != 20 AND procedure = 21 AND bins.id IN {FG}"
-        querygt3:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure IN (5,10,13,12) AND modified = (SELECT MAX(modified) FROM detections WHERE signal_code = 3) AND bins.id IN {FG}"
-        #use this to look at lm 5 by fg
-        querygt1_5:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure = 5 AND bins.id IN {FG}"
-        #use this to look at lm 5 by deployment
-        querygt2:
-          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND procedure = 5 AND detections.start_file IN {FG}
+        query_fins_proc_24:
+          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.procedure = 24 AND detections.start_file IN {FG}"
 Job:
     FormatFG:
         parameters:
@@ -34,7 +19,7 @@ Job:
             target_samp_rate: 512
             #target_samp_rate: 8192
             file_groupID: 
-              - [queryfg1]
+              - BS13_AU_PM02-a
         arguments:
             hard_rerun: n
         descriptors:
@@ -46,7 +31,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-2
-            query: [querygt1]
+            query: [query_fins_proc_24]
             remove_proc_ovlp: n
         arguments:
             hard_rerun: y
@@ -60,7 +45,6 @@ Job:
         arguments:
             fg_fill: n
             hard_rerun: n
-            #ignore_decimated: n
             ignore_decimated: y
         descriptors:
             runtype: lib
@@ -69,6 +53,8 @@ Job:
       parameters: 
         methodID: rd-simple-w-metadata
         methodvers: v1-5
+      arguments:
+        hard_rerun: n
       descriptors:
         runtype: lib
         language: R
@@ -88,7 +74,25 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-2
+        methodvers: v1-4
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    CalcPeaks:
+      parameters:
+        methodID: calcpeaks-simple
+        methodvers: v1-0
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    PeaksAssoc:
+      parameters:
+        methodID: peaks-assoc-simple
+        methodvers: v1-0
       arguments: 
         hard_rerun: n
       descriptors:

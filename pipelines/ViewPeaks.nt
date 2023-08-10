@@ -1,0 +1,22 @@
+pipe: ViewDETx
+ViewDETx:
+  process: RavenViewDETx
+  GetDETx:
+    pipe: CalcPeaks.pipe
+    CalcPeaks.pipe:
+      #calc peaks provides the peaks, and the associations- here it will spit out
+      #the peaks for further review
+      #save the peaks component as DETx.csv.gz
+      process: CalcPeaks
+      GetDETx:
+        pipe: FormatGT.pipe
+        #loop_on: FormatFG
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG: 
+            process: FormatFG
+  GetFG:
+    #loop_on: FormatFG
+    pipe: FormatFG.pipe
+    FormatFG.pipe:
+      process: FormatFG

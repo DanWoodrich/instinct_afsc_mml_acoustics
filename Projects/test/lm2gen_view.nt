@@ -55,6 +55,9 @@ Global:
         query_fins6:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
           > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        query_fins7:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND low_freq > 20 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
@@ -78,13 +81,13 @@ Job:
               #below is useful if revieweing a lot at the same sampling rate. 
               #- [queryfg2]
               #- fw_og_train
-              #- fw1difficult
-              #- fw2gen_oddtp
+              #- fw1difficult 
+              #- fw2gen_oddtp 
+              #- fw2gen_strat_pos_fewfin1b
+              #- fw2gen_strat_pos_somefin1 
+              #- fw2gen_strat_pos_manyfin1 
+              #- fw2gen_hardneg_ds 
               #- AW12_AU_CL01_files_441-516_bb_hg
-              #- fw2gen_strat_pos_fewfin1
-              #- fw2gen_strat_pos_somefin1
-              #- fw2gen_strat_pos_manyfin1
-              - fw2gen_hardneg_ds
               #- BS09_AU_PM02-a
         arguments:
             hard_rerun: n
@@ -98,7 +101,7 @@ Job:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-2
             #query: [query_fins2]
-            query: [query_fins6]
+            query: [query_fins7]
             remove_proc_ovlp: n
         arguments:
             hard_rerun: y
@@ -142,7 +145,7 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-3
+        methodvers: v1-4
       arguments: 
         hard_rerun: n
       descriptors:

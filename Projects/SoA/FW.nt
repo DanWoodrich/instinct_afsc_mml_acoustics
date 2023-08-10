@@ -14,7 +14,8 @@ Global:
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
-        msp_inf: 10
+        #msp_inf: 10
+        msp_inf: 40
         split_prot: within_file
         querygt1:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
@@ -41,6 +42,7 @@ Job:
             native_pix_per_sec: [npps]
             only_labs: n
             stride_pix: [msp_inf]
+            #stride_pix: 40
             win_size: [model_window_size]
             win_size_native: [native_window_size]
         arguments:
@@ -59,47 +61,12 @@ Job:
             methodvers: v1-1
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 512
+            target_samp_rate: 256
             file_groupID:
-                - BS15_AU_PM04
-                #- AL19_AU_UM01
-                #- RW09_EA_UM01
-                #- XA17_HA_BG01
-                #- AL17_AU_UN01
-                #- RW10_EA_UN01
-                #- AL20_AU_UN01-b 
-                #- AL19_AU_UN01-b
-                #- AL19_AU_UN01-a
-                #- RW10_EA_BS01
-                #- GA19_AU_SH01
-                #- RW08_EA_BS07
-                #- RW09_EA_BS07
-                #- AL19_AU_BS10
-                #- RW08_EA_BS08
-                #- AL20_AU_PM02-b
-                #- BS19_AU_PM02-b
-                #- BS10_AU_PM02-a
-                #- BS09_AU_PM02-b
-                #- XA07_HA_PM02-b
-                #- GA19_AU_BT01
-                #- AL19_AU_BS03
-                #- XA06_HA_PM04
-                #- XA07_HA_PM04
-                #- BS19_AU_PM04
-                #- BS08_HA_PM04
-                #- BS20_AU_PM04
-                #- BS16_AU_PM04
-                #- AL19_AU_BS09
-                #- AL19_AU_BS02
-                #- RW11_EA_BS02
+                #- AL20_AU_PH01
                 #- BS19_AU_PM05
-                #- BS08_AU_PM05
-                #- AL19_AU_BS11
-                #- RW11_EA_BS01
                 #- BS20_AU_PM08
-                #- BS12_AU_PM08
-                #- BS10_AU_PM08
-                #- BS19_AU_PM08
+                - BS13_AU_PM02-a
         arguments:
             hard_rerun: n
         descriptors:
@@ -162,7 +129,7 @@ Job:
                     do_val: y
                     do_weight: y
                     gt_depth: [signal_codes]
-                    learn_rate: 0.0001
+                    learn_rate: 0.000075
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
@@ -183,14 +150,14 @@ Job:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
                     #save these, others are for testing
-                    epoch: 15
+                    epoch: 8
                     epoch_steps: 4500
                     a_val_steps: 0
                     #epoch: 2
                     #epoch_steps: 30
                     #a_val_steps: 30
                     a_val_tp_heavy: y
-                    hard_rerun: n
+                    hard_rerun: y
                 descriptors:
                     runtype: lib
                     language: Python
@@ -295,7 +262,7 @@ Job:
         parameters:
             methodID: labels-w-iou-simple
             methodvers: v1-10
-            iou_thresh: 0.02
+            iou_thresh: 0.001
             write_GT: y
         arguments:
             hard_rerun: n
@@ -346,7 +313,7 @@ Job:
             methodID: pampgdb-standard-publish
             methodvers: v1-0
             bin_fill_code: LOW
-            procedure_id: 23
+            procedure_id: 24
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -362,7 +329,8 @@ Job:
             difftime_cap: 3600
             freq_low: [freq_start]
             freq_size: [freq_size]
-            group_pixels: 20
+            #group_pixels: 20 temporary testing!!
+            group_pixels: 80
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
             native_pix_per_sec: [npps]
@@ -378,7 +346,7 @@ Job:
             language: R
     ApplyCutoff:
         parameters:
-            cutoff: 0.9
+            cutoff: 0.25
         arguments:
             hard_rerun: n
         descriptors:
@@ -389,12 +357,16 @@ Job:
                 append_cutoff: y
                 cutoff:
                     - 0.0
-                    - 0.1
+                    #- 0.1
+                    - 0.4
+                    - 0.25
+                    - 0.5
+                    - 0.6
                     - 0.75
                     - 0.8
                     - 0.85
                     - 0.9
-                    - 0.95
+                    #- 0.95
                     #- 0.99
                     #- 0.999
             arguments:

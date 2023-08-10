@@ -562,6 +562,37 @@ class GraphDETx(INSTINCT_process):
 
         self.run_cmd()
 
+class PeaksAssoc(INSTINCT_process):
+
+    pipeshape = TwoUpstream_noCon
+    upstreamdef = ["GetPeaksDETx","GetAssocDETx"]
+
+    outfile = 'DETx.csv.gz' #takes peak labels and associates them with other dets. 
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
+class CalcPeaks(INSTINCT_process):#
+
+    pipeshape = OneUpstream
+    upstreamdef = ["GetDETx"]
+
+    outfile = 'DETx.csv.gz' #this is peaks - assoc dets saved as DETx2.csv.gz
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
 
 class PublishDets(INSTINCT_process):#
 

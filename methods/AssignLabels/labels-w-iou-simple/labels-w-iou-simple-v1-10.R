@@ -21,7 +21,7 @@ MethodID<-"labels-w-iou-simple-v1-3"
 #v1-6: retain cutoff if present. Leapfrogged 1-5, which I am not sure if it is in use. 
 #v1-10: parallelize long comparison step. 
 
-args<-"D:/Cache/449513 D:/Cache/449513/215749 D:/Cache/449513/439550/913601/760274/747025/942591 D:/Cache/449513/215749/805913 0.02 y labels-w-iou-simple-v1-10"
+args<-"D:/Cache/449513 D:/Cache/449513/215749 D:/Cache/449513/439550/913601/733691/787116/52349/656021 D:/Cache/449513/215749/544084 0.001 y labels-w-iou-simple-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -49,6 +49,10 @@ WriteGT<-args[6]
 
 GTdata<-read.csv(paste(GTpath,"DETx.csv.gz",sep="/"))
 FGdata<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))
+
+#if("fw1difficult" %in% FGdata$Name){
+#  stop("fw1difficult. stop for testing")
+#}
 
 #just for testing: 
 
@@ -130,6 +134,13 @@ if(nrow(GTlong)>0){
   GTdata$EndFile<-as.factor(GTdata$EndFile)
   
   GTlong$iou<-0
+  
+  #v1-10 if there is case where end is less than start, fix. happens when fg is not necessarily
+  #ordered consecutively. 
+  
+  if(any(GTlong$EndTime<GTlong$StartTime)){
+    GTlong[which(GTlong$EndTime<GTlong$StartTime),"EndTime"]= FGdataOrd[match(GTlong[which(GTlong$EndTime<GTlong$StartTime),"StartFile"],FGdataOrd$FileName),"cumsum"]+FGdataOrd[match(GTlong[which(GTlong$EndTime<GTlong$StartTime),"StartFile"],FGdataOrd$FileName),"Duration"] -0.1
+  }
 
 }else{
   GTlong<-cbind(GTlong, data.frame(iou=double()))
@@ -157,6 +168,14 @@ if(nrow(outData)>0){
   
   outLong$iou<-0
   
+  #v-10 bugfix: if there is case where end is less than start, fix. happens when fg is not necessarily
+  #ordered consecutively. 
+  
+  if(any(outLong$EndTime<outLong$StartTime)){
+    outLong[which(outLong$EndTime<outLong$StartTime),"EndTime"]= FGdataOrd[match(outLong[which(outLong$EndTime<outLong$StartTime),"StartFile"],FGdataOrd$FileName),"cumsum"]+FGdataOrd[match(outLong[which(outLong$EndTime<outLong$StartTime),"StartFile"],FGdataOrd$FileName),"Duration"] -0.1
+  }
+  
+  
 }else{
   
   outData<-cbind(outData, data.frame(StartTime=double()))
@@ -175,6 +194,9 @@ outLong<-outLong[order(outLong$StartTime),]
 #outLong = outLong[which(outLong$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
 #GTdata = GTdata[which(GTdata$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
 #outData = outData[which(outData$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
+
+GTlongIn=GTlong[which(GTlong$StartFile=="AU-ALPM02_b-210228-210000.wav"),]
+outLongIn=outLong[which(outLong$StartFile=="AU-ALPM02_b-210228-210000.wav"),]
 
 #calculate iou GT
 if(nrow(GTlong)>0){
@@ -232,6 +254,10 @@ if(nrow(GTlong)>0){
       
       k=klow
       if(nrow(outLongIn)>0){
+        
+        if(klow > khigh){
+          stop("bug in detection timestamps detected (klow> khigh), stopping.")
+        }
         
         for(k in klow:khigh){
           #while(GTlongIn$iou[i]<IoUThresh&k<=khigh){
@@ -292,9 +318,10 @@ if(nrow(GTlong)>0){
     return(list(GTlongIn,outLongIn))
     
   }
+  stopCluster(cluz)
 }
 
-stopCluster(cluz)
+
 
 #unpack output object 
 

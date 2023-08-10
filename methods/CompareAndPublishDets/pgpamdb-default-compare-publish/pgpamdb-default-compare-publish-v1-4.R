@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/620782/122012/176942/474461/555497 D:/Cache/620782/122012/176942/786314 D:/Cache/620782/122012/176942/474461/555497/398664  pgpamdb-default-compare-publish-v1-3"
+args="D:/Cache/669745/161133/776385/204574/63390 D:/Cache/669745/161133/776385/986780 D:/Cache/669745/161133/776385/204574/63390/228534  pgpamdb-default-compare-publish-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -383,6 +383,69 @@ if(length(affected_ids_total)>0){
   query <- gsub("[\r\n]", "", query)
   
   to_redo = dbFetch(dbSendQuery(con,query))
+  
+  #also, pull from prior data in case procedures or signal types changed. 
+  if(any(PriorData$id %in% affected_ids_total)){
+    
+    priordata_affected = PriorData[PriorData$id %in% affected_ids_total,c("procedure","signal_code","id")]
+    
+    unq_pdaffected = unique(priordata_affected[,c("procedure","signal_code")])
+    
+    unq_pdaffected_vec = c(unq_pdaffected$procedure,unq_pdaffected$signal_code)
+    
+    comb_seq = c()
+    for(f in 1:(length(unq_pdaffected_vec)/2)){
+      comb_seq = c(comb_seq,paste("(",unq_pdaffected_vec[f],",",unq_pdaffected_vec[f+length(unq_pdaffected_vec)/2],")",sep=""))
+    }
+    
+    prior_data_affected_query = paste("SELECT DISTINCT effort.name, detections.id
+                FROM detections JOIN bins_detections ON bins_detections.detections_id = detections.id
+                JOIN bins ON bins.id = bins_detections.bins_id JOIN bins_effort ON bins_effort.bins_id
+                = bins.id JOIN effort ON effort.id = bins_effort.effort_id JOIN effort_procedures ON 
+                effort_procedures.effort_id = effort.id  WHERE effproc_assumption = 'i_neg'
+                AND effort_procedures.completed = 'y' AND (effort_procedures.procedures_id,effort_procedures.signal_code)
+                IN (",paste(comb_seq,collapse=","),")
+                AND detections.id IN (",paste(affected_ids_total,collapse=",",sep=""),")",sep="")
+    
+    prior_data_affected_query <- gsub("[\r\n]", "", prior_data_affected_query)
+    
+    prior_data_affected_res = dbFetch(dbSendQuery(con,prior_data_affected_query))
+    
+    prior_data_affected_res$id = as.integer(prior_data_affected_res$id)
+    
+    to_redo_prior_data = merge(priordata_affected,prior_data_affected_res)
+    
+    to_redo_prior_data$id = NULL
+    
+    to_redo_prior_data = unique(to_redo_prior_data)
+    
+    unq_pdaffected2 = unique(to_redo_prior_data[,c("procedure","signal_code",'name')])
+    
+    unq_pdaffected_vec2 = c(unq_pdaffected2$procedure,unq_pdaffected2$signal_code,unq_pdaffected2$name)
+    
+    comb_seq2 = c()
+    for(f in 1:(length(unq_pdaffected_vec2)/3)){
+      comb_seq2 = c(comb_seq2,paste("(",unq_pdaffected_vec2[f],",",unq_pdaffected_vec2[f+length(unq_pdaffected_vec2)/3],",'",unq_pdaffected_vec2[f+(length(unq_pdaffected_vec2)/3)*2],"')",sep=""))
+    }
+    
+    #confirm that all of the new possible procedure/sigcode/fg combinations is actually present in 
+    #effort_procedures
+    
+    query_check = paste("SELECT DISTINCT procedures_id,signal_code,name FROM effort JOIN effort_procedures
+                        ON effort.id = effort_procedures.effort_id WHERE effproc_assumption = 'i_neg'
+                        AND effort_procedures.completed = 'y' AND (effort_procedures.procedures_id,effort_procedures.signal_code,effort.name)
+                        IN (",paste(comb_seq2,collapse=","),")")
+    
+    query_check_query <- gsub("[\r\n]", "", query_check)
+    
+    query_check_res = dbFetch(dbSendQuery(con,query_check_query))
+    
+    query_check_res$procedures_id = as.integer(query_check_res$procedures_id)
+    query_check_res$signal_code = as.integer(query_check_res$signal_code)
+    
+    to_redo = unique(rbind(unique(query_check_res),to_redo))
+  }
+  
   
   if(nrow(to_redo)>0){
     

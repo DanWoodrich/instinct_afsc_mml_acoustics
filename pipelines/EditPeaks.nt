@@ -1,0 +1,39 @@
+pipe: PeaksAssoc.pipe
+PeaksAssoc.pipe:
+  process: PeaksAssoc
+  GetAssocDETx:
+    #this just gets another output of calcpeaks- the detections which are associated with the peaks
+    #in calc peaks, save this output as DETx2.csv.gz- just to keep it from conflicting with 
+    #DETx.csv.gz assumed in the viewing/editing pipelines for the peak detections. 
+    pipe: CalcPeaks.pipe
+    CalcPeaks.pipe:
+      process: CalcPeaks
+      GetDETx:
+        pipe: FormatGT.pipe
+        #loop_on: FormatFG
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG: 
+            process: FormatFG
+  GetPeaksDETx:
+    pipe: ViewFileToDETx
+    ViewFileToDETx:
+      process: RavenToDETx
+      GetViewFile:
+        pipe: EditViewFile
+        EditViewFile:
+          process: EditRAVENx
+          GetViewFile:
+            pipe: ViewDETx
+            pipe_link: 
+              name: ViewPeaks.nt
+          GetFG:
+            #loop_on: FormatFG
+            pipe: FormatFG.pipe
+            FormatFG.pipe:
+              process: FormatFG
+      GetFG:
+        #loop_on: FormatFG
+        pipe: FormatFG.pipe
+        FormatFG.pipe:
+          process: FormatFG

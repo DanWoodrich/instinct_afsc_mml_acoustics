@@ -3,7 +3,7 @@ MethodID<-"rd-simple-w-metadata-v1-5"
 #1.1: make it so any extra metadata is retained
 #1.2: include a filename arg
 
-args="C:/Cache/345509/431110/801901 C:/Cache/345509 C:/Cache/345509/431110/801901/817521 RAVENx.txt"
+args="D:/Cache/622910/538363/210856 D:/Cache/622910 D:/Cache/622910/538363/210856/219080 RAVENx.txt"
 
 args<-strsplit(args,split=" ")[[1]]
 

@@ -574,7 +574,23 @@ class PeaksAssoc(INSTINCT_process):
         #import code
         #code.interact(local=locals())
 
-        self.cmd_args=[self.ports[1].outfilegen(),self.ports[0].outfilegen(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
+
+        self.run_cmd()
+
+class ProcedureProgress(INSTINCT_process):
+
+    pipeshape = OneUpstream
+    upstreamdef = ["DependsOn"] #doesn't actually use this, just needs for it be run prior. 
+
+    outfile = 'progress_vis.png' #takes peak labels and associates them with other dets. 
+
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
 
         self.run_cmd()
 

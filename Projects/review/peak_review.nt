@@ -19,7 +19,8 @@ Job:
             target_samp_rate: 512
             #target_samp_rate: 8192
             file_groupID: 
-              - BS13_AU_PM02-a
+              #- BS19_AU_PM05
+              - BS20_AU_PM08
         arguments:
             hard_rerun: n
         descriptors:
@@ -63,8 +64,18 @@ Job:
       parameters: 
         instructions:
           > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
-          > Review the contents for correctness, adding, modifying, or deleting as necessary.
-          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+          > Your job is to review 'peaks' of hourly percent presence. Each row represents the highest probability detection per 'peak'.
+          > To verify, change the 'label' field for your verifications. use numeric codes: 1 = yes, 0 = no, 2 = maybe. 
+          > Attempt to avoid maybes unless impossible.
+          > if airgun is encountered, change the signal code to 21.   
+          > comments can and should be added as relevant.
+          > do not change other fields.  
+          >
+          > You will only be able to view the single detection in a peak. The column 'countsInPeak' refers to how many total detections were
+          > in the current peak, which can be useful information to classify the detection. 
+          >
+          > The assumption being made is that the highest probability detection is representative of the whole peak, so mostly just judge the detection. 
+          > The procedure is not perfect and additional consideration will be used to evaluate the results aside from your designations. 
       arguments: 
         #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
         rerun_key: 0
@@ -74,7 +85,7 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-4
+        methodvers: v1-5
       arguments: 
         hard_rerun: n
       descriptors:
@@ -93,6 +104,17 @@ Job:
       parameters:
         methodID: peaks-assoc-simple
         methodvers: v1-0
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    ProcedureProgress:
+      parameters:
+        methodID: procedure-progress-simple
+        methodvers: v1-0
+        #seperate multiple by comma
+        procedures: 6,7,24
       arguments: 
         hard_rerun: n
       descriptors:

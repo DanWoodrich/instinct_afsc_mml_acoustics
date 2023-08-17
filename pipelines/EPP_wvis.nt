@@ -1,0 +1,7 @@
+pipe: ProcedureProgress.pipe
+ProcedureProgress.pipe:
+  process: ProcedureProgress
+  DependsOn:
+    pipe: CompareAndPublishDets.pipe
+    pipe_link:
+      name: EditPeaksPublish.nt

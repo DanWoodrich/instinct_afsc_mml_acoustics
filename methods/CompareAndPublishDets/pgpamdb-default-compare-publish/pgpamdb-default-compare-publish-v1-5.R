@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/622910/915330/385092/170683 D:/Cache/622910/915330 D:/Cache/622910/915330/385092/170683/758711  pgpamdb-default-compare-publish-v1-4"
+args="D:/Cache/92439/159444/545091/818032 D:/Cache/92439/159444 D:/Cache/92439/159444/545091/818032/457752  pgpamdb-default-compare-publish-v1-5"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -17,8 +17,6 @@ EditDataPath <-args[1]
 PriorDataPath <- args[2]
 resultPath <- args[3]
 #transferpath<-args[4]
-
-#stop()
 
 PriorData<-read.csv(paste(PriorDataPath,"DETx.csv.gz",sep="/"))
 EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
@@ -180,15 +178,18 @@ if(length(mod_keys)>0){
     sums = rowSums(testdf,na.rm=TRUE)
     
     #subset to only changed rows /columns
-    EditMod = EditMod[sums>0,c('id','procedure',names(colsums[which(colsums>0)]))]
-    testdf_reduce = testdf[sums>0,(names(colsums)=="id" |names(colsums)=="procedure" | colsums>0)]
+    #EditMod = EditMod[sums>0,c('id','procedure',names(colsums[which(colsums>0)]))]
+    #testdf_reduce = testdf[sums>0,(names(colsums)=="id" |names(colsums)=="procedure" | colsums>0)]
+    
+    EditMod = EditMod[sums>0,]
+    testdf_reduce = testdf[sums>0,]
     
     #new in 1-3: also check to see what columns have been modified. remove those which haven't
     
     #check changed columns by procedures. If EditMod contains a procedure which is a detector deployment
     #but disallowed columns change, abort the operation. 
     bn_added = 0 #running count of bin negatives added
-    bn_removed = 0 
+    bn_removed = 0
     all_bn_proc = c()
     if(nrow(EditMod)>0){
       for(i in 1:length(unique(EditMod$procedure))){
@@ -218,66 +219,109 @@ if(length(mod_keys)>0){
           
           EditMod_proc_labelchange =EditMod_proc[testdf_reduce_proc$label,]
           
-          
           #pseudo: using the changed detections, load in all affected bins, all existing detections, and those
           #detection labels. 
+          bin_length = dbFetch(dbSendQuery(con,paste("SELECT length_seconds FROM bin_type_codes WHERE id =",check_row$negative_bin)))$length_seconds
+          #optimization: make a subset of EditMod_proc_labelchange which only contains 
+          #one representative detection per bin. For this, just take ceiling of start time /  bin_length
           
-          affected_bins = dbFetch(dbSendQuery(con,paste("SELECT detections.id,detections.label,bins.* FROM detections JOIN bins_detections ON detections.id = bins_detections.detections_id JOIN bins ON 
+          EditMod_proc_labelchange$bin_unqst = ceiling(EditMod_proc_labelchange$start_time/bin_length)
+          EditMod_proc_labelchange$bin_unqend = ceiling(EditMod_proc_labelchange$end_time/bin_length)
+          
+          EditMod_proc_labelchange$bin_unq= (EditMod_proc_labelchange$bin_unqst + EditMod_proc_labelchange$bin_unqend) / 2
+          
+          #these are ids representing unique bins. edge ids included for convenience, some may technically be duplicated. 
+          #may not even be necessary since we're including start and end file in duplicated
+          unq_ids = EditMod_proc_labelchange[which(!duplicated(data.frame(EditMod_proc_labelchange$start_file,EditMod_proc_labelchange$end_file,EditMod_proc_labelchange$bin_unq))),"id"]
+         #print('1')
+          affected_bins = dbFetch(dbSendQuery(con,paste("SELECT detections.id,detections.label,detections.probability,bins.* FROM detections JOIN bins_detections ON detections.id = bins_detections.detections_id JOIN bins ON 
                                                         bins.id = bins_detections.bins_id WHERE bins.id IN 
                                                         (SELECT DISTINCT bins_detections.bins_id FROM bins JOIN bins_detections ON bins.id = bins_detections.bins_id 
                                                         WHERE bins_detections.detections_id IN (",
-                                                        paste(EditMod_proc_labelchange$id,sep="",collapse = ","),
+                                                        paste(unq_ids,sep="",collapse = ","),
                                                         ") AND type = ",check_row$negative_bin,")",
                                                         " AND detections.procedure = ",unique(EditMod$procedure)[i],sep="")))
-          
+          #print('2')
           #fill in the new labels for considered detections. using this table, make another table which 
           #represents each bin, and whether it contains a 1 detection or not. 
           
           affected_bins$id = as.integer(affected_bins$id)
-          affected_bins$id..3 = as.integer(affected_bins$id..3)
+          affected_bins$id..4 = as.integer(affected_bins$id..4)
           
-          affected_bins$label= EditMod_proc_labelchange[match(affected_bins$id,EditMod_proc_labelchange$id),"label"]
+          affected_bins$newlabel= EditMod_proc_labelchange[match(affected_bins$id,EditMod_proc_labelchange$id),"label"]
           
-          affected_bins_0bins_temp = affected_bins[which(affected_bins$label %in% c(0,1)),]
-          affected_bins_0bins = aggregate(affected_bins_0bins_temp$label,by=list(affected_bins_0bins_temp$id..3),mean)
+          affected_bins_0bins_temp = affected_bins[which(affected_bins$newlabel %in% c(0,20,1,21)),]
+          affected_bins_0bins_temp[which(affected_bins_0bins_temp$newlabel==20),"newlabel"]=0
+          affected_bins_0bins_temp[which(affected_bins_0bins_temp$newlabel==21),"newlabel"]=1
+          if(nrow(affected_bins_0bins_temp)>0){
+            affected_bins_0bins = aggregate(affected_bins_0bins_temp$newlabel,by=list(affected_bins_0bins_temp$id..4),mean)
+            affected_bins_0bins$over0 = affected_bins_0bins$x>0
+            
+          }else{
+            affected_bins_0bins=affected_bins_0bins_temp
+            affected_bins_0bins$over0 = numeric(0)
+          }
+            
           
           #this indicates if any 1s are present > 0 or not, 
           
-          affected_bins_0bins$over0 = affected_bins_0bins$x>0
           
-          if(any(affected_bins$label==20,na.rm=TRUE)){
+          if(any(affected_bins$label==20 & is.na(affected_bins$probability),na.rm=TRUE)){
             
-            stop("new case, write out the rest of this method before continuing")
+            bn_to_rem  =c()
             
-            #I will need to compare here
+            #loop through each affected bin with '20'. match id to editmod_proc_labelchange. if going from 20 -> 1/21,
+            #then need to remove 20. Otherwise, ignore. add case is covered below. 
             
-            #if the 1 bins have a matching bin negative, delete it. If the 0 bins have a matching bin negative, do nothing. 
-            #if the 0 bins don't have a matching bin negative, add one. 
+            ab_bin_negs = affected_bins[which(affected_bins$label==20 & is.na(affected_bins$probability)),]
             
-          }else{
+            for(p in 1:nrow(ab_bin_negs)){
+              
+              alldets_in_bin = affected_bins[which(affected_bins$id..4==ab_bin_negs[p,"id..4"]),]
+              
+              newlabs = unique(EditMod_proc_labelchange[which(EditMod_proc_labelchange$id %in% alldets_in_bin$id),"label"])
+              
+              if(any(newlabs %in% c(1,21))){
+                
+                bn_removed = bn_removed + 1
+                
+                #delete bin negative
+                bn_to_rem = c(bn_to_rem,ab_bin_negs$id[p])
+              }
+              
+            }
+            
+            #remove all bn_to_rem
+            if(length(bn_to_rem)>0){
+              table_delete(con,'detections',bn_to_rem,hard_delete = TRUE)
+            }
+            
+          }
             
             #this is a simpler case (doesn't need to be distinct from initial condition after I write it out)
             
             #if no 20s exist, I just submit each bin which has a 0 
-            if(any(!affected_bins_0bins$over0)){
-              
-              submitbins = affected_bins_0bins$Group.1[which(!affected_bins_0bins$over0)]
-              submitbins_frame = affected_bins[which(affected_bins$id..3 %in% submitbins),]
-              adddets = data.frame(submitbins_frame$seg_start,submitbins_frame$seg_end,0,max(PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"HighFreq"]),
-                                   submitbins_frame$soundfiles_id,submitbins_frame$soundfiles_id,NA,"",unique(EditMod$procedure)[i],20,PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"signal_code"][1],
-                                   2)
-              
-              colnames(adddets) = c("start_time","end_time","low_freq","high_freq","start_file","end_file",
-                                    "probability","comments","procedure","label","signal_code","strength")
-              
-              #add the new bin negatives
-              out = dbAppendTable(con,'detections',adddets)
-              
-              bn_added = bn_added + out
-              
+     
+            
+          if(any(!affected_bins_0bins$over0)){
+            
+            submitbins = affected_bins_0bins$Group.1[which(!affected_bins_0bins$over0)]
+            submitbins_frame = affected_bins[which(affected_bins$id..4 %in% submitbins),]
+            adddets = data.frame(submitbins_frame$seg_start,submitbins_frame$seg_end,0,max(PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"HighFreq"]),
+                                 submitbins_frame$soundfiles_id,submitbins_frame$soundfiles_id,NA,"",unique(EditMod$procedure)[i],20,PriorData[which(PriorData$procedure==unique(EditMod$procedure)[i]),"signal_code"][1],
+                                 2)
+            
+            colnames(adddets) = c("start_time","end_time","low_freq","high_freq","start_file","end_file",
+                                  "probability","comments","procedure","label","signal_code","strength")
+            
+            if(any(duplicated(adddets))){
+              adddets = adddets[-which(duplicated(adddets)),]
             }
             
-  
+            #add the new bin negatives
+            out = dbAppendTable(con,'detections',adddets)
+            
+            bn_added = bn_added + out
             
           }
           
@@ -286,6 +330,10 @@ if(length(mod_keys)>0){
         
       }
       
+      #pare down edit mod to only necessary columns
+      EditMod = EditMod[,c('id','procedure',names(colsums[which(colsums>0)]))]
+      #print('3')
+      #update editmod
       table_update(con,'detections',EditMod)
 
     }
@@ -413,39 +461,43 @@ if(length(affected_ids_total)>0){
     
     prior_data_affected_res = dbFetch(dbSendQuery(con,prior_data_affected_query))
     
-    prior_data_affected_res$id = as.integer(prior_data_affected_res$id)
-    
-    to_redo_prior_data = merge(priordata_affected,prior_data_affected_res)
-    
-    to_redo_prior_data$id = NULL
-    
-    to_redo_prior_data = unique(to_redo_prior_data)
-    
-    unq_pdaffected2 = unique(to_redo_prior_data[,c("procedure","signal_code",'name')])
-    
-    unq_pdaffected_vec2 = c(unq_pdaffected2$procedure,unq_pdaffected2$signal_code,unq_pdaffected2$name)
-    
-    comb_seq2 = c()
-    for(f in 1:(length(unq_pdaffected_vec2)/3)){
-      comb_seq2 = c(comb_seq2,paste("(",unq_pdaffected_vec2[f],",",unq_pdaffected_vec2[f+length(unq_pdaffected_vec2)/3],",'",unq_pdaffected_vec2[f+(length(unq_pdaffected_vec2)/3)*2],"')",sep=""))
-    }
-    
-    #confirm that all of the new possible procedure/sigcode/fg combinations is actually present in 
-    #effort_procedures
-    
-    query_check = paste("SELECT DISTINCT procedures_id,signal_code,name FROM effort JOIN effort_procedures
+    #stealth fix 1-5: test if not relevant 
+    if(nrow(prior_data_affected_res)>0){
+      prior_data_affected_res$id = as.integer(prior_data_affected_res$id)
+      
+      to_redo_prior_data = merge(priordata_affected,prior_data_affected_res)
+      
+      to_redo_prior_data$id = NULL
+      
+      to_redo_prior_data = unique(to_redo_prior_data)
+      
+      unq_pdaffected2 = unique(to_redo_prior_data[,c("procedure","signal_code",'name')])
+      
+      unq_pdaffected_vec2 = c(unq_pdaffected2$procedure,unq_pdaffected2$signal_code,unq_pdaffected2$name)
+      
+      comb_seq2 = c()
+      for(f in 1:(length(unq_pdaffected_vec2)/3)){
+        comb_seq2 = c(comb_seq2,paste("(",unq_pdaffected_vec2[f],",",unq_pdaffected_vec2[f+length(unq_pdaffected_vec2)/3],",'",unq_pdaffected_vec2[f+(length(unq_pdaffected_vec2)/3)*2],"')",sep=""))
+      }
+      
+      #confirm that all of the new possible procedure/sigcode/fg combinations is actually present in 
+      #effort_procedures
+      
+      query_check = paste("SELECT DISTINCT procedures_id,signal_code,name FROM effort JOIN effort_procedures
                         ON effort.id = effort_procedures.effort_id WHERE effproc_assumption = 'i_neg'
                         AND effort_procedures.completed = 'y' AND (effort_procedures.procedures_id,effort_procedures.signal_code,effort.name)
                         IN (",paste(comb_seq2,collapse=","),")")
+      
+      query_check_query <- gsub("[\r\n]", "", query_check)
+      
+      query_check_res = dbFetch(dbSendQuery(con,query_check_query))
+      
+      query_check_res$procedures_id = as.integer(query_check_res$procedures_id)
+      query_check_res$signal_code = as.integer(query_check_res$signal_code)
+      
+      to_redo = unique(rbind(unique(query_check_res),to_redo))
+    }
     
-    query_check_query <- gsub("[\r\n]", "", query_check)
-    
-    query_check_res = dbFetch(dbSendQuery(con,query_check_query))
-    
-    query_check_res$procedures_id = as.integer(query_check_res$procedures_id)
-    query_check_res$signal_code = as.integer(query_check_res$signal_code)
-    
-    to_redo = unique(rbind(unique(query_check_res),to_redo))
   }
   
   

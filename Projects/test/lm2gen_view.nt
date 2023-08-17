@@ -58,11 +58,52 @@ Global:
         query_fins7:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
           > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND low_freq > 20 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        querygt_fw24y_lm5y:
+          > "SELECT detections.* FROM detections JOIN (SELECT detections.id,soundfiles.data_collection_id,s1.datetime + interval '1 second' * detections.start_time AS datetime_start, 
+          > s2.datetime + interval '1 second' * detections.end_time as datetime_end 
+          > from detections JOIN soundfiles AS s1 ON detections.start_file = s1.id 
+          > JOIN soundfiles as s2 ON detections.end_file = s2.id 
+          > JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          > WHERE detections.start_file IN {FG} AND procedure = 24 AND label IN (1,21)) AS fwsub ON detections.id = fwsub.id 
+          > WHERE EXISTS (SELECT 1 FROM (SELECT soundfiles.data_collection_id,s1.datetime + interval '1 second' * detections.start_time AS datetime_start, 
+          >   s2.datetime + interval '1 second' * detections.end_time as datetime_end 
+          >   FROM detections JOIN soundfiles AS s1 ON detections.start_file = s1.id 
+          >   JOIN soundfiles as s2 ON detections.end_file = s2.id 
+          >   JOIN soundfiles ON detections.start_file = soundfiles.id 
+          >   JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          >   WHERE detections.start_file IN {FG} AND procedure = 5 AND label = 1) AS lmsub 
+          >   WHERE tstzrange(lmsub.datetime_start, lmsub.datetime_end, '()') &&
+          >   tstzrange(fwsub.datetime_start, fwsub.datetime_end, '()')
+          >   AND fwsub.data_collection_id = lmsub.data_collection_id)"
+        #can add additional conds (... AND) top of tstzrange, such as, fwsub.site = lmsub.site
+        querygt_fwAlln_lm5y:
+          > "SELECT detections.* FROM detections JOIN (SELECT detections.id,soundfiles.data_collection_id,s1.datetime + interval '1 second' * detections.start_time AS datetime_start, 
+          > s2.datetime + interval '1 second' * detections.end_time as datetime_end 
+          > from detections JOIN soundfiles AS s1 ON detections.start_file = s1.id 
+          > JOIN soundfiles as s2 ON detections.end_file = s2.id 
+          > JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          > WHERE detections.start_file IN {FG} AND procedure IN (7,24) AND probability IS NULL AND label IN (20)) AS fwsub ON detections.id = fwsub.id 
+          > WHERE EXISTS (SELECT 1 FROM (SELECT soundfiles.data_collection_id,s1.datetime + interval '1 second' * detections.start_time AS datetime_start, 
+          >   s2.datetime + interval '1 second' * detections.end_time as datetime_end 
+          >   FROM detections JOIN soundfiles AS s1 ON detections.start_file = s1.id 
+          >   JOIN soundfiles as s2 ON detections.end_file = s2.id 
+          >   JOIN soundfiles ON detections.start_file = soundfiles.id 
+          >   JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          >   WHERE detections.start_file IN {FG} AND procedure = 5 AND label = 1) AS lmsub 
+          >   WHERE tstzrange(lmsub.datetime_start, lmsub.datetime_end, '()') 
+          >   && tstzrange(fwsub.datetime_start, fwsub.datetime_end, '()')
+          >   AND fwsub.data_collection_id = lmsub.data_collection_id)" 
+        queryfg_all_lm:
+          > "SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end FROM bins JOIN soundfiles ON 
+          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN detections ON soundfiles.id = detections.start_file 
+          > WHERE detections.procedure = 5 AND detections.label = 1 AND data_collection.sampling_rate = 16384"
 Job:
     FormatFG:
         parameters:
-            decimate_data: y
-            #decimate_data: n
+            #decimate_data: y
+            decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-0
@@ -88,7 +129,8 @@ Job:
               #- fw2gen_strat_pos_manyfin1 
               #- fw2gen_hardneg_ds 
               #- AW12_AU_CL01_files_441-516_bb_hg
-              #- BS09_AU_PM02-a
+              - BS13_AU_PM02-a
+              #- [queryfg_all_lm]
         arguments:
             hard_rerun: n
         descriptors:
@@ -101,10 +143,10 @@ Job:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-2
             #query: [query_fins2]
-            query: [query_fins7]
+            query: [querygt_fw24y_lm5y]
             remove_proc_ovlp: n
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R
@@ -113,10 +155,10 @@ Job:
             methodID: rv-simple-w-metadata
             methodvers: v1-10
         arguments:
-            fg_fill: y
+            fg_fill: n
             hard_rerun: n
-            ignore_decimated: n
-            #ignore_decimated: y
+            #ignore_decimated: n
+            ignore_decimated: y
         descriptors:
             runtype: lib
             language: R

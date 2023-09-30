@@ -20,6 +20,6 @@ vis = procedure_prog(con,as.numeric(strsplit(procedures,",")[[1]]))
 
 plot(vis[[1]])
 
-write.csv(vis[[2]],paste(resultPath,"/progress_vis.png",sep=""))
-
 dev.off()
+
+write.csv(vis[[2]],paste(resultPath,"/progress_tab.csv",sep=""))

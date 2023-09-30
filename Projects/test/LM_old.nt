@@ -1,4 +1,4 @@
-#LM2gen / procedure 23 on db
+#based on LM2gen3
 Global:
     cache_root: D:/Cache
     SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -56,21 +56,50 @@ Job:
             decimate_data: y
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
-            methodvers: v1-2
+            methodvers: v1-1
             methodID2m: matlabdecimate
             methodvers2m: V1s0
             target_samp_rate: 512
             file_groupID:
-                - AL21_AU_BS10
-                - AL20_AU_BS11
-                - AL22_AU_BS10
-                - BS16_AU_PM08
-                - BS21_AU_PM02
-                - GA20_AU_SH01
-                - AL21_AU_UM01
-                - AL21_AU_UN01
-                - AL22_AU_UN01
-                - BS21_AU_PM04
+                #- BS15_AU_PM04
+                #- AL19_AU_UM01
+                #- RW09_EA_UM01
+                #- XA17_HA_BG01
+                #- AL17_AU_UN01
+                #- RW10_EA_UN01
+                #- AL20_AU_UN01-b 
+                #- AL19_AU_UN01-b
+                #- AL19_AU_UN01-a
+                #- RW10_EA_BS01
+                #- GA19_AU_SH01
+                #- RW08_EA_BS07
+                #- RW09_EA_BS07
+                #- AL19_AU_BS10
+                #- RW08_EA_BS08
+                #- AL20_AU_PM02-b
+                #- BS19_AU_PM02-b
+                #- BS10_AU_PM02-a
+                - BS09_AU_PM02-b
+                - XA07_HA_PM02-b
+                - GA19_AU_BT01
+                - AL19_AU_BS03
+                - XA06_HA_PM04
+                - XA07_HA_PM04
+                - BS19_AU_PM04
+                - BS08_HA_PM04
+                - BS20_AU_PM04
+                - BS16_AU_PM04
+                - AL19_AU_BS09
+                - AL19_AU_BS02
+                - RW11_EA_BS02
+                - BS19_AU_PM05
+                - BS08_AU_PM05
+                - AL19_AU_BS11
+                - RW11_EA_BS01
+                - BS20_AU_PM08
+                - BS12_AU_PM08
+                #- BS10_AU_PM08
+                - BS19_AU_PM08
         arguments:
             hard_rerun: n
         descriptors:
@@ -79,17 +108,6 @@ Job:
             runtype2m: bin
             language2m: MATLAB
     TrainModel_paramset:
-        FormatGT:
-            parameters:
-                methodID: pampgdb-standard-pullgt
-                methodvers: v1-2
-                query: [querygt1]
-                remove_proc_ovlp: y
-            arguments:
-                hard_rerun: n
-            descriptors:
-                runtype: lib
-                language: R
         FormatFG:
             parameters:
                 decimate_data: y
@@ -237,10 +255,9 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-4
+            methodvers: v1-2
             query: [querygt1]
-            remove_proc_ovlp: n
-            standardize_sig_code: n
+            remove_proc_ovlp: y
         arguments:
             hard_rerun: n
         descriptors:
@@ -308,7 +325,7 @@ Job:
     CompareAndPublishDets:
         parameters:
             methodID: pgpamdb-default-compare-publish
-            methodvers: v1-6
+            methodvers: v1-2
         arguments:
             hard_rerun: n
         descriptors:
@@ -317,7 +334,7 @@ Job:
     PublishDetswFG:
         parameters: 
             methodID: pampgdb-standard-publish
-            methodvers: v1-1
+            methodvers: v1-0
             bin_fill_code: LOW
             procedure_id: 23
             signal_code: [signal_codes]
@@ -331,7 +348,7 @@ Job:
     ScoresToDETx:
         parameters:
             methodID: moving-smooth
-            methodvers: v1-13
+            methodvers: v1-10
             difftime_cap: 3600
             freq_low: [freq_start]
             freq_size: [freq_size]

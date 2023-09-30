@@ -6,7 +6,6 @@ library(flux)
 args<-"D:/Cache/348728/295513/905503 D:/Cache/348728/295513/905503/129693 D:/Cache/348728/295513/631525/915668/238485 2 y pe2dl-simple-v1-4"
 args<-strsplit(args,split=" ")[[1]]
 
-
 source(paste(getwd(),"/user/R_misc.R",sep="")) 
 args<-commandIngest()
 

@@ -247,6 +247,7 @@ if(vertical_bins==1){
       #scores_starts[which(scores_starts<0)]=0.1
       
       #crop the final value so that it is within difftime interval
+      #helps in cases where a sample or two are missing. 
       scores_ends[which(scores_ends>=dur)]=dur-0.1
       
       FGdt2 = aggregate(SegDur ~ FileName, data = FGdt, sum)
@@ -261,10 +262,10 @@ if(vertical_bins==1){
       }
       
       startfiles = FGdt2$FileName[findInterval(scores_starts,c(0,FGdt2$cumdur))]
-      endfiles = FGdt2$FileName[findInterval(scores_ends,c(0,FGdt2$cumdur))]
+      endfiles = FGdt2$FileName[findInterval(scores_ends,c(0,FGdt2$cumdur),left.open = TRUE)] #left open v1-13 change
       
       startint = findInterval(scores_starts,c(0,FGdt2$cumdur))
-      endint = findInterval(scores_ends,c(0,FGdt2$cumdur))
+      endint = findInterval(scores_ends,c(0,FGdt2$cumdur),left.open = TRUE) #left open v1-13 change
       
       scores_starts = scores_starts- FGdt2$startcum[startint]+FGdt2$offset[startint]
       scores_ends = scores_ends- FGdt2$startcum[endint]+FGdt2$offset[endint]

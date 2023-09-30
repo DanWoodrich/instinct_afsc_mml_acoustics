@@ -7,7 +7,7 @@ jobs = {
 "MPE_DL_Train": ["DLModelTrain_Eval_Train","PE2DL_all_Train","PE2DL_FG_Train","ViewScoresDL_w_AL_Train","Model_Stats_Train"],#Training: assumes test split sourced from different data than FGs
 "MPE_DL_Train_nopp": ["DLModelTrain_Eval_Train","PE2DL_all_Train","PE2DL_FG_Train","ViewScoresDL_w_AL_Train_allGT","Model_Stats_Train"],
 "Test_DL_novel":["PE2DL_all_novel","PE2DL_FG_novel","Model_Stats_novel"],#,"ViewScoresDL_w_AL_novel"]#,""] #add MPE_DL_TT when complete #Test: assumes test split sourced from different data than FGs
-"DL_TT":["Model_Stats_TT"], #"MPE_DL_Train","Test_DL_novel",
+"DL_TT":["Model_Stats_TT"] #"MPE_DL_Train","Test_DL_novel",
 }
 
 pipelines = {

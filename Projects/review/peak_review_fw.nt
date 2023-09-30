@@ -4,8 +4,8 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        query_fins_proc_24:
-          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.procedure = 24 AND detections.start_file IN {FG}"
+        query_fins_proc_25:
+          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.procedure = 25 AND detections.start_file IN {FG}"
 Job:
     FormatFG:
         parameters:
@@ -13,14 +13,13 @@ Job:
             #decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
-            methodvers: v1-0
+            methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
             target_samp_rate: 512
             #target_samp_rate: 8192
             file_groupID: 
-              #- BS19_AU_PM05
-              - BS20_AU_PM08
+              - AL19_AU_CL01
         arguments:
             hard_rerun: n
         descriptors:
@@ -31,9 +30,10 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-2
-            query: [query_fins_proc_24]
+            methodvers: v1-4
+            query: [query_fins_proc_25]
             remove_proc_ovlp: n
+            standardize_sig_code: n
         arguments:
             hard_rerun: y
         descriptors:
@@ -46,7 +46,7 @@ Job:
         arguments:
             fg_fill: n
             hard_rerun: n
-            ignore_decimated: y
+            ignore_decimated: n
         descriptors:
             runtype: lib
             language: R
@@ -67,7 +67,7 @@ Job:
           > Your job is to review 'peaks' of hourly percent presence. Each row represents the highest probability detection per 'peak'.
           > To verify, change the 'label' field for your verifications. use numeric codes: 1 = yes, 0 = no, 2 = maybe. 
           > Attempt to avoid maybes unless impossible.
-          > if airgun is encountered, change the signal code to 21.   
+          > if airgun is encountered, change the signal code to 21, and mark the label as 1 (yes). 
           > comments can and should be added as relevant.
           > do not change other fields.  
           >
@@ -85,7 +85,7 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-5
+        methodvers: v1-6
       arguments: 
         hard_rerun: n
       descriptors:
@@ -94,7 +94,7 @@ Job:
     CalcPeaks:
       parameters:
         methodID: calcpeaks-simple
-        methodvers: v1-0
+        methodvers: v1-1
       arguments: 
         hard_rerun: n
       descriptors:
@@ -104,6 +104,7 @@ Job:
       parameters:
         methodID: peaks-assoc-simple
         methodvers: v1-0
+        allow_ambiguous_label: n
       arguments: 
         hard_rerun: n
       descriptors:
@@ -112,11 +113,11 @@ Job:
     ProcedureProgress:
       parameters:
         methodID: procedure-progress-simple
-        methodvers: v1-0
+        methodvers: v1-1
         #seperate multiple by comma
-        procedures: 6,7,24
+        procedures: 6,7,25
       arguments: 
-        hard_rerun: n
+        hard_rerun: y
       descriptors:
         language: R
         runtype: lib

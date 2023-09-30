@@ -567,7 +567,7 @@ class PeaksAssoc(INSTINCT_process):
     pipeshape = TwoUpstream_noCon
     upstreamdef = ["GetPeaksDETx","GetAssocDETx"]
 
-    outfile = 'DETx.csv.gz' #takes peak labels and associates them with other dets. 
+    outfile = 'DETx.csv.gz' #takes peak labels and associates them with other dets.
 
     def run(self):
 
@@ -583,16 +583,19 @@ class ProcedureProgress(INSTINCT_process):
     pipeshape = OneUpstream
     upstreamdef = ["DependsOn"] #doesn't actually use this, just needs for it be run prior. 
 
-    outfile = 'progress_vis.png' #takes peak labels and associates them with other dets. 
+    outfile = 'artifacts.tar'#'progress_vis.png' #takes peak labels and associates them with other dets.
 
     def run(self):
 
-        #import code
-        #code.interact(local=locals())
+        if self.ports[0]==None:
+            depends_on = "NULL"
+        else:
+            depends_on = self.ports[0].outpath()
 
-        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]#,self.arguments['transfer_loc']
+        self.cmd_args=[depends_on,self.outpath(),self.param_string2]#self.ports[0].outpath()
 
         self.run_cmd()
+        
 
 class CalcPeaks(INSTINCT_process):#
 
@@ -788,8 +791,7 @@ class FormatFG(INSTINCT_process):
 
             #this is a little hacky- reset descriptors and methods vars to reflect the decimation method.
 
-            #import code
-            #code.interact(local=dict(globals(), **locals()))
+            
 
             #'unfreeze' parameters and descriptors. Couldn't hurt anything right? 
 
@@ -800,6 +802,9 @@ class FormatFG(INSTINCT_process):
             self.parameters['methodvers']=self.parameters['methodvers2m']
             self.descriptors['runtype']=self.descriptors['runtype2m']
             self.descriptors['language']=self.descriptors['language2m']
+
+            #import code
+            #code.interact(local=dict(globals(), **locals()))
 
             self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
             #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
@@ -909,7 +914,7 @@ class DLmodel_Train(INSTINCT_process):
         arg_vals = [arg_tlist[x][1] for x in range(len(arg_tlist))]
         arg_vals_sort = [sorted(arg_vals[x])[n] if isinstance(arg_vals[x],list) else arg_vals[x] for x in range(len(arg_vals))]
         arg_string = os.environ["INS_ARG_SEP"].join(arg_vals_sort)
-        
+
         self.cmd_args=[self.ports[3].outfilegen(),self.ports[2].outpath(),self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),"NULL","train",self.param_string2,arg_string]#,self.arguments['transfer_loc']
 
         self.run_cmd()

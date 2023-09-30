@@ -43,7 +43,7 @@ if(nrow(DetData)!=0){
 
 
 source(Sys.getenv('DBSECRETSPATH')) #source("C:/Users/daniel.woodrich/Desktop/cloud_sql_db/paths.R")
-con=pamdbConnect("poc_v2",keyscript,clientkey,clientcert)
+con=pamdbConnect(dbname,keyscript,clientkey,clientcert)
 
 #convert FG into db form: 
 #cols needed: "soundfiles_id","seg_start","seg_end","duration"

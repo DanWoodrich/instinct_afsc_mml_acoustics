@@ -12,7 +12,8 @@ Global:
         queryfg2:
           > "SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
           > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bins_detections ON bins_detections.bins_id = bins.id JOIN 
-          > detections ON detections.id = bins_detections.detections_id WHERE detections.status = 1 AND detections.procedure = 23 AND detections.label = 99 AND bins.type = 1 AND data_collection.sampling_rate = 16384 LIMIT 250"
+          > detections ON detections.id = bins_detections.detections_id WHERE detections.status = 1 AND detections.procedure = 23 AND detections.label = 99 AND bins.type = 1 AND data_collection.sampling_rate = 16384
+          #LIMIT 250"
           #> AND data_collection.name IN ('BS15_AU_PM04','BS10_AU_PM02-a','AL19_AU_UN01-b','AL19_AU_UM01','AL19_AU_UN01-a')"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
@@ -76,6 +77,37 @@ Global:
           >   WHERE tstzrange(lmsub.datetime_start, lmsub.datetime_end, '()') &&
           >   tstzrange(fwsub.datetime_start, fwsub.datetime_end, '()')
           >   AND fwsub.data_collection_id = lmsub.data_collection_id)"
+        #like the above, but all fw, also union with lm dets as well. 
+        #this one uses with so I can reference the subtables again after the union
+        #it also requires that the detection frequency ranges intersect. 
+        querygt_fwALLy_lm5y:
+          > "WITH fwsub AS (SELECT detections.id,low_freq,high_freq,soundfiles.data_collection_id,s1.datetime + interval '1 second' * detections.start_time AS datetime_start, 
+          > s2.datetime + interval '1 second' * detections.end_time as datetime_end 
+          > from detections JOIN soundfiles AS s1 ON detections.start_file = s1.id 
+          > JOIN soundfiles as s2 ON detections.end_file = s2.id 
+          > JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          > WHERE detections.start_file IN {FG} AND signal_code IN (4,5,6) AND label IN (1,21)), lmsub AS
+          > (SELECT detections.id,low_freq,high_freq,soundfiles.data_collection_id,s1.datetime + interval '1 second' * detections.start_time AS datetime_start, 
+          > s2.datetime + interval '1 second' * detections.end_time as datetime_end 
+          > FROM detections JOIN soundfiles AS s1 ON detections.start_file = s1.id 
+          > JOIN soundfiles as s2 ON detections.end_file = s2.id 
+          > JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id 
+          > WHERE detections.start_file IN {FG} AND procedure = 5 AND label = 1)
+          > SELECT detections.* FROM detections JOIN fwsub ON detections.id = fwsub.id 
+          > WHERE EXISTS (SELECT 1 FROM lmsub 
+          >   WHERE tstzrange(lmsub.datetime_start, lmsub.datetime_end, '()') &&
+          >   tstzrange(fwsub.datetime_start, fwsub.datetime_end, '()') AND 
+          >   numrange(lmsub.low_freq::numeric, lmsub.high_freq::numeric) &&
+          >   numrange(fwsub.low_freq::numeric, fwsub.high_freq::numeric)
+          >   AND fwsub.data_collection_id = lmsub.data_collection_id) 
+          > UNION SELECT detections.* FROM detections JOIN lmsub ON detections.id = lmsub.id WHERE EXISTS (SELECT 1 FROM fwsub 
+          >   WHERE tstzrange(fwsub.datetime_start, fwsub.datetime_end, '()') 
+          >   && tstzrange(lmsub.datetime_start, lmsub.datetime_end, '()') AND 
+          >   numrange(fwsub.low_freq::numeric, fwsub.high_freq::numeric) &&
+          >   numrange(lmsub.low_freq::numeric, lmsub.high_freq::numeric)
+          >   AND fwsub.data_collection_id = lmsub.data_collection_id)" 
         #can add additional conds (... AND) top of tstzrange, such as, fwsub.site = lmsub.site
         querygt_fwAlln_lm5y:
           > "SELECT detections.* FROM detections JOIN (SELECT detections.id,soundfiles.data_collection_id,s1.datetime + interval '1 second' * detections.start_time AS datetime_start, 
@@ -94,7 +126,7 @@ Global:
           >   WHERE detections.start_file IN {FG} AND procedure = 5 AND label = 1) AS lmsub 
           >   WHERE tstzrange(lmsub.datetime_start, lmsub.datetime_end, '()') 
           >   && tstzrange(fwsub.datetime_start, fwsub.datetime_end, '()')
-          >   AND fwsub.data_collection_id = lmsub.data_collection_id)" 
+          >   AND fwsub.data_collection_id = lmsub.data_collection_id)"
         queryfg_all_lm:
           > "SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end FROM bins JOIN soundfiles ON 
           > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN detections ON soundfiles.id = detections.start_file 
@@ -106,7 +138,7 @@ Job:
             decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
-            methodvers: v1-0
+            methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
             target_samp_rate: 512
@@ -129,8 +161,9 @@ Job:
               #- fw2gen_strat_pos_manyfin1 
               #- fw2gen_hardneg_ds 
               #- AW12_AU_CL01_files_441-516_bb_hg
-              - BS13_AU_PM02-a
-              #- [queryfg_all_lm]
+              #- BS13_AU_PM02-a
+              - [queryfg_all_lm]
+              #- [queryfg3]
         arguments:
             hard_rerun: n
         descriptors:
@@ -141,12 +174,14 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-2
+            methodvers: v1-4
             #query: [query_fins2]
-            query: [querygt_fw24y_lm5y]
+            #query: [querygt_fw24y_lm5y]
+            query: [querygt_fwALLy_lm5y]
             remove_proc_ovlp: n
+            standardize_sig_code: n
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R

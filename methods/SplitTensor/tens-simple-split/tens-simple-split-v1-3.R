@@ -5,17 +5,20 @@
 #read in image dimensions instead of naively calculating to avoid rounding errors
 #later associated with unpredictable behavior in image generation
 
+#v1-3 stealth change: parallelize
+
 library(signal)
 library(dplyr)
 library(png)
+library(doParallel)
+library(foreach)
 
-args="D:/Cache/449513 D:/Cache/449513/439550 D:/Cache/449513/439550/913601 fw1difficult 20 1 within_file y 0.80 0.75 y     tens-simple-split-v1-3"
+args="D:/Cache/962525 D:/Cache/962525/742867 D:/Cache/962525/742867/612700 BS13_AU_PM02-a 20 1 within_file n 0 0.75 y     tens-simple-split-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 
-source(paste(getwd(),"/user/R_misc.R",sep="")) 
+source(paste(getwd(),"/user/R_misc.R",sep="")) #source("C:/Apps/INSTINCT/lib/user/R_misc.R") 
 args<-commandIngest()
-
 
 FG = read.csv(paste(args[1],"/FileGroupFormat.csv.gz",sep=""))
 bigfilespath = args[2]
@@ -39,11 +42,19 @@ train_val_split=as.numeric(args[10])
 
 bigfiles = unique(FG$DiffTime)
 
-set.seed(seed_val)
+#set.seed(seed_val) #this doesn't get propogated correctly into parallelization. 
+#so, change is to declare inside loop. Seeds won't be compatible b/t this way
+#and non-parallelized way. 
 
 dir.create(paste(resultpath,"/splittensors",sep=""))
 
-for(i in 1:length(bigfiles)){
+crs<-detectCores()
+
+startLocalPar(crs,"seed_val","FG","bigfilespath","resultpath","native_pix_per_sec","split_protocol","test_split","train_test_split","train_val_split")
+
+foreach(i=1:length(bigfiles),.packages=c("signal","dplyr","png")) %dopar% {
+  
+  set.seed(i+seed_val)
   
   #combine GT with FG
   fileFG = FG[which(FG$DiffTime==bigfiles[i]),,drop = FALSE]
@@ -92,6 +103,9 @@ for(i in 1:length(bigfiles)){
   }
   
 }
+
+stopCluster(cluz)
+
 
 outtab = data.frame(paste(resultpath,"/splittensors/splittensor",1:length(bigfiles),".csv.gz",sep=""),FGname)
 colnames(outtab)=c("filename","FGname")

@@ -61,16 +61,8 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 512
             file_groupID:
-                - AL21_AU_BS10
-                - AL20_AU_BS11
-                - AL22_AU_BS10
-                - BS16_AU_PM08
-                - BS21_AU_PM02
-                - GA20_AU_SH01
-                - AL21_AU_UM01
-                - AL21_AU_UN01
-                - AL22_AU_UN01
-                - BS21_AU_PM04
+                - GA20_AU_BT01
+                - GA21_AU_BT01
         arguments:
             hard_rerun: n
         descriptors:

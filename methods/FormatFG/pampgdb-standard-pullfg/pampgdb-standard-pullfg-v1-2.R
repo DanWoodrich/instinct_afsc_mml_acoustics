@@ -75,7 +75,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
 
       query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end
                     FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id 
-                    WHERE data_collection.name='",FGname,"'",sep="")
+                    WHERE data_collection.name='",FGname,"' ORDER BY soundfiles.datetime",sep="")
       
       query = gsub("[\r\n]", "", query)
       
@@ -87,7 +87,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
       
       query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles_duration AS seg_end
                     FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id 
-                    WHERE data_collection.historic_name='",FGname,"'",sep="")
+                    WHERE data_collection.historic_name='",FGname,"' ORDER BY soundfiles.datetime",sep="")
       
       query = gsub("[\r\n]", "", query)
       

@@ -86,6 +86,7 @@ Job:
       parameters:
         methodID: pgpamdb-default-compare-publish
         methodvers: v1-6
+        assume_full_review: n
       arguments: 
         hard_rerun: n
       descriptors:

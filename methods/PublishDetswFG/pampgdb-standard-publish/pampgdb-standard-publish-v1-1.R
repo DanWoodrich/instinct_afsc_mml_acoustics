@@ -4,7 +4,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/962525/742867/265067/208115/883370 D:/Cache/962525/742867/265067/208115/883370/969254 LOW 25 FW loose pampgdb-standard-publish-v1-0"
+args="D:/Cache/117379 D:/Cache/117379/330917/530145/291556/83017 D:/Cache/117379/330917/530145/291556/83017/92722 LOW 23 LM loose pampgdb-standard-publish-v1-1"
 
 args<-strsplit(args,split=" ")[[1]]
 

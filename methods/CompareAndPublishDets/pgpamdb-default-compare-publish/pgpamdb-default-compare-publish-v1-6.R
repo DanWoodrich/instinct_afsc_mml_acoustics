@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/572733/425307/581716/371720 D:/Cache/572733/425307 D:/Cache/572733/425307/581716/371720/581334 pgpamdb-default-compare-publish-v1-6"
+args="D:/Cache/467040/979527/586030/354157/390747 D:/Cache/467040/979527/586030/472898 D:/Cache/467040/979527/586030/354157/390747/105742 y pgpamdb-default-compare-publish-v1-6"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -16,10 +16,15 @@ con=pamdbConnect(dbname,keyscript,clientkey,clientcert)
 EditDataPath <-args[1]
 PriorDataPath <- args[2]
 resultPath <- args[3]
-#transferpath<-args[4]
+assume_full_review<-args[4]
 
 PriorData<-read.csv(paste(PriorDataPath,"DETx.csv.gz",sep="/"))
 EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
+
+#v1-6 stealth change: if assuming full review, change the analyst on EditData to the analyst of the current session. 
+if(assume_full_review=="y"){
+  EditData$analyst =as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name = current_user"))$id)
+}
 
 #bugfix: if raven conversion resulted in case where a detection did not have an endfile, remove from 
 #editdata and remove id from priordata (ignore it)

@@ -4,40 +4,41 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        queryfg1:
-          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS13_AU_PM04' 
-          > AND bins.type = 2"
-        querygt1:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND label != 20 AND procedure = 21 AND bins.id IN {FG}"
-        querygt3:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure IN (5,10,13,12) AND modified = (SELECT MAX(modified) FROM detections WHERE signal_code = 3) AND bins.id IN {FG}"
-        #use this to look at lm 5 by fg
-        querygt1_5:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.signal_code = 3 AND procedure = 5 AND bins.id IN {FG}"
-        #use this to look at lm 5 by deployment
-        querygt2:
-          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND procedure = 5 AND detections.start_file IN {FG}
-        querygt4:
+        #this query pulls in all detections which are current (status = 1), belonging to lm 2nd gen detector (procedure = 23) and not 
+        #an assumed negative of the protocol (label not = 20). So, it will pull in detections that have previously been reviewed (label = 1,2) 
+        #in addition to labels that have not been reviewed (99)
+        all_lm2_dets:
           > "SELECT DISTINCT detections.* FROM detections JOIN soundfiles ON detections.end_file = soundfiles.id 
           > WHERE detections.status = 1 AND procedure = 23 AND label != 20 AND detections.start_file IN {FG}"
+        #same as above, except that it exludes previously reviewed detections
+        lm2_to_rev:
+          > "SELECT DISTINCT detections.* FROM detections JOIN soundfiles ON detections.end_file = soundfiles.id 
+          > WHERE detections.status = 1 AND procedure = 23 AND label = 99 AND detections.start_file IN {FG}"
+        #query to aggregate moorings which have fewer counts (<100) to speed up analysis. 
+        all_low_cnts:
+          > "WITH cnt_tab AS (SELECT COUNT(*),data_collection.id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id JOIN data_collection ON 
+          > data_collection.id = soundfiles.data_collection_id WHERE label != 20 AND status = 1 AND detections.procedure = 23 GROUP BY data_collection.id HAVING COUNT(*)<100 AND COUNT(*)>0) 
+          > SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end 
+          > FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id JOIN 
+          > cnt_tab ON cnt_tab.id = data_collection.id AND soundfiles.id IN (SELECT distinct unnest(array[start_file,end_file]) FROM detections WHERE 
+          > detections.procedure = 23 AND label !=20 AND status = 1) ORDER BY data_collection.name,soundfiles.datetime"
 Job:
     FormatFG:
         parameters:
-            decimate_data: n
             #decimate_data: n
+            decimate_data: y
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 512
+            target_samp_rate: 1024
             #target_samp_rate: 8192
+            #specify certain mooring name (new convention), 
+            #or pull in all remaining unanalyzed detections (all_lm_fg). pulling in all unanalyzed dets convenient when # of dets is not high per mooring. 
             file_groupID: 
-              - BS20_AU_PM04
+              - [all_low_cnts]
+              #- BS20_AU_PM04
         arguments:
             hard_rerun: n
         descriptors:
@@ -49,7 +50,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [querygt4]
+            query: [all_lm2_dets]
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
@@ -64,8 +65,8 @@ Job:
         arguments:
             fg_fill: n
             hard_rerun: n
-            #ignore_decimated: n
-            ignore_decimated: y
+            ignore_decimated: n
+            #ignore_decimated: y
         descriptors:
             runtype: lib
             language: R
@@ -93,6 +94,7 @@ Job:
       parameters:
         methodID: pgpamdb-default-compare-publish
         methodvers: v1-6
+        assume_full_review: n
       arguments: 
         hard_rerun: n
       descriptors:

@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/300411/464573/474529/329608/298127 D:/Cache/300411/464573/474529/263330 D:/Cache/300411/464573/474529/329608/298127/375379  pgpamdb-default-compare-publish-v1-6s"
+args="D:/Cache/432432/745056/806297/794470/331786 D:/Cache/432432/745056/806297/388496 D:/Cache/432432/745056/806297/794470/331786/252009 n self pgpamdb-default-compare-publish-v1-7"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -17,13 +17,22 @@ EditDataPath <-args[1]
 PriorDataPath <- args[2]
 resultPath <- args[3]
 assume_full_review<-args[4]
+on_behalf_of = args[5]
 
 PriorData<-read.csv(paste(PriorDataPath,"DETx.csv.gz",sep="/"))
 EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
 
+#self for current pg user
+if(on_behalf_of!= "self"){
+  
+  analyst = as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name =",on_behalf_of))$id)
+}else{
+  analyst = as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name = current_user"))$id)
+}
+
 #v1-6 stealth change: if assuming full review, change the analyst on EditData to the analyst of the current session. 
 if(assume_full_review=="y"){
-  EditData$analyst =as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name = current_user"))$id)
+  EditData$analyst = analyst
 }
 
 #bugfix: if raven conversion resulted in case where a detection did not have an endfile, remove from 
@@ -32,7 +41,11 @@ if(assume_full_review=="y"){
 if(any(EditData$EndFile=="")){
   ids = EditData[which(EditData$EndFile==""),"id"]
   EditData= EditData[-which(EditData$EndFile==""),]
-  PriorData = PriorData[-which(PriorData$id==ids),]
+  if(any(!is.na(ids))){
+    ids = ids[!is.na(ids)]
+    PriorData = PriorData[-which(PriorData$id==ids),]
+  }
+  
 }
 
 
@@ -189,9 +202,8 @@ if(length(mod_keys)>0){
     EditMod$start_file = filelookup$id[match(EditMod$start_file,filelookup$name)]
     EditMod$end_file = filelookup$id[match(EditMod$end_file,filelookup$name)]
     
-    #remove analyst field so that it defaults to current user when submitted.
-    #stealth change, want this as normal behavior. 
-    EditMod$analyst=as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name = current_user"))$id)
+    #v1-7
+    EditMod$analyst=analyst
     
     colsums= colSums(testdf,na.rm=TRUE)
     sums = rowSums(testdf,na.rm=TRUE)
@@ -513,6 +525,9 @@ if(length(affected_ids_total)>0){
       
       query_check_res$procedures_id = as.integer(query_check_res$procedures_id)
       query_check_res$signal_code = as.integer(query_check_res$signal_code)
+      
+      #stealth change- make the column names line up 
+      colnames(query_check_res)[which(colnames(query_check_res)=="procedures_id")]="procedure"
       
       to_redo = unique(rbind(unique(query_check_res),to_redo))
     }

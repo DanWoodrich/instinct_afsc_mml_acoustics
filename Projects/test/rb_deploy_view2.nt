@@ -12,20 +12,25 @@ Global:
           > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN 
           > data_collection ON data_collection.id = soundfiles.data_collection_id join bins_effort ON 
           > bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id WHERE effort.name = 'Ildiko_alldep' AND soundfiles.datetime < '2014-01-01' "
+        all_16384:
+          > "SELECT DISTINCT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN 
+          > data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bins_effort ON 
+          > bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id WHERE effort.name = 'Ildiko_alldep' 
+          > AND sampling_rate = 16384 ORDER BY data_collection.name,datetime ASC,seg_start ASC"
         conflicts:
           > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN 
           > data_collection ON data_collection.id = soundfiles.data_collection_id JOIN bin_label_wide ON bins.id = bin_label_wide.id 
           > WHERE bins.type = 3 AND rb = 98"
         querygt1:
           > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.procedure = 18 AND bins.id IN {FG}"
+          > WHERE detections.status = 1 AND detections.procedure = 18 AND probability IS NOT NULL AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
-            decimate_data: y
+            decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
-            methodvers: v1-0
+            methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
             target_samp_rate: 4096
@@ -36,7 +41,11 @@ Job:
               #- round1_pull2
               #- Ildiko_alldep
               #- [small_fg]
-              - [2012yr_fg]
+              #- [2012yr_fg]
+              - [all_16384]
+              #- [all_16384_2]
+              #- [all_16384_3]
+              #- [all_16384_4]
               #- [conflicts]
         arguments:
             hard_rerun: n
@@ -48,8 +57,10 @@ Job:
     FormatGT:
         parameters:
             methodID: pampgdb-standard-pullgt
-            methodvers: v1-1
+            methodvers: v1-4
             query: [querygt1]
+            remove_proc_ovlp: n
+            standardize_sig_code: n
         arguments:
             hard_rerun: n
         descriptors:
@@ -58,11 +69,11 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-11
+            methodvers: v1-10
         arguments:
             fg_fill: n
             hard_rerun: n
-            ignore_decimated: n
+            ignore_decimated: y
         descriptors:
             runtype: lib
             language: R
@@ -89,7 +100,7 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-1
+        methodvers: v1-6
       arguments: 
         hard_rerun: n
       descriptors:

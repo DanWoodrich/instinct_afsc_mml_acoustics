@@ -61,8 +61,13 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 512
             file_groupID:
-                - GA20_AU_BT01
-                - GA21_AU_BT01
+                - GA22_AU_BT01
+                - GA22_AU_SE01
+                - GA22_AU_SH01
+                - GA22_AU_SU01
+                - BS22_AU_PM04
+                - BS22_AU_PM05
+                - AL22_AU_BS11
         arguments:
             hard_rerun: n
         descriptors:
@@ -337,7 +342,7 @@ Job:
         arguments:
             hard_rerun: n
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
-            remove_spec: y
+            remove_spec: n
         descriptors:
             runtype: lib
             language: R

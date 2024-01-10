@@ -4,22 +4,23 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        signal_codes: FW
-        freq_start: 0
-        #freq_size: 128
-        freq_size: 96
+        signal_codes: AM
+        freq_start: 800
+        freq_size: 224
+        #freq_start: 875
+        #freq_size: 100
         native_height: 256
-        npps: 20
-        native_window_size: 80
+        npps: 32
+        native_window_size: 240
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
         #msp_inf: 10
-        msp_inf: 40
+        msp_inf: 96
         split_prot: within_file
         querygt1:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND procedure = 26 AND label = 1 AND bins.id IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -61,15 +62,17 @@ Job:
             methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 256
+            target_samp_rate: 2048
             file_groupID:
-                - GA22_AU_BT01
-                - GA22_AU_SE01
-                - GA22_AU_SH01
-                - GA22_AU_SU01
-                - BS22_AU_PM04
-                - BS22_AU_PM05
-                - AL22_AU_BS11
+                #- AL22_AU_BF02
+                #- AL18_AU_WT01
+                #- IP18_AU_CH01
+                #- AL19_AU_WT01
+                #- IP19_AU_CH01
+                #- IP20_AU_CH01
+                #- IP21_AU_CH01
+                #- IP22_AU_CH01
+                #- AL21_AU_WT01
         arguments:
             hard_rerun: n
         descriptors:
@@ -81,11 +84,11 @@ Job:
         FormatGT:
             parameters:
                 methodID: pampgdb-standard-pullgt
-                methodvers: v1-3
+                methodvers: v1-4
                 query: [querygt1]
                 #below is "n" or the int signal code to standardize to
-                standardize_sig_code: 4
-                remove_proc_ovlp: y
+                standardize_sig_code: n
+                remove_proc_ovlp: n
             arguments:
                 hard_rerun: n
             descriptors:
@@ -96,18 +99,12 @@ Job:
                 decimate_data: y
                 difftime_limit: 3600
                 methodID: pampgdb-standard-pullfg
-                methodvers: v1-1
+                methodvers: v1-2
                 methodID2m: matlabdecimate
                 methodvers2m: V1s0
-                target_samp_rate: 256
+                target_samp_rate: 2048
                 file_groupID:
-                    - fw_og_train
-                    - fw2gen_hardneg_ds
-                    - fw2gen_strat_pos_fewfin1
-                    - fw2gen_strat_pos_somefin1
-                    - fw2gen_strat_pos_manyfin1
-                    - fw1difficult
-                    - fw2gen_oddtp
+                    - amos_groundtruth
             arguments:
                 hard_rerun: n
             descriptors:
@@ -145,18 +142,18 @@ Job:
                     do_val: y
                     do_weight: y
                     gt_depth: [signal_codes]
-                    learn_rate: 0.000075
+                    learn_rate: 0.001
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
                     perc_fp: 1.00
-                    perc_tp: 0.025
+                    perc_tp: 0.001
                     #prop_fp: 0.9
                     #prop_tp: 0.1
-                    prop_fp: 0.75
-                    prop_tp: 0.25
+                    prop_fp: 0.9
+                    prop_tp: 0.1
                     shuf_size: 0.01
-                    stride_pix: 30
+                    stride_pix: 48
                     tp_weight: 2
                     view_plots: n
                     win_size: [model_window_size]
@@ -166,9 +163,9 @@ Job:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
                     #save these, others are for testing
-                    epoch: 8
-                    epoch_steps: 4500
-                    a_val_steps: 0
+                    epoch: 15
+                    epoch_steps: 500
+                    a_val_steps: 500
                     #epoch: 2
                     #epoch_steps: 30
                     #a_val_steps: 30
@@ -202,7 +199,7 @@ Job:
             crop_freq_start: [freq_start]
             native_height: [native_height]
             native_pix_per_sec: [npps]
-            window_length: 128
+            window_length: 512
         arguments:
             hard_rerun: n
         descriptors:
@@ -211,7 +208,7 @@ Job:
     LabelTensor:
         parameters:
             methodID: tens-simple-label
-            methodvers: v1-7
+            methodvers: v1-8
             dimensions: 2
             freq_size: [freq_size]
             freq_start: [freq_start]
@@ -262,7 +259,7 @@ Job:
         arguments:
             fg_fill: y
             hard_rerun: n
-            ignore_decimated: n
+            ignore_decimated: y
         descriptors:
             runtype: lib
             language: R
@@ -317,7 +314,7 @@ Job:
     CompareAndPublishDets:
         parameters:
             methodID: pgpamdb-default-compare-publish
-            methodvers: v1-2
+            methodvers: v1-6
         arguments:
             hard_rerun: n
         descriptors:
@@ -326,9 +323,9 @@ Job:
     PublishDetswFG:
         parameters: 
             methodID: pampgdb-standard-publish
-            methodvers: v1-2
+            methodvers: v1-3
             bin_fill_code: LOW
-            procedure_id: 25
+            procedure_id: 26
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -345,7 +342,7 @@ Job:
             freq_low: [freq_start]
             freq_size: [freq_size]
             #group_pixels: 20 temporary testing!!
-            group_pixels: 80
+            group_pixels: 120
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
             native_pix_per_sec: [npps]

@@ -11,7 +11,7 @@ library(signal)
 library(dplyr)
 library(doParallel)
 
-args="D:/Cache/666665 D:/Cache/666665/52606 D:/Cache/666665/699223 D:/Cache/666665/699223/32267 amos_groundtruth 2 224 800 256 32 tens-simple-label-v1-7"
+args="D:/Cache/840059 D:/Cache/840059/981255 D:/Cache/840059/628503 D:/Cache/840059/628503/899278 jasco_bearded_2007_2008 2 4000 0 240 120 tens-simple-label-v1-8"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -120,10 +120,16 @@ filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr","png")) %d
   
   pix_per_freq = dim_x / (highfreq-lowfreq)
   
-  GT$HighPix = GT$HighFreq * pix_per_freq
-  GT$LowPix = GT$LowFreq * pix_per_freq
+  #v1-8: fix apparent bug, possibly due to smaller freq than spec range or the high lowfreq. 
+  GT$HighPix = (GT$HighFreq-lowfreq) * pix_per_freq
+  GT$LowPix = (GT$LowFreq-lowfreq) * pix_per_freq
   
   #bound by freq:
+  #v1-8 stealth edit- remove gt which exceed the high freq on their low boundary. 
+  if(any(GT$LowPix>dim_x)){
+    GT= GT[-which(GT$LowPix>dim_x),]
+  }
+  #v1-8 stealth edit- uncomment this out. Not sure why it was commented out in the first place... 
   GT$HighPix[GT$HighPix>dim_x] = dim_x
   GT$LowPix[GT$LowPix<0] = 0
   

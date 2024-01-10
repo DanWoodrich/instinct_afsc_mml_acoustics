@@ -4,22 +4,21 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        signal_codes: FW
+        signal_codes: RB
         freq_start: 0
-        #freq_size: 128
-        freq_size: 96
-        native_height: 256
-        npps: 20
-        native_window_size: 80
+        freq_size: 4000
+        native_height: 240
+        npps: 120
+        native_window_size: 240
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
         #msp_inf: 10
-        msp_inf: 40
+        msp_inf: 120
         split_prot: within_file
         querygt1:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -61,15 +60,11 @@ Job:
             methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 256
+            target_samp_rate: 8192
             file_groupID:
-                - GA22_AU_BT01
-                - GA22_AU_SE01
-                - GA22_AU_SH01
-                - GA22_AU_SU01
-                - BS22_AU_PM04
-                - BS22_AU_PM05
-                - AL22_AU_BS11
+                #- AL22_AU_PH01
+                - AL21_AU_IC02
+                - AL20_AU_BF02
         arguments:
             hard_rerun: n
         descriptors:
@@ -81,11 +76,11 @@ Job:
         FormatGT:
             parameters:
                 methodID: pampgdb-standard-pullgt
-                methodvers: v1-3
+                methodvers: v1-4
                 query: [querygt1]
                 #below is "n" or the int signal code to standardize to
-                standardize_sig_code: 4
-                remove_proc_ovlp: y
+                standardize_sig_code: n
+                remove_proc_ovlp: n
             arguments:
                 hard_rerun: n
             descriptors:
@@ -96,18 +91,13 @@ Job:
                 decimate_data: y
                 difftime_limit: 3600
                 methodID: pampgdb-standard-pullfg
-                methodvers: v1-1
+                methodvers: v1-2
                 methodID2m: matlabdecimate
                 methodvers2m: V1s0
-                target_samp_rate: 256
+                target_samp_rate: 8192
                 file_groupID:
-                    - fw_og_train
-                    - fw2gen_hardneg_ds
-                    - fw2gen_strat_pos_fewfin1
-                    - fw2gen_strat_pos_somefin1
-                    - fw2gen_strat_pos_manyfin1
-                    - fw1difficult
-                    - fw2gen_oddtp
+                    - jasco_bearded_2009_2010
+                    - jasco_bearded_2007_2008
             arguments:
                 hard_rerun: n
             descriptors:
@@ -143,9 +133,9 @@ Job:
                     do_aug: y
                     do_spec_averaging: y
                     do_val: y
-                    do_weight: y
+                    do_weight: n
                     gt_depth: [signal_codes]
-                    learn_rate: 0.000075
+                    learn_rate: 0.00015
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
@@ -155,7 +145,7 @@ Job:
                     #prop_tp: 0.1
                     prop_fp: 0.75
                     prop_tp: 0.25
-                    shuf_size: 0.01
+                    shuf_size: 0.0005
                     stride_pix: 30
                     tp_weight: 2
                     view_plots: n
@@ -166,9 +156,9 @@ Job:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
                     #save these, others are for testing
-                    epoch: 8
+                    epoch: 10
                     epoch_steps: 4500
-                    a_val_steps: 0
+                    a_val_steps: 3000
                     #epoch: 2
                     #epoch_steps: 30
                     #a_val_steps: 30
@@ -197,12 +187,12 @@ Job:
         parameters:
             methodID: con_bright_no_rep
             methodvers: v1-5
-            crop_freq: y
+            crop_freq: n
             crop_freq_size: [freq_size]
             crop_freq_start: [freq_start]
             native_height: [native_height]
             native_pix_per_sec: [npps]
-            window_length: 128
+            window_length: 512
         arguments:
             hard_rerun: n
         descriptors:
@@ -211,7 +201,7 @@ Job:
     LabelTensor:
         parameters:
             methodID: tens-simple-label
-            methodvers: v1-7
+            methodvers: v1-8
             dimensions: 2
             freq_size: [freq_size]
             freq_start: [freq_start]
@@ -317,7 +307,7 @@ Job:
     CompareAndPublishDets:
         parameters:
             methodID: pgpamdb-default-compare-publish
-            methodvers: v1-2
+            methodvers: v1-7
         arguments:
             hard_rerun: n
         descriptors:
@@ -326,9 +316,9 @@ Job:
     PublishDetswFG:
         parameters: 
             methodID: pampgdb-standard-publish
-            methodvers: v1-2
-            bin_fill_code: LOW
-            procedure_id: 25
+            methodvers: v1-3
+            bin_fill_code: SHI
+            procedure_id: 27
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -345,7 +335,7 @@ Job:
             freq_low: [freq_start]
             freq_size: [freq_size]
             #group_pixels: 20 temporary testing!!
-            group_pixels: 80
+            group_pixels: 120
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
             native_pix_per_sec: [npps]
@@ -361,7 +351,7 @@ Job:
             language: R
     ApplyCutoff:
         parameters:
-            cutoff: 0.25
+            cutoff: 0.85
         arguments:
             hard_rerun: n
         descriptors:

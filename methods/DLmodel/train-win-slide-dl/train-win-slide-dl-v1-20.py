@@ -690,7 +690,7 @@ if stage=="train":
 
     if do_val=='y' and val_tp_heavy == 'y':
         val_dataset = MakeDataset(tf.data.Dataset.sample_from_datasets([TP_dataset,full_dataset],weights=[.75,.25],seed=1),model_win_size,model_win_size,stride_pix_train,False,2,batch_size_train,None,True,None,False,True,None,False,False) #different wh and wl avoid the random crop
-    elif do_cal=='y':
+    elif do_val=='y':
         val_dataset = MakeDataset(full_dataset,model_win_size,model_win_size,stride_pix_train,False,2,batch_size_train,None,True,None,False,True,None,False,False)
     else:
         val_dataset = None
@@ -797,20 +797,26 @@ if do_plot:
         #code.interact(local=dict(globals(), **locals()))
 
         def seespec(obj):
-            spectrogram_batch, label_batch, weight_batch = obj
+            #spectrogram_batch, label_batch, weight_batch = obj
+            
+            #import code
+            #code.interact(local=dict(globals(), **locals()))
             plots_rows = 4
             plots_cols = 5
             fig, axes = plt.subplots(plots_rows, plots_cols, figsize=(12, 9))
-            indices = list(range(spectrogram_batch.shape[0]))
+            indices = list(range(obj[0].shape[0]))
 
             #random.shuffle(indices)
             for i in range(plots_rows * plots_cols):
               batch_index = indices[i]
-              class_index = label_batch[batch_index].numpy()
+              class_index = obj[1][batch_index].numpy()
               #assn_index = assn_batch[batch_index].numpy()
-              weight_index = weight_batch[batch_index].numpy()
+              if do_weight=='y':
+                  weight_index = obj[2][batch_index].numpy()
+              else:
+                  weight_index = 1.
               ax = axes[i // plots_cols,i % plots_cols]
-              ax.pcolormesh(spectrogram_batch[batch_index, :,:,1].numpy())
+              ax.pcolormesh(obj[0][batch_index, :,:,1].numpy())
               ax.set_title(str(class_index)+ ":" + str(weight_index))
               ax.get_xaxis().set_ticks([])
               ax.get_yaxis().set_ticks([])

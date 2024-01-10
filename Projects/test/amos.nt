@@ -4,22 +4,23 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        signal_codes: FW
+        signal_codes: AM
         freq_start: 0
-        #freq_size: 128
-        freq_size: 96
-        native_height: 256
-        npps: 20
-        native_window_size: 80
+        freq_size: 4000
+        native_height: 240
+        npps: 120
+        native_window_size: 240
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
         #msp_inf: 10
-        msp_inf: 40
+        msp_inf: 120
         split_prot: within_file
-        querygt1:
+        gt_view:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND procedure = 26 AND bins.id IN {FG}"
+        review:
+            > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.label IN (0,1,99) AND procedure = 26 AND probability >= 0.9 AND detections.start_file IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -55,21 +56,17 @@ Job:
             venv_name: tf-gpu4
     FormatFG:
         parameters:
+            #decimate_data: n
             decimate_data: y
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 256
+            target_samp_rate: 2048
             file_groupID:
-                - GA22_AU_BT01
-                - GA22_AU_SE01
-                - GA22_AU_SH01
-                - GA22_AU_SU01
-                - BS22_AU_PM04
-                - BS22_AU_PM05
-                - AL22_AU_BS11
+                - IP18_AU_CH01
+                - AL21_AU_WT01
         arguments:
             hard_rerun: n
         descriptors:
@@ -81,11 +78,11 @@ Job:
         FormatGT:
             parameters:
                 methodID: pampgdb-standard-pullgt
-                methodvers: v1-3
-                query: [querygt1]
+                methodvers: v1-4
+                query: [gt_view]
                 #below is "n" or the int signal code to standardize to
-                standardize_sig_code: 4
-                remove_proc_ovlp: y
+                standardize_sig_code: n
+                remove_proc_ovlp: n
             arguments:
                 hard_rerun: n
             descriptors:
@@ -93,21 +90,15 @@ Job:
                 language: R
         FormatFG:
             parameters:
-                decimate_data: y
+                decimate_data: n
                 difftime_limit: 3600
                 methodID: pampgdb-standard-pullfg
-                methodvers: v1-1
+                methodvers: v1-2
                 methodID2m: matlabdecimate
                 methodvers2m: V1s0
-                target_samp_rate: 256
+                target_samp_rate: 4096
                 file_groupID:
-                    - fw_og_train
-                    - fw2gen_hardneg_ds
-                    - fw2gen_strat_pos_fewfin1
-                    - fw2gen_strat_pos_somefin1
-                    - fw2gen_strat_pos_manyfin1
-                    - fw1difficult
-                    - fw2gen_oddtp
+                    - amos_groundtruth
             arguments:
                 hard_rerun: n
             descriptors:
@@ -166,13 +157,13 @@ Job:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
                     #save these, others are for testing
-                    epoch: 8
-                    epoch_steps: 4500
-                    a_val_steps: 0
+                    epoch: 25
+                    epoch_steps: 1500
+                    a_val_steps: 1000
                     #epoch: 2
                     #epoch_steps: 30
                     #a_val_steps: 30
-                    a_val_tp_heavy: y
+                    a_val_tp_heavy: n
                     hard_rerun: n
                 descriptors:
                     runtype: lib
@@ -185,11 +176,12 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [querygt1]
+            #query: [gt_view]
+            query: [review]
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R
@@ -197,12 +189,12 @@ Job:
         parameters:
             methodID: con_bright_no_rep
             methodvers: v1-5
-            crop_freq: y
+            crop_freq: n
             crop_freq_size: [freq_size]
             crop_freq_start: [freq_start]
             native_height: [native_height]
             native_pix_per_sec: [npps]
-            window_length: 128
+            window_length: 512
         arguments:
             hard_rerun: n
         descriptors:
@@ -211,7 +203,7 @@ Job:
     LabelTensor:
         parameters:
             methodID: tens-simple-label
-            methodvers: v1-7
+            methodvers: v1-8
             dimensions: 2
             freq_size: [freq_size]
             freq_start: [freq_start]
@@ -260,7 +252,7 @@ Job:
             methodID: rv-simple-w-metadata
             methodvers: v1-10
         arguments:
-            fg_fill: y
+            fg_fill: n
             hard_rerun: n
             ignore_decimated: n
         descriptors:
@@ -317,7 +309,9 @@ Job:
     CompareAndPublishDets:
         parameters:
             methodID: pgpamdb-default-compare-publish
-            methodvers: v1-2
+            methodvers: v1-7
+            assume_full_review: n
+            on_behalf_of: Catherine
         arguments:
             hard_rerun: n
         descriptors:
@@ -328,7 +322,7 @@ Job:
             methodID: pampgdb-standard-publish
             methodvers: v1-2
             bin_fill_code: LOW
-            procedure_id: 25
+            procedure_id: 26
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -345,7 +339,7 @@ Job:
             freq_low: [freq_start]
             freq_size: [freq_size]
             #group_pixels: 20 temporary testing!!
-            group_pixels: 80
+            group_pixels: 120
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
             native_pix_per_sec: [npps]
@@ -355,7 +349,7 @@ Job:
         arguments:
             hard_rerun: n
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
-            remove_spec: y
+            remove_spec: n
         descriptors:
             runtype: lib
             language: R

@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "D:/Cache/117379/FileGroupFormat.csv.gz D:/Cache/842040/139581/601121/453911/193185/140222 D:/Cache/117379/330917 D:/Cache/117379/330917/530145 D:/Cache/117379/330917/530145/276439 3600 0 128 240 240 240 16 mean within_file 48 moving-smooth-v1-12 n n 1"
+args = "D:/Cache/167913/FileGroupFormat.csv.gz D:/Cache/865375/401113/370627/843649/607518/401599 D:/Cache/167913/366574 D:/Cache/167913/366574/652610 D:/Cache/167913/366574/652610/122446 3600 0 4000 120 240 240 120 mean within_file 120 moving-smooth-v1-13 n y 1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -207,6 +207,10 @@ vertical_bins = round(nrow(Scores)/sum(filetabs$tot_strides))
 
 model_s_size = model_win_size/(native_pix_per_sec*time_expand)
 
+#model step size
+
+#model_s_size = round(sum(FGs$Duration)/length(Scores$V1))
+
 if(vertical_bins==1){
   
   scores_ind=1
@@ -217,6 +221,10 @@ if(vertical_bins==1){
     indFG = FGs[which(FGs$Name==unique(FGs$Name)[i]),]
     
     for(p in unique(indFG$DiffTime)){
+      
+      #if(p == 3639){
+      #  stop()
+      #}
 
       FGdt = indFG[which(indFG$DiffTime==p),]
       

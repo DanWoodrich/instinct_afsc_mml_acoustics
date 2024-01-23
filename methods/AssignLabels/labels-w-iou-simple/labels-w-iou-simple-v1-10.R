@@ -21,7 +21,7 @@ MethodID<-"labels-w-iou-simple-v1-3"
 #v1-6: retain cutoff if present. Leapfrogged 1-5, which I am not sure if it is in use. 
 #v1-10: parallelize long comparison step. 
 
-args<-"D:/Cache/449513 D:/Cache/449513/215749 D:/Cache/449513/439550/913601/733691/787116/52349/656021 D:/Cache/449513/215749/544084 0.001 y labels-w-iou-simple-v1-10"
+args<-"D:/Cache/264078 D:/Cache/264078/421141 D:/Cache/865375/401113/370627/843649/777039/772363 D:/Cache/264078/421141/277887 0.001 y labels-w-iou-simple-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -327,15 +327,18 @@ if(nrow(GTlong)>0){
 
 gttemp = list()
 oltemp = list()
-
-for(i in 1:crs){
-  gttemp[i] = long_comp_out[[i]][1]
-  oltemp[i]= long_comp_out[[i]][2]
+if(nrow(GTdata)>0){
+  for(i in 1:crs){
+    gttemp[i] = long_comp_out[[i]][1]
+    oltemp[i]= long_comp_out[[i]][2]
+    
+  }
+  
+  GTlong = do.call("rbind",gttemp)
+  GTlong = GTlong[order(GTlong$StartTime),]
   
 }
 
-GTlong = do.call("rbind",gttemp)
-GTlong = GTlong[order(GTlong$StartTime),]
 
 outLong_ =do.call("rbind",oltemp)
 
@@ -358,29 +361,32 @@ if(nrow(outLong)!=nrow(outData)){
   stop("bug detected, parallelizing not working properly with detections.")
 }
 
-if("splits" %in% colnames(outLong)){
-  #populate splits for GT, using closest detection (should be close enough considering DL has uniform
-  #detection results). 
-  
-  GTlong$splits = 0
-  
-  GTlong$FGID = FGdata$Name[1]
-  
-  if(nrow(outLong)>0){
+if(nrow(GTdata)>0){
+  if("splits" %in% colnames(outLong)){
+    #populate splits for GT, using closest detection (should be close enough considering DL has uniform
+    #detection results). 
     
-    for(i in 1:nrow(GTlong)){
-      GTlong$splits[i]=outLong[which.min(abs(GTlong$StartTime[i]-outLong$StartTime)),"splits"]
-    } 
+    GTlong$splits = 0
     
-    #need to retain FG info too
+    GTlong$FGID = FGdata$Name[1]
     
-    
-    outLong$FGID = FGdata$Name[1]
+    if(nrow(outLong)>0){
+      
+      for(i in 1:nrow(GTlong)){
+        GTlong$splits[i]=outLong[which.min(abs(GTlong$StartTime[i]-outLong$StartTime)),"splits"]
+      } 
+      
+      #need to retain FG info too
+      
+      
+      
+    }
   }
-  
 
   
 }
+
+outLong$FGID = FGdata$Name[1]
 
 GTlong$StartTime<-GTdata$StartTime
 GTlong$EndTime<-GTdata$EndTime
@@ -409,10 +415,12 @@ if(nrow(outLong)>0){
 
 #add back in probs if present
 if("probs" %in% colnames(outLong)){
-  if(nrow(GTlong)>0){
-    GTlong$probs<-NA
-  }else{
-    GTlong<-cbind(GTlong, data.frame(probs=double()))
+  if(nrow(GTdata)>0){
+    if(nrow(GTlong)>0){
+      GTlong$probs<-NA
+    }else{
+      GTlong<-cbind(GTlong, data.frame(probs=double()))
+    }
   }
 }
 
@@ -427,17 +435,25 @@ if("probability" %in% colnames(outLong)){
 
 #v1-6 same with cutoff
 if("cutoff" %in% colnames(outLong)){
-  if(nrow(GTlong)>0){
-    GTlong$cutoff<-outLong$cutoff[1]
-  }else{
-    GTlong<-cbind(GTlong, data.frame(probs=double()))
+  if(nrow(GTdata)>0){
+    if(nrow(GTlong)>0){
+      GTlong$cutoff<-outLong$cutoff[1]
+    }else{
+      GTlong<-cbind(GTlong, data.frame(probs=double()))
+    }
   }
 }
 
 #make sure columns match (throw out other metdata not relevant here)
-cols <- intersect(colnames(outLong), colnames(GTlong))
 
-CombineTab<-rbind(GTlong[,cols],outLong[,cols])
+
+if(nrow(GTdata)>0){
+  cols <- intersect(colnames(outLong), colnames(GTlong))
+  CombineTab<-rbind(GTlong[,cols],outLong[,cols])
+}else{
+  CombineTab = outLong
+}
+
 
 CombineTab<-CombineTab[order(CombineTab$StartFile,CombineTab$StartTime),]
 

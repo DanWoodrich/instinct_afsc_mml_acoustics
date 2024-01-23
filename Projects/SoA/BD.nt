@@ -4,7 +4,7 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        signal_codes: RB
+        signal_codes: BD
         freq_start: 0
         freq_size: 4000
         native_height: 240
@@ -18,7 +18,7 @@ Global:
         split_prot: within_file
         querygt1:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28) AND bins.id IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -62,8 +62,8 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 8192
             file_groupID:
-                #- AL22_AU_PH01
-                - AL21_AU_IC02
+                #- AL17_AU_IC02
+                #- AW15_AU_NM01
                 - AL20_AU_BF02
         arguments:
             hard_rerun: n
@@ -98,6 +98,9 @@ Job:
                 file_groupID:
                     - jasco_bearded_2009_2010
                     - jasco_bearded_2007_2008
+                    - high_dens_positive_bd_unverified
+                    - high_prob_negative_bd_unverified
+                    - random_negative_bd_unverified
             arguments:
                 hard_rerun: n
             descriptors:
@@ -318,7 +321,7 @@ Job:
             methodID: pampgdb-standard-publish
             methodvers: v1-3
             bin_fill_code: SHI
-            procedure_id: 27
+            procedure_id: 29
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -351,7 +354,7 @@ Job:
             language: R
     ApplyCutoff:
         parameters:
-            cutoff: 0.85
+            cutoff: 0.5
         arguments:
             hard_rerun: n
         descriptors:

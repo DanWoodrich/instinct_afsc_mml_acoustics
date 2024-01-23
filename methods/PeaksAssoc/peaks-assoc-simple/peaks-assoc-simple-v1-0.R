@@ -1,4 +1,4 @@
-args="D:/Cache/572733/425307/581716/773851/458463/427818 D:/Cache/572733/425307/581716 D:/Cache/572733/425307/581716/556756  peaks-assoc-simple-v1-0"
+args="D:/Cache/838624/491352/631885/966452/620541/247813 D:/Cache/838624/491352/631885 D:/Cache/838624/491352/631885/817831 y peaks-assoc-simple-v1-0"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -30,7 +30,7 @@ if(allow_ambiguous_label=='n'& present99){
 #print(head(peak_data))
 #print(head(assoc_data))
 
-lab_lookup = data.frame(c(0,1,2),c(20,21,22))
+lab_lookup = data.frame(c(0,1,2,99),c(20,21,22,99))
 colnames(lab_lookup)<- c("labels","prot_labels")
 
 for(i in 1:nrow(peak_data)){
@@ -69,5 +69,7 @@ for(i in 1:nrow(peak_data)){
 
 #write out in vanilla detx, drop assoc id. 
 assoc_data$peak_assoc_id=NULL
+
+
 
 write.csv(assoc_data,gzfile(paste(resultPath,"DETx.csv.gz",sep="/")),row.names = FALSE)

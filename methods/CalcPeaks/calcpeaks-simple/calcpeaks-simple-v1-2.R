@@ -1,5 +1,3 @@
-stop("bugged- use 1-2. Will not handle moorings with identical sf names to other appropriately")
-
 library(pgpamdb)
 library(DBI)
 library(foreach)
@@ -117,7 +115,7 @@ localMinima2 <- function(x) {
 
 #this is an adaptation of the original algorithm used in FinReview.R (in network/detector/tools)
 
-args="D:/Cache/838624/688676 D:/Cache/838624/688676/596785  calcpeaks-simple-v1-1"
+args="D:/Cache/838624/491352 D:/Cache/838624/491352/631885  calcpeaks-simple-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -140,10 +138,13 @@ if(nrow(data[which(!is.na(data$probability)),])==0){
 #assume the data has all been reviewed by the user running script
 data[which(!is.na(data$probability)),"analyst"] = as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name = current_user"))$id)
 
-sfs = data.frame(unique(c(data$StartFile,data$EndFile)))
-colnames(sfs) = 'name'
+sfs = data.frame(rbind(data[,c("StartFile","data_collection_id")],setNames(data[,c("EndFile","data_collection_id")],c("StartFile","data_collection_id"))))
+sfs = sfs[!duplicated(sfs),]
+#sfs = data.frame(unique(c(data$StartFile,data$EndFile)))
+colnames(sfs)[1] = 'name'
+sfs$data_collection_id= as.integer(sfs$data_collection_id)
 
-metadata = table_dataset_lookup(con,"SELECT * FROM soundfiles",sfs,"character varying")
+metadata = table_dataset_lookup(con,"SELECT * FROM soundfiles",sfs,c("character varying","integer"))
 
 colnames(metadata)[which(colnames(metadata)=="name")]="StartFile"
 
@@ -155,13 +156,20 @@ data$hourly<-format(data$datetime,"%y%m%d %H")
 
 SecInPng=dbFetch(dbSendQuery(con,paste("SELECT length_seconds FROM bin_type_codes JOIN signals ON bin_type_codes.id = signals.native_bin WHERE signals.id =",data$signal_code[1])))$length_seconds
 
-data$PNGSperUnit<-ceiling(data$duration/SecInPng)
+#fix this: aggregate by duration per hour, then calculate pngs per hour.
+#data$PNGSperUnit<-ceiling(data$duration/SecInPng)
+#total_pngs = data[which(!duplicated(data$id.y)),]
+#total_pngs <-aggregate(PNGSperUnit ~ hourly,data=total_pngs,sum)
+
 total_pngs = data[which(!duplicated(data$id.y)),]
-total_pngs <-aggregate(PNGSperUnit ~ hourly,data=total_pngs,sum)
+total_pngs <-aggregate(duration ~ hourly,data=total_pngs,sum)
+total_pngs$PNGSperUnit = ceiling(total_pngs$duration/SecInPng)
 
 #now find total pngs with detections
-total_neg = aggregate((EndTime - StartTime)/SecInPng ~ hourly,data = data[which(is.na(data$probability)),],sum)
+total_neg = aggregate((EndTime - StartTime) ~ hourly,data = data[which(is.na(data$probability)),],sum)
+
 colnames(total_neg)[2]="neg_total"
+total_neg$neg_total = ceiling(total_neg$neg_total/SecInPng)
 
 hourly_perc = merge(total_pngs,total_neg,all.x = TRUE)
 hourly_perc$neg_total[which(is.na(hourly_perc$neg_total))]=0

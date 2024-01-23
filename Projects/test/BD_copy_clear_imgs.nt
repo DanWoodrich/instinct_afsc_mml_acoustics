@@ -16,28 +16,9 @@ Global:
         #msp_inf: 10
         msp_inf: 120
         split_prot: within_file
-        fg_limited:
-            > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-            > bins.soundfiles_id = soundfiles.id JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id 
-            > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE effort.name = 'high_dens_positive_bd_unverified' ORDER BY random() LIMIT 100"
-        gt_view:
-            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND procedure = 10 AND signal_code = 17 AND label = 1 AND bins.id IN {FG}"
-        gt_2view:
+        querygt1:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
             > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28) AND bins.id IN {FG}"
-        dicey_spots_fg:
-            > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-            > bins.soundfiles_id = soundfiles.id JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id 
-            > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE effort.name IN ('jasco_bearded_2009_2010','jasco_bearded_2007_2008')
-            > AND soundfiles.name IN ('AU-XTWN40-100524-120000.wav','AU-XTPL50-100503-120000.wav','AU-XTW50-100430-120000.wav','AU-XTW50-100430-120000.wav',
-            > 'AU-XTPLN40-080612-070000.wav','AU-XTWN40-100424-120000.wav','AU-XTW35-100406-120000.wav','AU-XTPLN40-100524-120000.wav','AU-XTPLN40-080612-070000.wav',
-            > 'AU-XTWN40-100524-120000.wav','AU-XTPLN40-080529-100000.wav','AU-XTW50-080514-090000.wav','AU-XTPLN80-100319-120000.wav')"
-        ins_y:
-            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND procedure = 29 AND signal_code = 17 AND bins.id IN {FG}"
-        #review:
-        #    > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.label IN (0,1,99) AND procedure = 26 AND probability >= 0.9 AND detections.start_file IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -73,24 +54,17 @@ Job:
             venv_name: tf-gpu4
     FormatFG:
         parameters:
-            decimate_data: n
-            #decimate_data: y
+            decimate_data: y
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 4096
+            target_samp_rate: 8192
             file_groupID:
-                #- NM15_SC1_INS0
-                #- NM15_SC0_INS1
-                #- IC2_17_SC1_INS0 
-                - IC2_17_SC0_INS1
-                #- jasco_bearded_2009_2010
-                #- jasco_bearded_2007_2008
-                #- [dicey_spots_fg]
-                #- high_dens_positive_bd_unverified
-                #- [fg_limited]
+                - AL17_AU_IC02
+                - AW15_AU_NM01
+                #- AL20_AU_BF02
         arguments:
             hard_rerun: n
         descriptors:
@@ -103,7 +77,7 @@ Job:
             parameters:
                 methodID: pampgdb-standard-pullgt
                 methodvers: v1-4
-                query: [ins_y]
+                query: [querygt1]
                 #below is "n" or the int signal code to standardize to
                 standardize_sig_code: n
                 remove_proc_ovlp: n
@@ -114,15 +88,19 @@ Job:
                 language: R
         FormatFG:
             parameters:
-                decimate_data: n
+                decimate_data: y
                 difftime_limit: 3600
                 methodID: pampgdb-standard-pullfg
                 methodvers: v1-2
                 methodID2m: matlabdecimate
                 methodvers2m: V1s0
-                target_samp_rate: 4096
+                target_samp_rate: 8192
                 file_groupID:
-                    - amos_groundtruth
+                    - jasco_bearded_2009_2010
+                    - jasco_bearded_2007_2008
+                    - high_dens_positive_bd_unverified
+                    - high_prob_negative_bd_unverified
+                    - random_negative_bd_unverified
             arguments:
                 hard_rerun: n
             descriptors:
@@ -158,9 +136,9 @@ Job:
                     do_aug: y
                     do_spec_averaging: y
                     do_val: y
-                    do_weight: y
+                    do_weight: n
                     gt_depth: [signal_codes]
-                    learn_rate: 0.000075
+                    learn_rate: 0.00015
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
@@ -170,7 +148,7 @@ Job:
                     #prop_tp: 0.1
                     prop_fp: 0.75
                     prop_tp: 0.25
-                    shuf_size: 0.01
+                    shuf_size: 0.0005
                     stride_pix: 30
                     tp_weight: 2
                     view_plots: n
@@ -181,13 +159,13 @@ Job:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
                     #save these, others are for testing
-                    epoch: 25
-                    epoch_steps: 1500
-                    a_val_steps: 1000
+                    epoch: 10
+                    epoch_steps: 4500
+                    a_val_steps: 3000
                     #epoch: 2
                     #epoch_steps: 30
                     #a_val_steps: 30
-                    a_val_tp_heavy: n
+                    a_val_tp_heavy: y
                     hard_rerun: n
                 descriptors:
                     runtype: lib
@@ -200,12 +178,11 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [ins_y]
-            #query: [review]
+            query: [querygt1]
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R
@@ -278,7 +255,7 @@ Job:
         arguments:
             fg_fill: y
             hard_rerun: n
-            ignore_decimated: y
+            ignore_decimated: n
         descriptors:
             runtype: lib
             language: R
@@ -334,8 +311,6 @@ Job:
         parameters:
             methodID: pgpamdb-default-compare-publish
             methodvers: v1-7
-            assume_full_review: n
-            on_behalf_of: self
         arguments:
             hard_rerun: n
         descriptors:
@@ -344,9 +319,9 @@ Job:
     PublishDetswFG:
         parameters: 
             methodID: pampgdb-standard-publish
-            methodvers: v1-2
-            bin_fill_code: LOW
-            procedure_id: 26
+            methodvers: v1-3
+            bin_fill_code: SHI
+            procedure_id: 27
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -373,13 +348,13 @@ Job:
         arguments:
             hard_rerun: n
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
-            remove_spec: n
+            remove_spec: y
         descriptors:
             runtype: lib
             language: R
     ApplyCutoff:
         parameters:
-            cutoff: 0.25
+            cutoff: 0.5
         arguments:
             hard_rerun: n
         descriptors:

@@ -2,7 +2,7 @@
 #for no unnecessary rerun when swapping out fg. 
 
 
-args<-"D:/Cache/445295/492425 D:/Cache/680082/922262/357474/48463 D:/Cache/680082/922262/357474/48463/427863 y pe1dl-simple-v1-2"
+args<-"D:/Cache/705031 D:/Cache/705031/309947/862566/651102 D:/Cache/705031/309947/862566/651102/503161 n pe1dl-simple-v1-2"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep="")) 
@@ -113,17 +113,20 @@ if(length(cut_loop)>0){
     #extract GT from cut and replace with 0
     
     GTin = data[which(data$SignalCode!="out" & data$cutoff==cut_loop[i]),]
-    GTin = GTin[order(GTin$StartTime),]
+    if(nrow(GTin)>0){
+      GTin = GTin[order(GTin$StartTime),]
+      
+      if(any(GTin$StartTime-zeroGT$StartTime)>0){
+        stop("incorrect assumption")
+      }
+      
+      GTin$splits=zeroGT$splits
+      
+      data = data[-which(data$SignalCode!="out" & data$cutoff==cut_loop[i]),]
+      
+      data=rbind(data,GTin)
     
-    if(any(GTin$StartTime-zeroGT$StartTime)>0){
-      stop("incorrect assumption")
     }
-    
-    GTin$splits=zeroGT$splits
-    
-    data = data[-which(data$SignalCode!="out" & data$cutoff==cut_loop[i]),]
-    
-    data=rbind(data,GTin)
     
   }
 

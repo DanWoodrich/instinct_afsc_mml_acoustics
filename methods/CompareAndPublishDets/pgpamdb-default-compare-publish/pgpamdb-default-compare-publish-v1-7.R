@@ -1,7 +1,7 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/432432/745056/806297/794470/331786 D:/Cache/432432/745056/806297/388496 D:/Cache/432432/745056/806297/794470/331786/252009 n self pgpamdb-default-compare-publish-v1-7"
+args="D:/Cache/838624/491352/631885/817831 D:/Cache/838624/491352 D:/Cache/838624/491352/631885/817831/513222 n self pgpamdb-default-compare-publish-v1-7"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -75,7 +75,24 @@ allprocedures = unique(EditData$procedure)
 procedure_assumption_lookup = dbFetch(dbSendQuery(con,paste("SELECT * FROM procedures WHERE id IN (",
                                                   paste(allprocedures,sep="",collapse=","),")",sep="")))
 
+db_columns = names(dbFetch(dbSendQuery(con,"SELECT * FROM detections LIMIT 0")))
+
+#append on names that haven't been converted yet from detx 
+db_columns = c(db_columns,"LowFreq", "HighFreq","StartFile","EndFile","StartTime","EndTime" )
+
+allcols = unique(c(colnames(PriorData),colnames(EditData)))
+non_db_columns = allcols[-which(allcols %in% db_columns)]
+
 #check columns are the same.
+#remove columns which are irrelevant:
+if(any(c("changed_by","uploaded_by",non_db_columns) %in% colnames(PriorData))){
+  PriorData = PriorData[,colnames(PriorData)[-which(colnames(PriorData) %in% c("changed_by","uploaded_by",non_db_columns))]]
+}
+if(any(c("changed_by","uploaded_by",non_db_columns) %in% colnames(EditData))){
+  EditData = EditData[,colnames(EditData)[-which(colnames(EditData) %in% c("changed_by","uploaded_by",non_db_columns))]]
+}
+
+
 if(any(!colnames(EditData)==colnames(PriorData))){
   stop("edited data columns do not match database standard")
 }

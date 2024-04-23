@@ -1,6 +1,5 @@
 #use this to build out performance eval for ground truth data. 
 pipe: ScoresToDETx.pipe
-#params_drop: TrainModel_paramset-test1
 ScoresToDETx.pipe:
   process: ScoresToDETx
   GetFG:

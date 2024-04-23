@@ -6,10 +6,12 @@ Global:
     parameters:
         signal_codes: BD
         freq_start: 0
-        freq_size: 4000
+        freq_size: 4096
         native_height: 240
-        npps: 120
+        #native_window_size: 256
+        #npps: 128
         native_window_size: 240
+        npps: 80
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
@@ -18,7 +20,12 @@ Global:
         split_prot: within_file
         querygt1:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28) AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28,29) AND bins.id IN {FG}"
+        querygt_only_10:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        blank_query:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
 Job:
     ModelEval_NN:
         parameters:
@@ -33,8 +40,8 @@ Job:
     DLmodel*:
         parameters:
             methodID: train-win-slide-dl
-            methodvers: v1-20
-            augstr: 0.20,0.55,1
+            methodvers: v1-21
+            augstr: 0.25,0.25,0.5
             gt_depth: [signal_codes]
             model_name: [model_name]
             native_height: [native_height]
@@ -62,9 +69,34 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 8192
             file_groupID:
-                #- AL17_AU_IC02
-                #- AW15_AU_NM01
-                - AL20_AU_BF02
+                #manolo moorings
+                #- XA23_ST_KS07
+                #- XA22_ST_KS04
+                #- XA23_ST_KS02
+                #SC testing moorings:
+                #- AL18_AU_NM01
+                #- CX14_AU_IC02
+                #- AL17_AU_BF02
+                #paul conn priority moorings
+                #- AL22_AU_NM01
+                #- AL22_AU_IC01
+                #- AL22_AU_BS11
+                #- AL22_AU_BF02
+                #- AL22_AU_IC03
+                #- AL22_AU_PB01
+                - AL22_AU_PH01
+                - AL22_AU_NM01
+                - BS22_AU_PM05
+                - BS22_AU_PM04
+                - AL22_AU_BS11
+                - AL22_AU_BS10
+                - AL22_AU_UN01
+                - AL19_AU_CL01
+                - IP21_AU_CH01
+                - IP20_AU_CH01
+                - AL20_AU_IC03
+                - AL19_AU_IC03
+                - AL20_AU_BS11
         arguments:
             hard_rerun: n
         descriptors:
@@ -77,7 +109,7 @@ Job:
             parameters:
                 methodID: pampgdb-standard-pullgt
                 methodvers: v1-4
-                query: [querygt1]
+                query: [querygt_only_10]
                 #below is "n" or the int signal code to standardize to
                 standardize_sig_code: n
                 remove_proc_ovlp: n
@@ -96,11 +128,13 @@ Job:
                 methodvers2m: V1s0
                 target_samp_rate: 8192
                 file_groupID:
-                    - jasco_bearded_2009_2010
-                    - jasco_bearded_2007_2008
-                    - high_dens_positive_bd_unverified
-                    - high_prob_negative_bd_unverified
-                    - random_negative_bd_unverified
+                    - jasco_strat_subsample
+                    - high_prob_negative_bd_unverified_2
+                    - random_negative_bd_unverified_2
+                    - NM15_SC1_INS0
+                    - bearded_ribbon
+                    - BS22_AU_PM05_bowhead_for_bearded
+                    #- XA22_ST_KS04
             arguments:
                 hard_rerun: n
             descriptors:
@@ -129,12 +163,12 @@ Job:
             DLmodel*:
                 parameters:
                     methodID: train-win-slide-dl
-                    methodvers: v1-20
+                    methodvers: v1-21
                     addnoise_mean: 0.5
                     addnoise_stddev: 0.25
-                    augstr: 0.20,0.55,1
+                    augstr: 0.25,0.25,0.5
                     do_aug: y
-                    do_spec_averaging: y
+                    do_spec_averaging: half_pos
                     do_val: y
                     do_weight: n
                     gt_depth: [signal_codes]
@@ -142,29 +176,29 @@ Job:
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
-                    perc_fp: 1.00
+                    perc_fp: 0.975
                     perc_tp: 0.025
-                    #prop_fp: 0.9
-                    #prop_tp: 0.1
                     prop_fp: 0.75
                     prop_tp: 0.25
-                    shuf_size: 0.0005
-                    stride_pix: 30
+                    #CHANGE PROC 30: 0.0005 -> 0.005: see if it is resonable with higher epoch size + longer stride pix
+                    shuf_size: 0.05 
+                    #CHANGE PROC 30: 30 -> 120 not sure why this was so low in the first place
+                    stride_pix: 120 
                     tp_weight: 2
                     view_plots: n
                     win_size: [model_window_size]
                     win_size_native: [native_window_size]
-                    zero_drop: 0.1
+                    zero_drop: n
                 arguments:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
-                    #save these, others are for testing
-                    epoch: 10
-                    epoch_steps: 4500
-                    a_val_steps: 3000
-                    #epoch: 2
-                    #epoch_steps: 30
-                    #a_val_steps: 30
+                    #CHANGE PROC 30: increase 10 -> 15
+                    epoch: 15  
+                    #CHANGE PROC 30: double both of below
+                    epoch_steps: 9000
+                    #epoch_steps: 900
+                    a_val_steps: 6000
+                    #a_val_steps: 600
                     a_val_tp_heavy: y
                     hard_rerun: n
                 descriptors:
@@ -178,7 +212,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [querygt1]
+            query: [blank_query]
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
@@ -188,23 +222,25 @@ Job:
             language: R
     GenBigSpec:
         parameters:
-            methodID: con_bright_no_rep
-            methodvers: v1-5
-            crop_freq: n
-            crop_freq_size: [freq_size]
-            crop_freq_start: [freq_start]
+            methodID: mel
+            methodvers: v1-1
             native_height: [native_height]
             native_pix_per_sec: [npps]
+            outlier_perc: 99.99
+            view_mode: n
             window_length: 512
         arguments:
             hard_rerun: n
+            #rerun_key: 2
         descriptors:
             runtype: lib
-            language: R
+            language: Python
+            venv: Conda
+            venv_name: mel-spec
     LabelTensor:
         parameters:
             methodID: tens-simple-label
-            methodvers: v1-8
+            methodvers: v1-9
             dimensions: 2
             freq_size: [freq_size]
             freq_start: [freq_start]
@@ -251,7 +287,7 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-10
+            methodvers: v1-13
         arguments:
             fg_fill: y
             hard_rerun: n
@@ -288,40 +324,12 @@ Job:
         descriptors:
             runtype: lib
             language: R
-    EditRAVENx:
-        parameters:
-            instructions:
-                >
-                > INSTRUCTIONS: 
-                >
-                > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
-                > Review the outputs and populate label column. Allowable labels are y/m/n (yes, maybe, or no).  
-                > Comments can be made and will be retained in the database. Adding, deleting, or modifying timestamps or frequency of
-                > detections is forbidden by protocol. 
-                >
-                > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
-                > Instead, use the EditGTpublish pipeline. 
-                >
-                > If you are rerunning this process, there may be a previously edited file you are free to override or retain
-        arguments:
-            hard_rerun: n
-        descriptors:
-            runtype: no_method
-    CompareAndPublishDets:
-        parameters:
-            methodID: pgpamdb-default-compare-publish
-            methodvers: v1-7
-        arguments:
-            hard_rerun: n
-        descriptors:
-            language: R
-            runtype: lib
     PublishDetswFG:
         parameters: 
             methodID: pampgdb-standard-publish
             methodvers: v1-3
             bin_fill_code: SHI
-            procedure_id: 29
+            procedure_id: 37
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -337,7 +345,7 @@ Job:
             difftime_cap: 3600
             freq_low: [freq_start]
             freq_size: [freq_size]
-            #group_pixels: 20 temporary testing!!
+            #PROC 30 CHANGE: attempt to lower the total # of dets. 
             group_pixels: 120
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
@@ -348,13 +356,14 @@ Job:
         arguments:
             hard_rerun: n
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
+            #CHANGE WITH  INFERENCE!
             remove_spec: y
         descriptors:
             runtype: lib
             language: R
     ApplyCutoff:
         parameters:
-            cutoff: 0.5
+            cutoff: 0.8
         arguments:
             hard_rerun: n
         descriptors:

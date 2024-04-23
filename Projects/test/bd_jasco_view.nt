@@ -36,6 +36,9 @@ Global:
         ins_y:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
             > WHERE detections.status = 1 AND procedure = 29 AND signal_code = 17 AND bins.id IN {FG}"
+        gt_yes:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND procedure = 10 AND signal_code = 17 AND bins.id IN {FG}"
         #review:
         #    > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.label IN (0,1,99) AND procedure = 26 AND probability >= 0.9 AND detections.start_file IN {FG}"
 Job:
@@ -82,10 +85,10 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 4096
             file_groupID:
-                #- NM15_SC1_INS0
+                - NM15_SC1_INS0
                 #- NM15_SC0_INS1
                 #- IC2_17_SC1_INS0 
-                - IC2_17_SC0_INS1
+                #- IC2_17_SC0_INS1
                 #- jasco_bearded_2009_2010
                 #- jasco_bearded_2007_2008
                 #- [dicey_spots_fg]
@@ -200,7 +203,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [ins_y]
+            query: [gt_yes]
             #query: [review]
             remove_proc_ovlp: n
             standardize_sig_code: n
@@ -274,7 +277,8 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-10
+            methodvers: v1-12
+            randomize_order: y
         arguments:
             fg_fill: y
             hard_rerun: n
@@ -333,9 +337,9 @@ Job:
     CompareAndPublishDets:
         parameters:
             methodID: pgpamdb-default-compare-publish
-            methodvers: v1-7
+            methodvers: v1-8
             assume_full_review: n
-            on_behalf_of: self
+            on_behalf_of: Brynn
         arguments:
             hard_rerun: n
         descriptors:

@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "D:/Cache/167913/FileGroupFormat.csv.gz D:/Cache/865375/401113/370627/843649/607518/401599 D:/Cache/167913/366574 D:/Cache/167913/366574/652610 D:/Cache/167913/366574/652610/122446 3600 0 4000 120 240 240 120 mean within_file 120 moving-smooth-v1-13 n y 1"
+args = "D:/Cache/912248/FileGroupFormat.csv.gz D:/Cache/766359/707095/85667/505872/229546/572166 D:/Cache/912248/664993 D:/Cache/912248/664993/200550 D:/Cache/912248/664993/200550/289003 3600 0 4096 120 240 240 80 mean within_file 120 moving-smooth-v1-13 n y 1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -234,7 +234,9 @@ if(vertical_bins==1){
       #stealth bugfix to try to fix offset seen in scores
       
       #v1-11: max rounding behavior same as spectogram generation so scores line up better. 
-      end_ind = (scores_ind+floor((round(dur)-model_s_size)*native_pix_per_sec/stride_pix))
+      #end_ind = (scores_ind+floor((round(dur)-model_s_size)*native_pix_per_sec/stride_pix))
+      
+      end_ind = (scores_ind+floor((dur-model_s_size)*native_pix_per_sec/stride_pix))
       
       scores= Scores$V1[scores_ind:end_ind]
       
@@ -322,6 +324,10 @@ if(vertical_bins==1){
       datachunk = datachunk + 1
       scores_ind= end_ind+1
     }
+  }
+  
+  if(end_ind != nrow(Scores)){
+    stop("Not all scores consumed- check rounding and model behaviors")
   }
   
   data_all = do.call('rbind',data_all)

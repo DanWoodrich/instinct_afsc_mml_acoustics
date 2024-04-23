@@ -1,7 +1,24 @@
+
+
+check_sf_dups = function(conn,sfs){
+  
+  dups = dbFetch(dbSendQuery(conn,paste("SELECT COUNT( DISTINCT soundfiles.data_collection_id),soundfiles.name FROM soundfiles WHERE soundfiles.name IN ('",paste(sfs,collapse="','",sep=""),"') GROUP BY soundfiles.name HAVING COUNT(*) > 1 ",sep="")))
+  
+  if(nrow(dups)>0){
+    return(TRUE)
+  }else{
+    return(FALSE)
+  }
+  
+  
+  
+}
+
+
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/652199/553810/714190/417661/688622 D:/Cache/652199/553810/714190/879851 D:/Cache/652199/553810/714190/417661/688622/694322 n self pgpamdb-default-compare-publish-v1-7"
+args="D:/Cache/858283/504086/691077/204298/114851 D:/Cache/858283/504086/691077/239907 D:/Cache/858283/504086/691077/204298/114851/949224 n self pgpamdb-default-compare-publish-v1-8"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -25,7 +42,10 @@ EditData<-read.csv(paste(EditDataPath,"DETx.csv.gz",sep="/"))
 #self for current pg user
 if(on_behalf_of!= "self"){
   
-  analyst = as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name =",on_behalf_of))$id)
+  analyst = as.integer(dbFetch(dbSendQuery(con,paste("SELECT id FROM personnel WHERE personnel.pg_name ='",on_behalf_of,"'",sep="")))$id)
+  if(length(analyst)==0){
+    stop("unable to match analyst from db pg_name")
+  }
 }else{
   analyst = as.integer(dbFetch(dbSendQuery(con,"SELECT id FROM personnel WHERE personnel.pg_name = current_user"))$id)
 }
@@ -121,7 +141,12 @@ if(typeof(EditData$label)!="integer"){
 
 #seperate the edited data into those with keys that match priordata, and keys that are novel (or missing).
 mod_keys = EditData$id[which(EditData$id %in% PriorData$id)]
-new_data = EditData[-which(EditData$id %in% PriorData$id),]
+#if no data in prior, skip check
+if(nrow(PriorData)>0){
+  new_data = EditData[-which(EditData$id %in% PriorData$id),]
+}else{
+  new_data = EditData
+}
 del_keys= PriorData$id[-which(PriorData$id %in% EditData$id)]
 
 #do a check on new and delete data up here to make sure assumption errors are caught before data modification.
@@ -201,6 +226,7 @@ if(length(mod_keys)>0){
   #.1 precision on frequency, .01 precision on time
   diffs[,3:4]= abs(diffs[,3:4])>0.1
   diffs[,1:2]= abs(diffs[,1:2])>0.01
+  
 
   #if diffs are false, and the file end time has been modified, revert to original.
   #fix for the behavior where raven uses exact samples and rewrites end file (I round to 2 decimal for sf on db)
@@ -210,10 +236,30 @@ if(length(mod_keys)>0){
   #reduce this set to only rows which were modified
   testdf = EditMod[,5:length(EditMod)]!=PriorMod[,5:length(PriorMod)]
   testdf = cbind(diffs,testdf)
+  
+  #stealth change- add diffs comparison for probability as well. 
+  
+  if('probability' %in% colnames(EditMod)){
+    prob_diffs = EditMod$probability-PriorMod$probability
+    #really, probability shouldn't ever be changed- would imply a different procedure. 
+    #what we'll do, is scan for any large difference, and return an error, otherwise, set diffs to False. 
+    prob_diffs= abs(prob_diffs)>0.01
+    if(any(prob_diffs,na.rm=TRUE)){
+      stop("modified probability detected- not valid for a consistent procedure. stopping...")
+    }else{
+      testdf$probability=prob_diffs
+    }
+  }
+  
 
   if(nrow(EditMod)>0){
     
     #lookup file names
+    
+    if(check_sf_dups(con,unique(c(EditMod$start_file,EditMod$end_file)))){
+      stop("duplicate soundfiles present in insert- need to revise process to correctly distinguish duplicate file names. aborting..")
+    }
+    
     filelookup =lookup_from_match(con,'soundfiles',unique(c(EditMod$start_file,EditMod$end_file)),"name")
     
     EditMod$start_file = filelookup$id[match(EditMod$start_file,filelookup$name)]
@@ -366,6 +412,10 @@ if(length(mod_keys)>0){
               adddets = adddets[-which(duplicated(adddets)),]
             }
             
+            if(check_sf_dups(con,unique(c(adddets$start_file,adddets$end_file)))){
+              stop("duplicate soundfiles present in insert- need to revise process to correctly distinguish duplicate file names. aborting..")
+            }
+            
             #add the new bin negatives
             out = dbAppendTable(con,'detections',adddets)
             
@@ -398,10 +448,19 @@ if(length(mod_keys)>0){
 }
 
 if(nrow(new_data)>0){
+  
+  #this was not made resilient to duplicated sound file names. Add in a check to error out if duplicated 
+  #sound file names are present. Ultimately, will need to revise 
 
   colnames(new_data)[1:6]=c("start_time","end_time","low_freq","high_freq","start_file","end_file")
 
-  #lookup file names
+  #lookup file names:
+  #uh oh- this needs to also check for duplicated sound file names!!
+  
+  if(check_sf_dups(con,unique(c(new_data$start_file,new_data$end_file)))){
+    stop("duplicate soundfiles present in insert- need to revise process to correctly distinguish duplicate file names. aborting..")
+  }
+  
   filelookup =lookup_from_match(con,'soundfiles',unique(c(new_data$start_file,new_data$end_file)),"name")
 
   new_data$start_file = filelookup$id[match(new_data$start_file,filelookup$name)]

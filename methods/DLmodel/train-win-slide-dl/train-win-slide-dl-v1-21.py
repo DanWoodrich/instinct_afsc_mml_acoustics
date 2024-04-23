@@ -109,6 +109,8 @@ if stage !="train":
 
     val_tp_heavy = 'n'
     val_steps = 0
+    
+    zero_drop = 'n'
 
 else:
 
@@ -139,7 +141,7 @@ else:
     view_plots = args[27]
     model_win_size = int(args[28])
     win_size_native = int(args[29])
-    zero_drop = float(args[30])
+    zero_drop = args[30]
     #arguments:
     val_steps = int(args[32])
     val_tp_heavy = args[33]
@@ -157,6 +159,11 @@ else:
 
 if val_steps == 0:
     val_steps = None
+    
+if zero_drop == 'n':
+    zero_drop = None
+else:
+    zero_drop = float(zero_drop)
 
 #calculate this based on given dimensions
 win_t_factor = model_win_size/win_size_native
@@ -666,6 +673,19 @@ if stage=="train":
         #this averages signal with noise based on function protocol
         train_dataset_signal2 = tf.data.Dataset.zip((train_dataset_signal, train_dataset_noise)).map(lambda ds1,ds2: (add_noise2(ds1,ds2,addnoise_mean,addnoise_stddev,do_weight_))) #add averagethesefxn
         
+        #this averages noise with noise based on function protocol
+        train_dataset_noise_aug_w_noise = tf.data.Dataset.zip((train_dataset_noise, train_dataset_noise)).map(lambda ds1,ds2: (add_noise2(ds1,ds2,addnoise_mean,addnoise_stddev,do_weight_)))
+        
+        #this samples from noise datasets. 
+        train_dataset_noise2= tf.data.Dataset.sample_from_datasets([train_dataset_noise, train_dataset_noise_aug_w_noise], weights=[0.75, 0.25])
+    
+    elif do_spec_averaging=="half_pos":
+        
+        #positives will be half and half noise superimposed and half normal
+        train_dataset_signal_b = tf.data.Dataset.zip((train_dataset_signal, train_dataset_noise)).map(lambda ds1,ds2: (add_noise2(ds1,ds2,addnoise_mean,addnoise_stddev,do_weight_)))
+        train_dataset_signal2 = tf.data.Dataset.sample_from_datasets([train_dataset_signal, train_dataset_signal_b], weights=[0.5, 0.5])
+        
+        #same as y for noise
         #this averages noise with noise based on function protocol
         train_dataset_noise_aug_w_noise = tf.data.Dataset.zip((train_dataset_noise, train_dataset_noise)).map(lambda ds1,ds2: (add_noise2(ds1,ds2,addnoise_mean,addnoise_stddev,do_weight_)))
         

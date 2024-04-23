@@ -4,7 +4,7 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        signal_codes: AM
+        signal_codes: BD
         freq_start: 0
         freq_size: 4000
         native_height: 240
@@ -16,11 +16,37 @@ Global:
         #msp_inf: 10
         msp_inf: 120
         split_prot: within_file
+        fg_limited:
+            > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+            > bins.soundfiles_id = soundfiles.id JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id 
+            > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE effort.name = 'high_dens_positive_bd_unverified' ORDER BY random() LIMIT 100"
+        bearded_ribbon_ordered:
+            > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+            > bins.soundfiles_id = soundfiles.id JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id 
+            > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE effort.name = 'bearded_ribbon' ORDER BY data_collection.name,soundfiles.datetime"
         gt_view:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND procedure = 10 AND signal_code = 44 AND bins.id IN {FG}"
-        review:
-            > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.label IN (0,1,99) AND procedure = 26 AND probability >= 0.9 AND detections.start_file IN {FG}"
+            > WHERE detections.status = 1 AND procedure = 10 AND signal_code = 17 AND label = 1 AND bins.id IN {FG}"
+        gt_2view:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28) AND bins.id IN {FG}"
+        dicey_spots_fg:
+            > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+            > bins.soundfiles_id = soundfiles.id JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id 
+            > JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE effort.name IN ('jasco_bearded_2009_2010','jasco_bearded_2007_2008')
+            > AND soundfiles.name IN ('AU-XTWN40-100524-120000.wav','AU-XTPL50-100503-120000.wav','AU-XTW50-100430-120000.wav','AU-XTW50-100430-120000.wav',
+            > 'AU-XTPLN40-080612-070000.wav','AU-XTWN40-100424-120000.wav','AU-XTW35-100406-120000.wav','AU-XTPLN40-100524-120000.wav','AU-XTPLN40-080612-070000.wav',
+            > 'AU-XTWN40-100524-120000.wav','AU-XTPLN40-080529-100000.wav','AU-XTW50-080514-090000.wav','AU-XTPLN80-100319-120000.wav')"
+        dicey_spots_fg_2:
+            > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE effort.name IN ('jasco_bearded_2007_2008','jasco_bearded_2009_2010','high_prob_negative_bd_unverified_2','BS22_AU_PM05_bowhead_for_bearded','random_negative_bd_unverified_2','bearded_ribbon','NM15_SC1_INS0') AND soundfiles.name IN ('AU-ALIC02-230110-141000.wav','AU-ALIC02-230110-143000.wav','AU-ALIC02-221212-103000.wav','AU-ALIC02-221215-041000.wav','AU-ALPH01-230115-192000.wav','AU-ALPH01-230115-195000.wav','AU-ALPH01-230117-110000.wav','AU-ALPH01-230121-161000.wav','AU-ALPH01-230122-110000.wav','AU-ALPH01-230122-121000.wav','AU-ALPH01-230122-161000.wav','AU-ALPH01-230122-162000.wav','AU-ALPH01-230122-163000.wav','AU-ALPH01-230122-164000.wav','AU-ALPH01-230122-165000.wav','AU-ALPH01-230122-170000.wav','AU-ALPH01-230122-171000.wav','AU-ALPH01-230124-080000.wav','AU-ALPH01-230124-081000.wav','AU-ALPH01-230124-082000.wav','AU-ALPH01-230124-083000.wav','AU-ALPH01-230124-084000.wav','AU-ALPH01-230124-085000.wav','AU-ALPH01-230202-022000.wav','AU-ALPH01-230202-031000.wav','AU-AWPH01-121101-160000.wav','AU-AWNM01-160131-083000.wav','AU-AWNM01-160131-084000.wav','AU-AWNM01-160131-131000.wav','AU-AWNM01-160131-132000.wav','AU-BSPM04-120512-170000.wav','AU-BSPM08-120225-170000.wav','AU-BSPM08-120301-124000.wav','AU-BSPM08-120301-130000.wav','AU-BSPM05-230212-141000.wav','AU-BSPM05-230309-033000.wav','AU-BSPM05-230309-081000.wav','AU-BSPM05-230310-042000.wav','AU-BSPM05-230313-025000.wav','AU-BSPM05-230313-031000.wav','AU-BSPM05-230313-071000.wav','AU-BSPM05-230313-074000.wav','AU-BSPM05-230515-201000.wav','AU-BSPM05-230515-202000.wav','AU-XTPL50-080104-060000.wav','AU-XTPL50-080223-100000.wav','AU-XTPL50-080229-140000.wav','AU-XTPL50-080511-090000.wav','AU-XTPL50-080513-140000.wav','AU-XTPL50-080513-180000.wav','AU-XTPL50-080513-220000.wav','AU-XTPL50-080514-090000.wav','AU-XTPL50-080523-180000.wav','AU-XTPL50-080526-090000.wav','AU-XTPL50-080529-090000.wav','AU-XTPL50-080602-020000.wav','AU-XTPL50-080602-060000.wav','AU-XTPL50-080602-180000.wav','AU-XTPL50-080604-090000.wav','AU-XTPL50-080613-090000.wav','AU-XTPL50-080616-090000.wav','AU-XTPLN40-080423-100000.wav','AU-XTPLN40-080511-100000.wav','AU-XTPLN40-080514-100000.wav','AU-XTPLN40-080517-100000.wav','AU-XTPLN40-080520-100000.wav','AU-XTPLN40-080523-100000.wav','AU-XTPLN40-080523-150000.wav','AU-XTPLN40-080604-100000.wav','AU-XTPLN40-071204-110000.wav','AU-XTPLN60-080304-050000.wav','AU-XTPLN60-080306-130000.wav','AU-XTPLN60-080309-120000.wav','AU-XTPLN60-080312-120000.wav','AU-XTPLN60-080321-120000.wav','AU-XTPLN60-080423-170000.wav','AU-XTPLN60-080426-120000.wav','AU-XTPLN60-080429-120000.wav','AU-XTPLN60-080503-010000.wav','AU-XTPLN60-080513-090000.wav','AU-XTPLN60-080514-120000.wav','AU-XTPLN60-080523-170000.wav','AU-XTPLN60-080523-210000.wav','AU-XTPLN60-080601-120000.wav','AU-XTPLN60-080602-130000.wav','AU-XTPLN60-080607-120000.wav','AU-XTPLN60-080612-050000.wav','AU-XTW50-080208-140000.wav','AU-XTW50-080402-090000.wav','AU-XTW50-080414-090000.wav','AU-XTW50-080423-060000.wav','AU-XTW50-080423-090000.wav','AU-XTW50-080426-090000.wav','AU-XTW50-080429-090000.wav','AU-XTW50-080503-140000.wav','AU-XTW50-080503-180000.wav','AU-XTW50-080505-090000.wav','AU-XTW50-080508-090000.wav','AU-XTW50-080513-020000.wav','AU-XTW50-080513-180000.wav','AU-XTW50-080517-090000.wav','AU-XTW50-080523-060000.wav','AU-XTW50-080523-090000.wav','AU-XTW50-080523-100000.wav','AU-XTW50-080523-140000.wav','AU-XTW50-080523-220000.wav','AU-XTW50-080529-090000.wav','AU-XTW50-080602-020000.wav','AU-XTW50-080602-220000.wav','AU-XTW50-080604-090000.wav','AU-XTW50-080616-090000.wav','AU-XTW50-080622-060000.wav','AU-XTWN20-080414-120000.wav','AU-XTWN20-080417-120000.wav','AU-XTWN20-080420-120000.wav','AU-XTWN20-080502-120000.wav','AU-XTWN20-080503-130000.wav','AU-XTWN20-080503-170000.wav','AU-XTWN20-080514-120000.wav','AU-XTWN20-080523-050000.wav','AU-XTWN20-080523-120000.wav','AU-XTWN20-080601-120000.wav','AU-XTWN20-080602-170000.wav','AU-XTWN20-080602-210000.wav','AU-XTWN20-080612-050000.wav','AU-XTWN20-080613-120000.wav','AU-XTWN20-080622-010000.wav','AU-XTWN20-080622-210000.wav','AU-XTWN20-080628-120000.wav','AU-XTWN20-071128-130000.wav','AU-XTWN20-071225-090000.wav','AU-XTB05-100310-120000.wav','AU-XTB05-100313-120000.wav','AU-XTB05-100316-120000.wav','AU-XTB05-100319-120000.wav','AU-XTB05-100409-120000.wav','AU-XTB05-100412-120000.wav','AU-XTB05-100503-120000.wav','AU-XTB05-100506-120000.wav','AU-XTB05-100509-120000.wav','AU-XTB05-100512-120000.wav','AU-XTB05-100530-120000.wav','AU-XTB05-100617-120000.wav','AU-XTB05-100711-120000.wav','AU-XTCL50-100208-120000.wav','AU-XTCL50-100223-120000.wav','AU-XTCL50-100424-120000.wav','AU-XTCL50-100515-120000.wav','AU-XTCL50-100518-120000.wav','AU-XTPL50-100103-120000.wav','AU-XTPL50-100112-120000.wav','AU-XTPL50-100226-120000.wav','AU-XTPL50-100328-120000.wav','AU-XTPL50-100430-120000.wav','AU-XTPL50-100518-120000.wav','AU-XTPL50-100521-120000.wav','AU-XTPL50-091231-120000.wav','AU-XTPLN40-100418-120000.wav','AU-XTPLN40-100430-120000.wav','AU-XTPLN40-100518-120000.wav','AU-XTPLN40-100521-120000.wav','AU-XTPLN40-100608-120000.wav','AU-XTPLN40-100611-120000.wav','AU-XTPLN80-100124-120000.wav','AU-XTW35-100115-120000.wav','AU-XTW35-100205-120000.wav','AU-XTW35-100217-120000.wav','AU-XTW35-100220-120000.wav','AU-XTW35-100319-120000.wav','AU-XTW35-100325-120000.wav','AU-XTW35-100403-120000.wav','AU-XTW35-100427-120000.wav','AU-XTW35-091026-120000.wav','AU-XTW35-091128-120000.wav','AU-XTW50-100115-120000.wav','AU-XTW50-100124-120000.wav','AU-XTW50-100211-120000.wav','AU-XTW50-100214-120000.wav','AU-XTW50-100412-120000.wav','AU-XTW50-100415-120000.wav','AU-XTW50-100427-120000.wav','AU-XTW50-100430-120000.wav','AU-XTW50-100506-120000.wav','AU-XTW50-100602-120000.wav','AU-XTW50-100611-120000.wav','AU-XTWN40-100319-120000.wav','AU-XTWN40-100325-120000.wav','AU-XTWN40-100328-120000.wav','AU-XTWN40-100518-120000.wav','AU-XTWN40-100524-120000.wav','AU-XTWN40-100530-120000.wav','AU-XTWN40-100608-120000.wav','AU-XTWN40-100611-120000.wav','AU-XTWN40-100623-120000.wav','AU-XTWN40-100629-120000.wav')"
+        ins_y:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND procedure = 30 AND signal_code = 17 AND bins.id IN {FG}"
+        gt_yes:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND procedure = 10 AND signal_code = 17 AND label = 1 AND bins.id IN {FG}"
+        #review:
+        #    > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.label IN (0,1,99) AND procedure = 26 AND probability >= 0.9 AND detections.start_file IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -63,11 +89,22 @@ Job:
             methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 2048
+            target_samp_rate: 8192
             file_groupID:
-                #- IP18_AU_CH01
-                #- AL21_AU_WT01
-                - amos_groundtruth
+                #- BS22_AU_PM05_bowhead_for_bearded
+                #- bearded_ribbon
+                #- [bearded_ribbon_ordered]
+                #- NM15_SC1_INS0
+                #- NM15_SC0_INS1
+                #- IC2_17_SC1_INS0 
+                #- IC2_17_SC0_INS1
+                #- jasco_bearded_2009_2010
+                #- jasco_bearded_2007_2008
+                #- [dicey_spots_fg]
+                #- high_dens_positive_bd_unverified
+                #- [fg_limited]
+                #-  NM18_SC0_INS1
+                - [dicey_spots_fg_2]
         arguments:
             hard_rerun: n
         descriptors:
@@ -80,7 +117,7 @@ Job:
             parameters:
                 methodID: pampgdb-standard-pullgt
                 methodvers: v1-4
-                query: [gt_view]
+                query: [ins_y]
                 #below is "n" or the int signal code to standardize to
                 standardize_sig_code: n
                 remove_proc_ovlp: n
@@ -177,7 +214,8 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [gt_view]
+            query: [gt_yes]
+            #query: [ins_y]
             #query: [review]
             remove_proc_ovlp: n
             standardize_sig_code: n
@@ -254,7 +292,7 @@ Job:
             methodvers: v1-12
             randomize_order: n
         arguments:
-            fg_fill: n
+            fg_fill: y
             hard_rerun: n
             ignore_decimated: n
         descriptors:

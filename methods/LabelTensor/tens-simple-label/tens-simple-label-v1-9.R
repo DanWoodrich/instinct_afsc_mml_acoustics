@@ -11,7 +11,7 @@ library(signal)
 library(dplyr)
 library(doParallel)
 
-args="D:/Cache/230905 D:/Cache/230905/433803 D:/Cache/230905/523232 D:/Cache/230905/523232/870263 [data_test] 2 2048 0 240 120 tens-simple-label-v1-8"
+args="D:/Cache/526603 D:/Cache/526603/496043 D:/Cache/526603/402577 D:/Cache/526603/402577/860531 random_negative_bd_unverified_2 1 2048 0 240 120 tens-simple-label-v1-9"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -23,6 +23,16 @@ bf_path = paste(args[2],"bigfiles",sep="/") #one change I need to make- this act
 #a file with necessary parameters to perform this process- in particular, it needs to save frequency
 #start and end so that the current process knows how to populate the label tensors. 
 GTref = read.csv(paste(args[3],"/DETx.csv.gz",sep=""))
+
+#if(nrow(GTref)==0){
+#  GTref$HighPix = numeric(0)
+#  GTref$LowPix = numeric(0)
+#}else{
+#  GTref$HighPix = NA
+#  GTref$LowPix  =  NA
+#}
+
+
 resultpath = args[4]
 
 FGname = args[5]
@@ -63,7 +73,7 @@ crs<-detectCores()
 startLocalPar(crs,"FG","bf_path","bigfiles","GTref","native_img_height","native_pix_per_sec","resultpath","dimensions","freq_size","freq_start","GT_depth","GT_unq")
 
 filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr","png")) %dopar% {
-  
+#for(i in 1:length(bigfiles)){
   #combine GT with FG
   fileFG = FG[which(FG$DiffTime==bigfiles[i]),,drop = FALSE]
   
@@ -114,31 +124,39 @@ filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr","png")) %d
   
   
   if(dimensions==2){
+    
+    if(nrow(GT)>0){
   
-  highfreq = freq_start+freq_size #figure these out from bigfile generation output
-  lowfreq = freq_start#figure these out from bigfile generation output
-  
-  pix_per_freq = dim_x / (highfreq-lowfreq)
-  
-  #v1-8: fix apparent bug, possibly due to smaller freq than spec range or the high lowfreq. 
-  GT$HighPix = (GT$HighFreq-lowfreq) * pix_per_freq
-  GT$LowPix = (GT$LowFreq-lowfreq) * pix_per_freq
-  
-  #bound by freq:
-  #v1-8 stealth edit- remove gt which exceed the high freq on their low boundary. 
-  if(any(GT$LowPix>dim_x)){
-    GT= GT[-which(GT$LowPix>dim_x),]
-  }
+      highfreq = freq_start+freq_size #figure these out from bigfile generation output
+      lowfreq = freq_start#figure these out from bigfile generation output
+      
+      pix_per_freq = dim_x / (highfreq-lowfreq)
+      
+      #v1-8: fix apparent bug, possibly due to smaller freq than spec range or the high lowfreq. 
+      GT$HighPix = (GT$HighFreq-lowfreq) * pix_per_freq
+      GT$LowPix = (GT$LowFreq-lowfreq) * pix_per_freq
+      
+      #bound by freq:
+      #v1-8 stealth edit- remove gt which exceed the high freq on their low boundary. 
+      if(any(GT$LowPix>dim_x)){
+        GT= GT[-which(GT$LowPix>dim_x),]
+      }
+    }
   #v1-8 stealth edit- uncomment this out. Not sure why it was commented out in the first place... 
-  GT$HighPix[GT$HighPix>dim_x] = dim_x
-  GT$LowPix[GT$LowPix<0] = 0
-  
-  GT$HighPix =round(GT$HighPix)
-  GT$LowPix =round(GT$LowPix)
+    if(nrow(GT)>0){
+      GT$HighPix[GT$HighPix>dim_x] = dim_x
+      GT$LowPix[GT$LowPix<0] = 0
+      
+      GT$HighPix =round(GT$HighPix)
+      GT$LowPix =round(GT$LowPix)
+    }
   }else if(dimensions==1){  
     
-    GT$HighPix = dim_x
-    GT$LowPix = 0
+    if(nrow(GT)>0){
+      GT$HighPix = dim_x
+      GT$LowPix = 0
+    }
+
   }
   
   
@@ -149,7 +167,8 @@ filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr","png")) %d
   GT$EndPix = GT$EndTime * pix_per_sec
   
   #bound by time:
-  GT = GT[which(GT$EndPix<dim_y & GT$StartPix>0),]
+  #v1-9: made more permissive
+  GT = GT[which(GT$StartPix<dim_y & GT$EndPix>0),]
   
   GT$StartPix = round(GT$StartPix)
   GT$EndPix =round(GT$EndPix)
@@ -167,7 +186,10 @@ filenames = foreach(i=1:length(bigfiles),.packages=c("signal","dplyr","png")) %d
     for(j in 1:length(GT_unq)){
       for(k in 1:nrow(GT)){
         
-        lab_array[GT[k,"LowPix"]:GT[k,"HighPix"],GT[k,"StartPix"]:GT[k,"EndPix"],GT[k,"depth"]] = 2 #0 is now 'tp'
+        end_ = min(dim_y,GT[k,"EndPix"])
+        start_ = max(0,GT[k,"StartPix"])
+        
+        lab_array[GT[k,"LowPix"]:GT[k,"HighPix"],start_:end_,GT[k,"depth"]] = 2 #0 is now 'tp'
       }
       
     }

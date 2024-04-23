@@ -3,7 +3,7 @@ library(flux)
 #library(tidyverse)
 #v1-1: make sure FG information makes it into the outputs. 
 
-args<-"D:/Cache/865375/185858/737026 D:/Cache/865375/185858/737026/278958 D:/Cache/865375/185858/746913/723985/767409 2 n pe2dl-simple-v1-4"
+args<-"D:/Cache/942573/199414/268525 D:/Cache/942573/199414/268525/761024 D:/Cache/942573/199414/330016/664458/840531 2 n pe2dl-simple-v1-4"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep="")) 
@@ -132,7 +132,12 @@ if(length(unique(data$label))<2){
   AUCs = list()
   for(i in 1:3){
     if(!is.na(curves[[i]]) & (i != 3 | suppress_test == 'n')){
-      AUCs[[i]]=auc(curves[[i]]$curve[,1],curves[[i]]$curve[,2])
+      if(!is.na(curves[[i]]$auc.davis.goadrich)){
+        AUCs[[i]]=auc(curves[[i]]$curve[,1],curves[[i]]$curve[,2])
+      }else{
+        AUCs[[i]] = NA
+      }
+      
     }else{
       AUCs[[i]] = NA
     }

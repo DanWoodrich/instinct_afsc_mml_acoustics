@@ -82,7 +82,7 @@ img_print <-function(object,xbins,pix_height,path){
 
 #needs PARAMSET_GLOBALS['SF_foc'] in process
 
-args="D:/Cache/672084 D:/Cache/672084/391329 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/2048 IP18_AU_CH01 y 224 800 256 32 512 con_bright_no_rep-v1-5"
+args="D:/Cache/493063 D:/Cache/493063/325405 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/4096 AL17_AU_BF02 n 2048 0 240 120 512 mel-v1-0"
 
 args<-strsplit(args,split=" ")[[1]]
 source(paste(getwd(),"/user/R_misc.R",sep="")) 

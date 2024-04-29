@@ -1,0 +1,15 @@
+pipe: CompareAndPublishDets.pipe
+#loop_on: FormatFG
+CompareAndPublishDets.pipe: 
+  process: CompareAndPublishDets
+  GetEditData:
+    pipe: PeaksAssoc.pipe
+    pipe_link:
+      name: EditPeaks_combine.nt
+  GetPriorData:
+    pipe: FormatGT.pipe
+    loop_on: FormatFG
+    FormatGT.pipe:
+      process: FormatGT
+      GetFG:
+        process: FormatFG

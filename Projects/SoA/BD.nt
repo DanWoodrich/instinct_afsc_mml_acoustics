@@ -84,19 +84,42 @@ Job:
                 #- AL22_AU_BF02
                 #- AL22_AU_IC03
                 #- AL22_AU_PB01
-                - AL22_AU_PH01
-                - AL22_AU_NM01
-                - BS22_AU_PM05
-                - BS22_AU_PM04
-                - AL22_AU_BS11
-                - AL22_AU_BS10
-                - AL22_AU_UN01
-                - AL19_AU_CL01
-                - IP21_AU_CH01
-                - IP20_AU_CH01
-                - AL20_AU_IC03
-                - AL19_AU_IC03
-                - AL20_AU_BS11
+                #- AL22_AU_PH01
+                #- AL22_AU_NM01
+                #- BS22_AU_PM05
+                #- BS22_AU_PM04
+                #- AL22_AU_BS11
+                #- AL22_AU_BS10
+                #- AL22_AU_UN01
+                #- AL19_AU_CL01
+                #- IP21_AU_CH01
+                #- IP20_AU_CH01
+                #- AL20_AU_IC03
+                #- AL19_AU_IC03
+                #- AL20_AU_BS11
+                - AL20_AU_CL01
+                - AL20_AU_PH01
+                - AL21_AU_NM01
+                - AL21_AU_PH01
+                - AL21_AU_UM01
+                - BS19_AU_PM05
+                - BS20_AU_PM08
+                - BS21_AU_PM04
+                - AL20_AU_BF02
+                - BS21_AU_PM02
+                - AL21_AU_UN01
+                - AL21_AU_BS10
+                - AL19_AU_PB01
+                - AL19_AU_WT01
+                - AL20_AU_NM01
+                - AL19_AU_IC02
+                - AL19_AU_BS10
+                - AL19_AU_BS03
+                - AL19_AU_UM01
+                - BS19_AU_PM02-b
+                - AL20_AU_PM02-b
+                - AL20_AU_UN01-b
+                - BS20_AU_PM04
         arguments:
             hard_rerun: n
         descriptors:

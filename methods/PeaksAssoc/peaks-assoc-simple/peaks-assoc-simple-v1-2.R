@@ -1,9 +1,12 @@
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/21783/207402/229016/379173/730529/463837/261382 D:/Cache/21783/207402/229016/379173 D:/Cache/21783/207402/229016/379173/997906 y 38 peaks-assoc-simple-v1-1"
+
+args="D:/Cache/21783/706996/313701/588976/907430/171281/918431 D:/Cache/21783/706996/313701/588976 D:/Cache/21783/706996/313701/588976/370033 y 37 peaks-assoc-simple-v1-2"
 
 args<-strsplit(args,split=" ")[[1]]
+
+stop()
 
 args<-commandArgs(trailingOnly = TRUE)
 
@@ -19,12 +22,10 @@ resultPath = args[3]
 allow_ambiguous_label <-args[4]
 new_procedure = args[5]
 
-if(any(assoc_data$peak_assoc_id==-1,na.rm=TRUE) | ! new_procedure %in% unique(unique(assoc_data$procedure),unique(peak_data$procedure))){
+if(any(assoc_data$peak_assoc_id==-1,na.rm=TRUE)){
   is_review = TRUE
   held_out_data = assoc_data[which(assoc_data$peak_assoc_id==-1),]
-  if(any(assoc_data$peak_assoc_id==-1,na.rm=TRUE)){
-    assoc_data = assoc_data[-which(assoc_data$peak_assoc_id==-1),]
-  }
+  assoc_data = assoc_data[-which(assoc_data$peak_assoc_id==-1),]
 }else{
   is_review=FALSE
 }
@@ -80,18 +81,13 @@ for(i in 1:nrow(peak_data)){
 }
 
 
-#this covers review of an existing procedure as well as verifications made on another procedure. 
+
 if(is_review){
   
   if(length(unique(held_out_data$procedure))>1){
     stop("ambiguous procedures present- only pull in procedures which you would like to update")
   }
-  
-  if(nrow(held_out_data)>0){
-    review_procedure = held_out_data$procedure[1]
-  }else{
-    review_procedure = unique(unique(assoc_data$procedure),unique(peak_data$procedure))
-  }
+  review_procedure = held_out_data$procedure[1]
   
   #recreate the original dets
   assoc_data_copy = assoc_data
@@ -131,10 +127,10 @@ if(is_review){
     
     assoc_data_copy$bin_unq= (assoc_data_copy$bin_unqst + assoc_data_copy$bin_unqend) / 2
     
-    unq_ids = assoc_data_copy[which(!duplicated(data.frame(assoc_data_copy$StartFile,assoc_data_copy$EndFile,assoc_data_copy$data_collection_id,assoc_data_copy$bin_unq))),"id"]
+    unq_ids = assoc_data_copy[which(!duplicated(data.frame(assoc_data_copy$StartFile,assoc_data_copy$EndFile,assoc_data_copy$bin_unq))),"id"]
     
-    all_bins = dbFetch(dbSendQuery(con,paste("SELECT DISTINCT bins.*,soundfiles.name,data_collection.id FROM bins JOIN bins_detections ON bins.id = bins_detections.bins_id JOIN detections ON detections.id = bins_detections.detections_id
-                                              JOIN soundfiles ON soundfiles.id = bins.soundfiles_id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE detections.id IN (",
+    all_bins = dbFetch(dbSendQuery(con,paste("SELECT DISTINCT bins.*,soundfiles.name FROM bins JOIN bins_detections ON bins.id = bins_detections.bins_id JOIN detections ON detections.id = bins_detections.detections_id
+                                              JOIN soundfiles ON soundfiles.id = bins.soundfiles_id WHERE detections.id IN (",
                                              paste(unq_ids,sep="",collapse = ","),
                                              ") AND bins.type = ",proc_details$negative_bin,
                                              " AND detections.procedure = ",review_procedure,sep="")))
@@ -149,43 +145,43 @@ if(is_review){
     #need to speed this up. 
     lastfile =  ""
     assoc_data_sub = assoc_data[which(assoc_data$label %in% c(1,21,2,22)),]
-    for(p in 1:length(unique(all_bins$id..7))){
-      inds = which(all_bins$id..7==unique(all_bins$id..7)[p])
-      assoc_data_In = assoc_data_sub[which(assoc_data_sub$data_collection_id==unique(all_bins$id..7)[p]),]
-      for(m in inds){
-        #print(paste(m,"of",nrow(all_bins)))
-        #ignoring case where det longer than bin
-        #for cases where det is on single file
-        if(lastfile != all_bins$name[m]){
-          comp_dets =assoc_data_In[which(assoc_data_In$StartFile==all_bins$name[m] & assoc_data_In$EndFile==all_bins$name[m]),]
-        }
-        
-        if(nrow(comp_dets[which(comp_dets$StartTime<=all_bins$seg_start[m] & 
-                                comp_dets$EndTime>all_bins$seg_start[m]) | (
-                                  comp_dets$StartTime>=all_bins$seg_start[m] &
-                                  comp_dets$EndTime<=all_bins$seg_end[m]) | (
-                                    comp_dets$EndTime>=all_bins$seg_end[m] &
-                                    comp_dets$StartTime<all_bins$seg_end[m]
-                            ) ,] > 0)){
-          all_bins$remove[m]=1
-        }
-        
-        lastfile = all_bins$name[m]
-        
-        #if(m%%100==0){
-        #  print(m)
-        #}
-        
+    for(m in 1:nrow(all_bins)){
+      #print(paste(m,"of",nrow(all_bins)))
+      #ignoring case where det longer than bin
+      #for cases where det is on single file
+      if(lastfile != all_bins$name[m]){
+        comp_dets =assoc_data_sub[which(assoc_data_sub$StartFile==all_bins$name[m] & assoc_data_sub$EndFile==all_bins$name[m]),]
       }
+      
+      if(nrow(comp_dets[which(comp_dets$StartTime<=all_bins$seg_start[m] & 
+                              comp_dets$EndTime>all_bins$seg_start[m]) | (
+                                comp_dets$StartTime>=all_bins$seg_start[m] &
+                                comp_dets$EndTime<=all_bins$seg_end[m]) | (
+                                  comp_dets$EndTime>=all_bins$seg_end[m] &
+                                  comp_dets$StartTime<all_bins$seg_end[m]
+                          ) ,] > 0)){
+        all_bins$remove[m]=1
+      }
+      
+      lastfile = all_bins$name[m]
+      
+      #for cases where det is between two files
+      #if(any(assoc_data[which(assoc_data$EndTime>all_bins$seg_start[m]
+      #                        &
+      #                        (assoc_data$EndFile==all_bins$name[m] & assoc_data$EndFile!=assoc_data$StartFile )) ,"label"] %in% c(1,21))){
+      #  all_bins$remove[m]=1
+      #}
+      
+      
     }
     
     overlap_sf = assoc_data[which(assoc_data$StartFile!=assoc_data$EndFile),]
-    overlap_sf = overlap_sf[which(overlap_sf$label %in% c(1,21,2,22)),]
+    overlap_sf = overlap_sf[which(overlap_sf$label %in%  c(1,21,2,22))]
     
     for(m in 1:nrow(overlap_sf)){
       
-      all_bins[which(all_bins$name==overlap_sf$EndFile[m] & all_bins$id..7==overlap_sf$data_collection_id[m] & all_bins$seg_start==0),"remove"]=1
-      all_bins[which(all_bins$name==overlap_sf$StartFile[m] & all_bins$id..7==overlap_sf$data_collection_id[m] & all_bins$seg_end>overlap_sf$StartTime[m]),"remove"]=1
+      all_bins[which(all_bins$name==overlap_sf$EndFile[m] & all_bins$seg_start==0),"remove"]=1
+      all_bins[which(all_bins$name==overlap_sf$StartFile[m] & all_bins$seg_end>overlap_sf$StartTime[m]),"remove"]=1
      
     }
     
@@ -196,7 +192,7 @@ if(is_review){
     assoc_data_out = rbind(assoc_data_copy,assoc_data,held_out_data,assoc_data_negs)
     
     new_neg_data = data.frame(neg_bins$seg_start,neg_bins$seg_end,0,max(assoc_data_out$HighFreq),neg_bins$name,neg_bins$name,
-                              NA,"",new_procedure,20,17,2,NA,assoc_data$analyst[1],1,NA,NA,as.integer(neg_bins$id..7),NA,NA)
+                              NA,"",new_procedure,20,17,2,NA,assoc_data$analyst[1],1,NA,NA,NA,NA)
     
     colnames(new_neg_data)= colnames(assoc_data_negs)
     

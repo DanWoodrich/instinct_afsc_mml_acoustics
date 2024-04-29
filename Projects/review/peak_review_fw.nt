@@ -4,8 +4,11 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
+        #query_fins_proc_25_old:
+        #  > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.procedure = 25 AND detections.start_file IN {FG}"
         query_fins_proc_25:
-          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.procedure = 25 AND detections.start_file IN {FG}"
+          > "SELECT DISTINCT detections.*,soundfiles.data_collection_id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > WHERE detections.procedure = 25 AND detections.start_file IN {FG}"
 Job:
     FormatFG:
         parameters:
@@ -19,7 +22,8 @@ Job:
             target_samp_rate: 512
             #target_samp_rate: 8192
             file_groupID: 
-              - AL19_AU_CL01
+              #- AL21_AU_UN01 #not done just glanced at
+              - AL22_AU_UN01
         arguments:
             hard_rerun: n
         descriptors:
@@ -42,7 +46,7 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-10
+            methodvers: v1-13
         arguments:
             fg_fill: n
             hard_rerun: n
@@ -85,8 +89,9 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-6
+        methodvers: v1-8
         assume_full_review: n
+        on_behalf_of: self
       arguments: 
         hard_rerun: n
       descriptors:
@@ -95,7 +100,8 @@ Job:
     CalcPeaks:
       parameters:
         methodID: calcpeaks-simple
-        methodvers: v1-1
+        methodvers: v1-3
+        calc_type: max
       arguments: 
         hard_rerun: n
       descriptors:

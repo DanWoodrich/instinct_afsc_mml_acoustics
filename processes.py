@@ -827,7 +827,10 @@ class EditRAVENx(INSTINCT_userprocess):
     userfile_append = "_edit"
 
     def get_info(self): #this injects some formatFG info into the manifest
-        return self.ports[1].parameters['file_groupID']
+        if 'parameters' in dir(self.ports[1]):
+            return self.ports[1].parameters['file_groupID']
+        else:
+            return 'multiple FDID'
 
 class ReviewRAVENx(INSTINCT_userprocess):
     #pipeshape = OneUpstream
@@ -837,11 +840,14 @@ class ReviewRAVENx(INSTINCT_userprocess):
     userfile_append = "_edit"
 
     def get_info(self): #this injects some formatFG info into the manifest
-        return self.ports[1].parameters['file_groupID']
+        if 'parameters' in dir(self.ports[1]):
+            return self.ports[1].parameters['file_groupID']
+        else:
+            return 'multiple FDID'
+        #return self.ports[1].parameters['file_groupID']
 
     def file_modify(self,file):
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
+        
 
         rav_tab = pd.read_csv(self.outfilegen(),sep="\t")
         rav_tab["label"] = ""

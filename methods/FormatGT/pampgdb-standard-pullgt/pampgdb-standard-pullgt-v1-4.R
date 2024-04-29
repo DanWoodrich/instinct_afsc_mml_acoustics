@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "D:/Cache/572733/184673/DETx.csv.gz AL19_AU_CL01 query remove_proc_ovlp standardize_sig_code query n n pampgdb-standard-pullgt-v1-4"
+args = "D:/Cache/21783/207402/DETx.csv.gz AL22_AU_NM01 query remove_proc_ovlp standardize_sig_code query n n pampgdb-standard-pullgt-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 

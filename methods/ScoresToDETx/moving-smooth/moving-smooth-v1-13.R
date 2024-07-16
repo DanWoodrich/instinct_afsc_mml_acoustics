@@ -16,7 +16,7 @@
 #v1-3:
 #add FGID to column to it is retained in outputs. 
 
-args = "D:/Cache/912248/FileGroupFormat.csv.gz D:/Cache/766359/707095/85667/505872/229546/572166 D:/Cache/912248/664993 D:/Cache/912248/664993/200550 D:/Cache/912248/664993/200550/289003 3600 0 4096 120 240 240 80 mean within_file 120 moving-smooth-v1-13 n y 1"
+args = "D:/Cache/691880/FileGroupFormat.csv.gz D:/Cache/766359/707095/85667/505872/229546/502877 D:/Cache/691880/372121 D:/Cache/691880/372121/669253 D:/Cache/691880/372121/669253/542624 3600 0 4096 120 240 240 80 mean within_file 120 moving-smooth-v1-13 n y 1"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -87,8 +87,10 @@ for(i in 1:length(unique(FGs$Name))){
   #bool = indFG$startTime_posx[2:nrow(indFG)]==indFG$endTime_posx[1:(nrow(indFG)-1)]
   
   #change this calculation to within 1 second like in formatFG process
+  #bool = abs(indFG$startTime_posx[2:nrow(indFG)]-indFG$endTime_posx[1:(nrow(indFG)-1)])<2
   
-  bool = abs(indFG$startTime_posx[2:nrow(indFG)]-indFG$endTime_posx[1:(nrow(indFG)-1)])<2
+  #stealth fix v1-13
+  bool = abs(difftime(indFG$startTime_posx[2:nrow(indFG)],indFG$endTime_posx[1:(nrow(indFG)-1)],units="secs"))<2
   
   for(m in 1:(nrow(indFG)-1)){
     #every time we hit a false, increase the iterator by 1
@@ -235,94 +237,105 @@ if(vertical_bins==1){
       
       #v1-11: max rounding behavior same as spectogram generation so scores line up better. 
       #end_ind = (scores_ind+floor((round(dur)-model_s_size)*native_pix_per_sec/stride_pix))
+    
+      #stealth  change v1-13
+      #algorithm doesn't give a score to len 1 segments.
+      num_steps = floor((dur-model_s_size)*native_pix_per_sec/stride_pix)
+       
+      if(num_steps>=1){
       
-      end_ind = (scores_ind+floor((dur-model_s_size)*native_pix_per_sec/stride_pix))
+        end_ind = scores_ind+num_steps
       
-      scores= Scores$V1[scores_ind:end_ind]
-      
-      #this is the point I smooth.
-      new_size = length(scores)*(stride_pix/group_pix)
-      scores = approx(scores, n=new_size)$y
-      
-      scores_starts= seq(0,length(scores)*group_pix/native_pix_per_sec-group_pix/native_pix_per_sec,group_pix/native_pix_per_sec)
-      
-      #v1-2: shift so that the scores correspond instead to midpoint of signal: 
-      #no longer needed after v4 change (change to model step behavior)
-      #scores_starts = scores_starts-(model_win_size/(native_pix_per_sec*time_expand))/2
-      #--
-      
-      scores_ends = scores_starts + model_s_size
-      
-      #v1-2: crop the initial value so that it is >0
-      #scores_starts[which(scores_starts<0)]=0.1
-      
-      #crop the final value so that it is within difftime interval
-      #helps in cases where a sample or two are missing. 
-      scores_ends[which(scores_ends>=dur)]=dur-0.1
-      
-      FGdt2 = aggregate(SegDur ~ FileName, data = FGdt, sum)
-      FGdt2$cumdur = cumsum(FGdt2$SegDur)
-      #now can assemble detx info. 
-      if(nrow(FGdt2)>1){
-        FGdt2$startcum =c(0,FGdt2$cumdur[1:(nrow(FGdt2)-1)])
-        FGdt2$offset = c(FGdt$SegStart[1],rep(0,nrow(FGdt2)-1))
-      }else{
-        FGdt2$startcum=0
-        FGdt2$offset = FGdt$SegStart[1]
-      }
-      
-      startfiles = FGdt2$FileName[findInterval(scores_starts,c(0,FGdt2$cumdur))]
-      endfiles = FGdt2$FileName[findInterval(scores_ends,c(0,FGdt2$cumdur),left.open = TRUE)] #left open v1-13 change
-      
-      startint = findInterval(scores_starts,c(0,FGdt2$cumdur))
-      endint = findInterval(scores_ends,c(0,FGdt2$cumdur),left.open = TRUE) #left open v1-13 change
-      
-      scores_starts = scores_starts- FGdt2$startcum[startint]+FGdt2$offset[startint]
-      scores_ends = scores_ends- FGdt2$startcum[endint]+FGdt2$offset[endint]
-      
-      detx = data.frame(scores_starts,scores_ends,freq_low,freq_low+freq_size,startfiles,endfiles,scores,FGdt$Name[1])
-
+        scores= Scores$V1[scores_ind:end_ind]
         
-      colnames(detx) = c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","probs","FGID")
-      
-      #if(any(detx$StartFile=="AU-BSPM04-160815-085000.wav")){
-      #  stop("temporary debug catch")
-      #}
-      
-      
-      if(any((detx$EndTime-detx$StartTime)>(model_s_size+1))){
-        print(detx[which((detx$EndTime-detx$StartTime)>(model_s_size+1)),])
-        stop("error found")
+        #this is the point I smooth.
+        new_size = length(scores)*(stride_pix/group_pix)
+        
+        #stealth  change v1-13
+  
+        score = approx(scores, n=new_size)$y
+        
+        
+        scores_starts= seq(0,length(scores)*group_pix/native_pix_per_sec-group_pix/native_pix_per_sec,group_pix/native_pix_per_sec)
+        
+        #v1-2: shift so that the scores correspond instead to midpoint of signal: 
+        #no longer needed after v4 change (change to model step behavior)
+        #scores_starts = scores_starts-(model_win_size/(native_pix_per_sec*time_expand))/2
+        #--
+        
+        scores_ends = scores_starts + model_s_size
+        
+        #v1-2: crop the initial value so that it is >0
+        #scores_starts[which(scores_starts<0)]=0.1
+        
+        #crop the final value so that it is within difftime interval
+        #helps in cases where a sample or two are missing. 
+        scores_ends[which(scores_ends>=dur)]=dur-0.1
+        
+        FGdt2 = aggregate(SegDur ~ FileName, data = FGdt, sum)
+        FGdt2$cumdur = cumsum(FGdt2$SegDur)
+        #now can assemble detx info. 
+        if(nrow(FGdt2)>1){
+          FGdt2$startcum =c(0,FGdt2$cumdur[1:(nrow(FGdt2)-1)])
+          FGdt2$offset = c(FGdt$SegStart[1],rep(0,nrow(FGdt2)-1))
+        }else{
+          FGdt2$startcum=0
+          FGdt2$offset = FGdt$SegStart[1]
+        }
+        
+        startfiles = FGdt2$FileName[findInterval(scores_starts,c(0,FGdt2$cumdur))]
+        endfiles = FGdt2$FileName[findInterval(scores_ends,c(0,FGdt2$cumdur),left.open = TRUE)] #left open v1-13 change
+        
+        startint = findInterval(scores_starts,c(0,FGdt2$cumdur))
+        endint = findInterval(scores_ends,c(0,FGdt2$cumdur),left.open = TRUE) #left open v1-13 change
+        
+        scores_starts = scores_starts- FGdt2$startcum[startint]+FGdt2$offset[startint]
+        scores_ends = scores_ends- FGdt2$startcum[endint]+FGdt2$offset[endint]
+        
+        detx = data.frame(scores_starts,scores_ends,freq_low,freq_low+freq_size,startfiles,endfiles,scores,FGdt$Name[1])
+  
+          
+        colnames(detx) = c("StartTime","EndTime","LowFreq","HighFreq","StartFile","EndFile","probs","FGID")
+        
+        #if(any(detx$StartFile=="AU-BSPM04-160815-085000.wav")){
+        #  stop("temporary debug catch")
+        #}
+        
+        
+        if(any((detx$EndTime-detx$StartTime)>(model_s_size+1))){
+          print(detx[which((detx$EndTime-detx$StartTime)>(model_s_size+1)),])
+          stop("error found")
+        }
+        
+        if(any(is.na(detx$EndFile)) | any(is.na(detx$StartFile)) | 
+           any(is.na(detx$scores_starts)) | any(is.na(detx$scores_ends))){
+          stop("Bug catch")
+        }
+        
+        #read in split data
+        
+        
+        
+        #v1-10 stealth bugfix: incorrectly assessed # of columns instead of # of rows
+        #v1-12 bugfix: splits csv not always labeled $x1, changed to consistent column name. 
+        #also, added rounding to approx (i imagine this is where odd fractional splits happen)
+        splits = read.csv(filetabs[datachunk,"splitfile"])
+        splits = splits[,1]
+        
+        if(length(splits)>1){
+          #downsample splits to the level of scores
+          splits2 = round(approx(splits, n=new_size)$y)
+        }else{
+          splits2 = 3
+        }
+        
+        detx$splits = splits2
+        
+        data_all[[datachunk]]=detx
+        
+        datachunk = datachunk + 1
+        scores_ind= end_ind+1
       }
-      
-      if(any(is.na(detx$EndFile)) | any(is.na(detx$StartFile)) | 
-         any(is.na(detx$scores_starts)) | any(is.na(detx$scores_ends))){
-        stop("Bug catch")
-      }
-      
-      #read in split data
-      
-      
-      
-      #v1-10 stealth bugfix: incorrectly assessed # of columns instead of # of rows
-      #v1-12 bugfix: splits csv not always labeled $x1, changed to consistent column name. 
-      #also, added rounding to approx (i imagine this is where odd fractional splits happen)
-      splits = read.csv(filetabs[datachunk,"splitfile"])
-      splits = splits[,1]
-      
-      if(length(splits)>1){
-        #downsample splits to the level of scores
-        splits2 = round(approx(splits, n=new_size)$y)
-      }else{
-        splits2 = 3
-      }
-      
-      detx$splits = splits2
-      
-      data_all[[datachunk]]=detx
-      
-      datachunk = datachunk + 1
-      scores_ind= end_ind+1
     }
   }
   

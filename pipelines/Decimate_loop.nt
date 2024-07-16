@@ -1,0 +1,4 @@
+pipe: FormatFG.pipe
+loop_on: FormatFG
+FormatFG.pipe:
+  process: FormatFG

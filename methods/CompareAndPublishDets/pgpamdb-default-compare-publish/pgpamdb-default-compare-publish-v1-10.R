@@ -1,5 +1,3 @@
-
-
 check_sf_dups = function(conn,sfs){
   
   dups = dbFetch(dbSendQuery(conn,paste("SELECT COUNT( DISTINCT soundfiles.data_collection_id),soundfiles.name FROM soundfiles WHERE soundfiles.name IN ('",paste(sfs,collapse="','",sep=""),"') GROUP BY soundfiles.name HAVING COUNT(*) > 1 ",sep="")))
@@ -18,7 +16,7 @@ check_sf_dups = function(conn,sfs){
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/151936/128921/254194/551277/755500 D:/Cache/151936/128921/254194 D:/Cache/151936/128921/254194/551277/755500/824393 n self pgpamdb-default-compare-publish-v1-9"
+args="C:/Apps/INSTINCT/Cache/197911/387042/108126/210862/198345 C:/Apps/INSTINCT/Cache/197911/387042/108126 C:/Apps/INSTINCT/Cache/197911/387042/108126/210862/198345/692012 n 38 Eric pgpamdb-default-compare-publish-v1-9"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -198,6 +196,11 @@ transaction_operation = list()
 operations = as.vector(rep("",3),mode='list')
 names(operations)<-c("Modify","Insert","Delete")
 
+#find the unique procedures present in prior_data. If none of them are i_neg, don't worry about
+#relaculating i_neg later for edited detections (very relevant to avoid in detection review workflows)
+
+i_neg_proc_prior = dbFetch(dbSendQuery(con,paste("SELECT * FROM effort_procedures WHERE procedures_id IN (",paste(unique(PriorData$procedure),collapse=",",sep=","),") AND effproc_assumption = 'i_neg'",sep="")))
+
 affected_ids_total = c()
 
 if(length(mod_keys)>0){
@@ -264,6 +267,8 @@ if(length(mod_keys)>0){
       
       colnames(FGred)=c("data_collection.id","soundfiles.name")
       
+      print('debug:1')
+      
       sfs = table_dataset_lookup(con,
                                  "SELECT DISTINCT ON (soundfiles.name,data_collection.id) soundfiles.id,soundfiles.name,data_collection.id FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id",
                                  FGred,
@@ -290,6 +295,7 @@ if(length(mod_keys)>0){
       
     }
     
+    #v1-7
     #EditMod$analyst=analyst
     
     colsums= colSums(testdf,na.rm=TRUE)
@@ -301,9 +307,6 @@ if(length(mod_keys)>0){
     
     EditMod = EditMod[sums>0,]
     testdf_reduce = testdf[sums>0,]
-    
-    #v1-9 stealth change- moved from above. maybe it will  now properly credit? looks like it was getting overwritten ealier
-    EditMod$analyst=analyst
     
     #new in 1-3: also check to see what columns have been modified. remove those which haven't
     
@@ -355,6 +358,7 @@ if(length(mod_keys)>0){
           #may not even be necessary since we're including start and end file in duplicated
           unq_ids = EditMod_proc_labelchange[which(!duplicated(data.frame(EditMod_proc_labelchange$start_file,EditMod_proc_labelchange$end_file,EditMod_proc_labelchange$bin_unq))),"id"]
          #print('1')
+          print('debug:2')
           affected_bins = dbFetch(dbSendQuery(con,paste("SELECT detections.id,detections.label,detections.probability,bins.* FROM detections JOIN bins_detections ON detections.id = bins_detections.detections_id JOIN bins ON 
                                                         bins.id = bins_detections.bins_id WHERE bins.id IN 
                                                         (SELECT DISTINCT bins_detections.bins_id FROM bins JOIN bins_detections ON bins.id = bins_detections.bins_id 
@@ -362,6 +366,7 @@ if(length(mod_keys)>0){
                                                         paste(unq_ids,sep="",collapse = ","),
                                                         ") AND type = ",check_row$negative_bin,")",
                                                         " AND detections.procedure = ",unique(EditMod$procedure)[i],sep="")))
+          print('debug:3')
           #print('2')
           #fill in the new labels for considered detections. using this table, make another table which 
           #represents each bin, and whether it contains a 1 detection or not. 
@@ -414,6 +419,7 @@ if(length(mod_keys)>0){
             
             #remove all bn_to_rem
             if(length(bn_to_rem)>0){
+              print('debug:4')
               table_delete(con,'detections',bn_to_rem,hard_delete = TRUE)
             }
             
@@ -443,6 +449,12 @@ if(length(mod_keys)>0){
               stop("duplicate soundfiles present in insert- need to revise process to correctly distinguish duplicate file names. aborting..")
             }
             
+            #v1-9 stealth change
+            #set analyst to analyst
+            adddets$analyst = analyst
+            
+            print('debug:5')
+            
             #add the new bin negatives
             out = dbAppendTable(con,'detections',adddets)
             
@@ -457,9 +469,17 @@ if(length(mod_keys)>0){
       
       #pare down edit mod to only necessary columns
       EditMod = EditMod[,c('id','procedure',names(colsums[which(colsums>0)]))]
-      #print('3')
+      
+      #v1-9 stealth change
+      #set analyst to analyst
+      EditMod$analyst = analyst
+      
+      print('debug:6')
+      
       #update editmod
       table_update(con,'detections',EditMod)
+      
+      print('debug:7')
 
     }
     
@@ -467,7 +487,17 @@ if(length(mod_keys)>0){
     
     operations[[1]]=paste(nrow(EditMod),"rows UPDATED. Bin negatives inserted:",bn_added,". Bin negatives deleted:",bn_removed,". Over the following procedures:",paste(all_bn_proc,sep="",collapse=","))
 
-    affected_ids_total = c(affected_ids_total,EditMod$id)
+    
+    #discard adding to affected ids total those from procedures not represented in i_neg- implies det_review and not worth
+    #the query later. 
+    
+    #print this out so I can check types after 1st run
+    print(unique(EditMod$procedures))
+    typeof(unique(EditMod$procedures))
+    print(i_neg_proc_prior$procedures_id)
+    typeof(i_neg_proc_prior$procedures_id)
+    
+    affected_ids_total = c(affected_ids_total,EditMod[which(EditMod$procedure %in% i_neg_proc_prior$procedures_id),"id"])
 
   }else{
     operations[[1]]="0 records UPDATED. No bin negatives modified."
@@ -586,14 +616,15 @@ if(length(del_keys)>0){
 
 if(length(affected_ids_total)>0){
   
+  #change! don't use .id IN (), use VALUES
   query = paste("SELECT DISTINCT effort.name, detections.procedure, detections.signal_code
                 FROM detections JOIN bins_detections ON bins_detections.detections_id = detections.id
                 JOIN bins ON bins.id = bins_detections.bins_id JOIN bins_effort ON bins_effort.bins_id
                 = bins.id JOIN effort ON effort.id = bins_effort.effort_id JOIN effort_procedures ON 
                 (effort_procedures.effort_id = effort.id AND detections.procedure = effort_procedures.procedures_id 
-                AND detections.signal_code = effort_procedures.signal_code) WHERE effproc_assumption = 'i_neg'
-                AND effort_procedures.completed = 'y'
-                AND detections.id IN (",paste(affected_ids_total,collapse=",",sep=""),")",sep="")
+                AND detections.signal_code = effort_procedures.signal_code) JOIN (VALUES (",paste(affected_ids_total,collapse="),(",sep=""),")) 
+                as v(id) ON detections.id = v.id WHERE effproc_assumption = 'i_neg'
+                AND effort_procedures.completed = 'y'",sep="")
   
   query <- gsub("[\r\n]", "", query)
   
@@ -613,14 +644,15 @@ if(length(affected_ids_total)>0){
       comb_seq = c(comb_seq,paste("(",unq_pdaffected_vec[f],",",unq_pdaffected_vec[f+length(unq_pdaffected_vec)/2],")",sep=""))
     }
     
+    #change! don't use .id IN (), use VALUES
     prior_data_affected_query = paste("SELECT DISTINCT effort.name, detections.id
                 FROM detections JOIN bins_detections ON bins_detections.detections_id = detections.id
                 JOIN bins ON bins.id = bins_detections.bins_id JOIN bins_effort ON bins_effort.bins_id
                 = bins.id JOIN effort ON effort.id = bins_effort.effort_id JOIN effort_procedures ON 
-                effort_procedures.effort_id = effort.id  WHERE effproc_assumption = 'i_neg'
+                effort_procedures.effort_id = effort.id JOIN (VALUES (",paste(affected_ids_total,collapse="),(",sep=""),")) 
+                as v(id) ON detections.id = v.id WHERE effproc_assumption = 'i_neg'
                 AND effort_procedures.completed = 'y' AND (effort_procedures.procedures_id,effort_procedures.signal_code)
-                IN (",paste(comb_seq,collapse=","),")
-                AND detections.id IN (",paste(affected_ids_total,collapse=",",sep=""),")",sep="")
+                IN (",paste(comb_seq,collapse=","),")",sep="")
     
     prior_data_affected_query <- gsub("[\r\n]", "", prior_data_affected_query)
     

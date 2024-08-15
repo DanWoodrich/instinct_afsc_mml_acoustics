@@ -16,7 +16,7 @@ check_sf_dups = function(conn,sfs){
 library(pgpamdb)
 library(DBI)
 
-args="C:/Apps/INSTINCT/Cache/197911/387042/108126/210862/198345 C:/Apps/INSTINCT/Cache/197911/387042/108126 C:/Apps/INSTINCT/Cache/197911/387042/108126/210862/198345/692012 n 38 Eric pgpamdb-default-compare-publish-v1-9"
+args="C:/Apps/INSTINCT/Cache/915396/426232/843987/507076/378231 C:/Apps/INSTINCT/Cache/915396/426232/843987 C:/Apps/INSTINCT/Cache/915396/426232/843987/507076/378231/157859 n 38 Eric pgpamdb-default-compare-publish-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -84,6 +84,8 @@ EditData$Name.y= NULL
 
 PriorData = PriorData[which(!is.na(PriorData$label)),]
 EditData = EditData[which(!is.na(EditData$label)),]
+
+#EditData[which(is.na(EditData$label)),'label']=99 #need to also set type to integer
 
 #keep a vector of all the procedures. Use this vector to check assumptions and make sure
 #that modifications outside of allowed rules (such as, moving/resizing a machine generated detection,
@@ -477,7 +479,26 @@ if(length(mod_keys)>0){
       print('debug:6')
       
       #update editmod
-      table_update(con,'detections',EditMod)
+      #chunk if too big: currently breaks db shared memory over a certain size
+      if(nrow(EditMod)>10000000){
+        chunk_size = 8000000
+        for(i in 1:ceiling(nrow(EditMod)/chunk_size)){
+          start = (1+((i-1)*chunk_size))
+          end = i*chunk_size
+          if(end>nrow(EditMod)){
+            end = nrow(EditMod)
+          }
+          
+          print(start)
+          print(end)
+          #print(EditMod[start:end,])
+          table_update(con,'detections',EditMod[start:end,])
+        }
+      
+      }else{
+        table_update(con,'detections',EditMod)
+      }
+      
       
       print('debug:7')
 

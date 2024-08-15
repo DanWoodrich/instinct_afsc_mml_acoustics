@@ -1,5 +1,5 @@
 Global:
-    cache_root: D:/Cache
+    cache_root: C:/Cache
     SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
@@ -87,11 +87,16 @@ Global:
           > "SELECT * FROM detections WHERE detections.start_file IN {FG}"
         #review:
         #    > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.label IN (0,1,99) AND procedure = 26 AND probability >= 0.9 AND detections.start_file IN {FG}"
+        AL18_AU_PH01_fg:
+             > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'AL18_AU_PH01' AND datetime < '2019-03-10' AND datetime > '2019-02-10'"
+        gt_all:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
             #decimate_data: n
-            decimate_data: y
+            decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-2
@@ -100,9 +105,10 @@ Job:
             target_samp_rate: 8192
             file_groupID:
                 #- [test_fg]
-                - [dicey_spots_11]
+                #- [dicey_spots_11]
                 #- [NM15_SC1_INS0_reduced]
                 #- [queryfg_high_prob_fp]
+                - [AL18_AU_PH01_fg]
         arguments:
             hard_rerun: y
         descriptors:
@@ -115,7 +121,7 @@ Job:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
             #query: [test_dets]
-            query: [gt_yes]
+            query: [gt_all]
             #query: [gt_yes_and_no]
             #query: [queryfg_high_prob_fp_gt]
             remove_proc_ovlp: n
@@ -133,7 +139,7 @@ Job:
         arguments:
             fg_fill: y
             hard_rerun: n
-            ignore_decimated: n
+            ignore_decimated: y
         descriptors:
             runtype: lib
             language: R

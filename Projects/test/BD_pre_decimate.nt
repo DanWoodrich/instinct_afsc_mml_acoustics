@@ -170,90 +170,99 @@ Job:
                 #- BS16_AU_PM04
                 #- BS16_AU_PM02-b
                 #- BS16_AU_PM02-a
-                # - BS15_AU_PM08
-                # - BS15_AU_PM05
-                # - BS15_AU_PM04
-                # - BS15_AU_PM02-b
-                # - BS15_AU_PM02-a
-                # - BS14_AU_PM05
-                # - BS14_AU_PM04
-                # - BS14_AU_PM02-b
-                # - BS14_AU_PM02-a
-                # - BS13_AU_PM05
-                # - BS13_AU_PM04
-                # - BS13_AU_PM02-b
-                # - BS13_AU_PM02-a
-                # - BS12_AU_PM08
-                # - BS12_AU_PM05
-                #done
-                #- BS12_AU_PM04
-                #- BS12_AU_PM02-b
-                #- BS12_AU_PM02-a
-                #- BS11_AU_PM08
-                #- BS11_AU_PM05
-                #- BS11_AU_PM04
-                #- BS11_AU_PM02-a
-                #- BS10_AU_PM08
-                #- BS10_AU_PM05
-                #- BS10_AU_PM04
-                #- BS10_AU_PM02-b
-                #- BS10_AU_PM02-a
-                #- BS09_AU_PM08
-                #- BS09_AU_PM05
-                #- BS09_AU_PM04
-                #- BS09_AU_PM02-b
-                #- BS09_AU_PM02-a
-                #- BS08_HA_PM04
-                #- BS08_AU_PM08
-                #- BS08_AU_PM05
-                #- BF11_AU_BF03
-                #- BF11_AU_BF02
-                #- BF11_AU_BF01
-                #most recently finished
-                #- AL16_AU_BS01
-                #- AL16_AU_BS02
-                #- AL16_AU_BS03
-                #- AL16_AU_IC02
-                #- AL16_AU_IC03
-                #- AL16_AU_UM01
-                #- AL17_AU_IC02
-                #- AL19_AU_BS09
-                #- BF07_AU_BF03
-                #- BF07_AU_BF04
-                #- BF07_AU_BF05
-                #- BF08_AU_BF04-01
-                ##- BF08_EA_MA01-01
-                #- BF08_EA_MA02-03
-                #- BF08_EA_OK01
-                #- BF09_AU_BF01
-                ##- BF09_AU_BF04-01
-                #- BF09_EA_MA03-03
-                #- BF09_EA_MA04-01
-                #- BF09_EA_OK01
-                #
-                #- BS16_AU_PM04
-                #- CX12_AU_IC02
-                #- CX12_AU_IC03
-                #- CX12_AU_WT02
-                #- CX13_AU_HS01
-                #- CX13_AU_HS03
-                #- CX13_AU_IC02
-                #- CX13_AU_IC03
-                #- CX14_AU_HS01
-                #- CX14_AU_HS02
-                #- CX15_AU_IC02
-                #- CX15_AU_IC03
-                #- IP08_AU_GR01
-                #- IP10_AU_GR01
-                #- ST13_AU_NS01
-                #- ST14_AU_NS01
-                #- IP22_AU_CH01
-                #some issues: hard rerun
+                #- AL16_AU_WT01
+                #- AL16_AU_UN01
+                #- AL16_AU_PH01
+                #- AL16_AU_PB01
+                #- AL16_AU_NS01
+                #- AL16_AU_NM01
+                #- AL16_AU_IC01
+                #- AL16_AU_CL01
+                #- AL16_AU_CC02
+                #- AL16_AU_BF02
+                #- AL16_AU_BF01
+                #- AW15_AU_WT01
+                #- AW15_AU_UN01
+                #- AW15_AU_PH01
+                #- AW15_AU_PB01
+                #- AW15_AU_NS01
+                #- AW15_AU_NM01
+                #- AW15_AU_KZ01
+                #- AW15_AU_IC01
+                #- AW15_AU_CL01
+                #- AW15_AU_BS03
+                #- AW15_AU_BS02
+                #- AW15_AU_BS01
+                #- AW15_AU_BF03
+                #- AW15_AU_BF02
+                #- AW14_AU_WT01
+                #- AW14_AU_UN01
+                #- IP19_AU_CH01
+                #- IP18_AU_CH01
                 #- IP17_AU_CH01
+                #- IP16_AU_CH01
+                #- IP15_AU_CH01
+                #- IP14_AU_CH01
+                #- IP13_AU_CH01
+                #- IP11_AU_CH01
                 #- IP10_AU_NR01
+                #- IP10_AU_CH01
+                #- IP09_AU_CH01
                 #- IP08_AU_NR01
+                #- IP08_AU_CH01
+                #- CZ11_AU_IC03-03
+                #- CZ11_AU_IC02-03
+                #- CZ11_AU_IC01-03
+                #- CZ10_AU_IC03-03
+                #- CZ10_AU_IC02-03
+                #- CZ10_AU_IC01-03
+                #- CX15_AU_IC03
+                #most recently completed
+                #- AW12_AU_BF02
+                #- AW12_AU_BF03
+                #- AW12_AU_BS01
+                #- AW12_AU_BS02
+                #- AW12_AU_BS03
+                #- AW12_AU_CL01
+                #- AW12_AU_IC01
+                #- AW12_AU_KZ01
+                #- AW12_AU_NM01
+                #- AW12_AU_PH01
+                ##- AW12_AU_UN01
+                #- AW12_AU_WT01
+                ##- AW13_AU_BF01
+                #- AW13_AU_BF02
+                ##- AW13_AU_BF03
+                #- AW13_AU_BS01
+                ##- AW13_AU_BS03
+                ##- AW13_AU_CL01
+                #- AW13_AU_IC01
+                #- AW13_AU_KZ01
+                ##- AW13_AU_NM01
+                #- AW13_AU_PB01
+                #- AW13_AU_PH01
                 #- AW13_AU_UN01
-                - BF12_AU_OK01
+                #- AW13_AU_WT01
+                #- AW14_AU_BF01
+                #- AW14_AU_BF02
+                #
+                - AL17_AU_NS01
+                #- AL19_AU_UN01-b
+                #- AL20_AU_UN01-b
+                #- AW14_AU_BS01
+                #- AW14_AU_BS02
+                #- AW14_AU_BS03
+                #- AW14_AU_BS05
+                #- AW14_AU_KZ01
+                #- AW14_AU_PB01
+                #- AW14_AU_PH01
+                #- BF07_AU_BF01
+                #- BF09_AU_BF04-02
+                #- BF10_AU_BF02
+                #- BF10_AU_BF03
+                #- BF11_EA_OK01
+                #- BS13_AU_PM08
+                #- BS14_AU_PM08
         arguments:
             hard_rerun: y
         descriptors:

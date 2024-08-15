@@ -69,110 +69,57 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 8192
             file_groupID:
-                ##- IP17_AU_CH01 #soundfiles missing genspec
-                ##- IP10_AU_NR01 #441999 soundfiles missing in gen spec
-                ##- IP08_AU_NR01 #uk bug, thought to be scores to detx but doesn't seem like it got that far based on cache
-                ##- AW13_AU_UN01 #hard rerun ths later
-                #after below are done, run the Publish_RFN_DL_model on these in async along with the next round (run next round on RFN_DL_model.nt)
-                #should work, tested and submitted AW12_AU_BS02
-                #- AL16_AU_BS01
-                #- AL16_AU_BS02
-                #- AL16_AU_IC02
-                #- AL16_AU_IC03
-                #- AL16_AU_UM01
-                #- AL19_AU_BS09
-                #- AW12_AU_BF02
-                #- AW12_AU_BF03
-                #- AW12_AU_CL01
-                #- AW12_AU_IC01
-                #- AW12_AU_NM01
-                ##- AW12_AU_WT01 #appears as though already ran and submitted, don't resubmit
-                #- AW13_AU_PH01
-                #- AW13_AU_UN01
-                #- BF07_AU_BF03
-                #- BF08_EA_MA02-03
-                #- BF08_EA_OK01
-                #- BF09_AU_BF01
-                #- BF09_EA_OK01
-                #- BF10_AU_BF01
-                #next (does not need decimate)
-                #- AL17_AU_IC02
-                #- AW12_AU_BS03
-                #- AW13_AU_CL01
-                #- AW13_AU_KZ01
-                #- AW15_AU_BS01
-                #- AW15_AU_IC01
-                #- BF07_AU_BF04
-                #- BF07_AU_BF05
-                #- BF08_AU_BF04-01
-                #- BF11_AU_BF01
-                #- BF11_AU_BF03
-                #- BS08_AU_PM05
-                #- BS08_AU_PM08
-                #- BS09_AU_PM02-a
-                #- BS10_AU_PM02-a
-                #- BS10_AU_PM04
-                #- BS11_AU_PM04
-                #- BS11_AU_PM05
-                #- BS11_AU_PM08
-                #- BS12_AU_PM02-a
-                #- BS12_AU_PM02-b
-                #- IP08_AU_NR01
-                #next (needs decimate)
-                #- AW13_AU_UN01
-                #- IP17_AU_CH01
-                #- IP10_AU_NR01
-                #- AL17_AU_NS01
-                #- AL19_AU_UN01-b
-                #- AL20_AU_UN01-b
-                #- AW14_AU_BS01
-                #- AW14_AU_BS02
-                #- AW14_AU_BS03
-                #- AW14_AU_BS05
-                #- AW14_AU_KZ01
-                #- AW14_AU_PB01
-                #- AW14_AU_PH01
-                #- BF07_AU_BF01
-                #- BF09_AU_BF04-02
-                #- BF10_AU_BF02
-                #- BF10_AU_BF03
-                #- BF11_EA_OK01
-                #- BS13_AU_PM08
-                #- BS14_AU_PM08
-                #- CX12_AU_IC02
-                #- CX12_AU_IC03
-                #- CX12_AU_WT02
-                #- CX13_AU_HS01
-                #- CX13_AU_HS03
-                #- CX13_AU_IC02
-                #- CX13_AU_IC03
-                #- CX14_AU_HS01
-                #- CX14_AU_HS02
-                #- CX15_AU_IC02
-                #- CX15_AU_IC03
-                #- IP08_AU_GR01
-                #- IP10_AU_GR01
-                #- ST13_AU_NS01
-                #- ST14_AU_NS01
-                #- IP22_AU_CH01
-                # still issues
-                ##sounfile data on db and nas don't seem to match. Fix on db. fixed, rerunning, rfn done needs publish
-                - BS16_AU_PM04 
-                # #scores don't line up with fg. needs hard rerun from formatfg and troubleshoot if still an issue. 
-                #unsure what issue is. 
-                #- BF12_AU_OK01 #can't diagnose issue with rounding so far. Slight differences from wav count to db count but doesn't seem like the issue
-                #straggler: 
-                #- CX14_AU_WT02
-                #Manolo moorings: 
-                #- XA22_ST_KS01
-                #- XA22_ST_KS02
-                #- XA22_ST_KS03
-                #- XA22_ST_KS04
-                #- XA23_ST_KS01
-                #- XA23_ST_KS03
-                #- XA23_ST_KS02
-                #- XA23_ST_KS04
+                #manolo moorings
                 #- XA23_ST_KS07
+                #- XA22_ST_KS04
+                #- XA23_ST_KS02
+                #SC testing moorings:
+                #- AL18_AU_NM01
+                #- CX14_AU_IC02
+                #- AL17_AU_BF02
+                #paul conn priority moorings
+                #- AL22_AU_NM01
+                #- AL22_AU_IC01
+                #- AL22_AU_BS11
+                #- AL22_AU_BF02
+                #- AL22_AU_IC03
+                #- AL22_AU_PB01
+                #- AL22_AU_PH01
+                #- AL22_AU_NM01
+                #- BS22_AU_PM05
+                #- BS22_AU_PM04
+                #- AL22_AU_BS11
+                #- AL22_AU_BS10
+                #- AL22_AU_UN01
+                #- AL19_AU_CL01
+                #- IP21_AU_CH01
+                #- IP20_AU_CH01
+                #- AL20_AU_IC03
+                #- AL19_AU_IC03
+                #- AL20_AU_BS11
+                - AL20_AU_CL01
+                - AL20_AU_PH01
+                - AL21_AU_NM01
+                - AL21_AU_PH01
+                - AL21_AU_UM01
+                - BS19_AU_PM05
+                - BS20_AU_PM08
+                - BS21_AU_PM04
+                - AL20_AU_BF02
+                - BS21_AU_PM02
+                - AL21_AU_UN01
+                - AL21_AU_BS10
+                - AL19_AU_PB01
+                - AL19_AU_WT01
+                - AL20_AU_NM01
+                - AL19_AU_IC02
+                - AL19_AU_BS10
+                - AL19_AU_BS03
+                - AL19_AU_UM01
+                - BS19_AU_PM02-b
+                - AL20_AU_PM02-b
+                - AL20_AU_UN01-b
+                - BS20_AU_PM04
         arguments:
             hard_rerun: n
         descriptors:

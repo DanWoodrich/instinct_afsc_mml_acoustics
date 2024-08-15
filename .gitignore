@@ -8,5 +8,6 @@
 .Rprofile
 .idea
 __pycache__/
+Data/
 
 Projects/StephLM/*

@@ -1,0 +1,418 @@
+Global:
+    cache_root: C:/Apps/INSTINCT/Cache
+    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    Wrapper: False
+    parameters:
+#need to modify this to be tolerant of review (pull in more than just status =1) 
+        query_proc_37:
+          > "SELECT DISTINCT detections.*,soundfiles.data_collection_id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > WHERE detections.procedure = 37 AND detections.start_file IN {FG}"
+        query_proc_37_38:
+          > "SELECT DISTINCT detections.*,soundfiles.data_collection_id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > WHERE detections.procedure IN (37,38) AND detections.start_file IN {FG}"
+#for review, need to specify originally submitted procedure as well as end procedure (if using different review protocol, for instance). If modifying existing
+#pull in everything, not just status =1. 
+        #query_proc_30_31:
+        #  > "SELECT DISTINCT detections.*,soundfiles.data_collection_id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id 
+        #  > WHERE detections.procedure IN (30,31) AND detections.start_file IN {FG}"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: n
+            #decimate_data: n
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-2
+            methodID2m: matlabdecimate
+            methodvers2m: V1s0
+            #target_samp_rate: 4096
+            target_samp_rate: 8192
+            file_groupID: 
+                #r1
+                #- AL20_AU_BS11
+                #- AL21_AU_UM01
+                #- AL20_AU_IC03
+                #- AL22_AU_PH01
+                #- AL22_AU_UN01
+                #- AL19_AU_IC03
+                #- BS20_AU_PM08
+                #- AL22_AU_IC01
+                #- BS22_AU_PM05
+                #- BS22_AU_PM04
+                #r2
+                #- AL18_AU_UN01-b
+                #- AL19_AU_PB01
+                #- AL19_AU_WT01
+                #- AL20_AU_CL01
+                #- AL18_AU_PH01
+                #- AL17_AU_IC03
+                #- AL19_AU_IC01
+                #- AL21_AU_UN01
+                #- BS19_AU_PM02-b
+                #- AL18_AU_IC02
+                #r3
+                #- BS21_AU_PM02
+                #- AL21_AU_PH01
+                #- AL19_AU_BS11
+                #- AL19_AU_BS03
+                #- AL19_AU_BS10
+                #- AL18_AU_PB01
+                #- AL21_AU_IC02
+                #- AL20_AU_BF02
+                #- AL21_AU_BS10
+                #- AL19_AU_BF02
+                #r4 
+                #- AL19_AU_BS02 
+                #- AL20_AU_NM01 
+                #- AL20_AU_PM02-b 
+                #- AL17_AU_PB01
+                #- AL17_AU_WT01
+                #- BS19_AU_PM05
+                #- AL18_AU_BF01
+                #- AL18_AU_IC01
+                #- AL19_AU_IC02
+                #- AL21_AU_NM01
+                #r5
+                #- AL17_AU_NM01
+                #- BS17_AU_PM04
+                #- AL17_AU_CC02
+                #- AL17_AU_UN01
+                #- BS16_AU_PM08
+                #- BS21_AU_PM04
+                #- AL18_AU_WT01
+                #- AL18_AU_IC03
+                #- AL18_AU_BS09
+                #- BS16_AU_PM02-a
+                #r6
+                #- AL17_AU_BS01
+                #- AL17_AU_BF01
+                #- BS17_AU_PM05
+                #- BS18_AU_PM02-a
+                #- AL19_AU_UM01
+                #- BS17_AU_PM08
+                #- AL17_AU_IC01
+                #- AL20_AU_PH01
+                #- AL17_AU_BS02
+                #- AL21_AU_WT01
+                #r7
+                #- AL16_AU_UN01
+                #- AL17_AU_PH01
+                #- AL17_AU_UM01
+                #- AL18_AU_BF02
+                #- AL19_AU_NM01
+                #- BS16_AU_PM02-b
+                #- BS18_AU_PM02-b 
+                #- BS18_AU_PM04
+                #- BS19_AU_PM02-a
+                #- BS19_AU_PM04 
+                #r8
+                #- AW14_AU_IC01
+                #- AW13_AU_IC01
+                #- AL16_AU_BF01
+                #- AW13_AU_BF01 
+                #- AW15_AU_CL01
+                #- AL16_AU_PH01
+                #- AL19_AU_PH01
+                #- AW14_AU_BF03
+                #- BS14_AU_PM02-b
+                #- BS14_AU_PM04
+                #r9
+                #- BF11_AU_BF02
+                #- BF07_AU_BF02
+                #- BS09_AU_PM04
+                #- BS09_AU_PM05
+                #- BF09_AU_BF04-01
+                #- IP18_AU_CH01
+                #- BS11_AU_PM02-a
+                #- BS09_AU_PM08
+                #- BS10_AU_PM02-b
+                #- BS11_AU_PM02-a
+                #- IP10_AU_CH01
+                #- IP13_AU_CH01
+                #- IP14_AU_CH01
+                #- IP15_AU_CH01
+                #- IP18_AU_CH01
+                #r10
+                #- AL16_AU_NS01
+                #- AW15_AU_BS02
+                #- BS12_AU_PM08
+                #- BS13_AU_PM02-b
+                #- AW14_AU_NM01
+                #- AW15_AU_BF03
+                #- AL16_AU_IC01
+                #- BS18_AU_PM08
+                #- CX13_AU_WT02
+                #- BS14_AU_PM05   
+                #r11
+                #- BS18_AU_PM05
+                #- BS13_AU_PM05
+                #- AW13_AU_BF03
+                #- AL16_AU_WT01
+                #- BS15_AU_PM02-a
+                #- CZ11_AU_IC01-03
+                #- AW14_AU_UN01
+                #- BS17_AU_PM02-b
+                #- AW15_AU_UN01
+                #- AL16_AU_BF02
+                #r12
+                #- AW15_AU_WT01
+                #- CX14_AU_IC03
+                #- AL16_AU_PB01
+                #- BS17_AU_PM02-a
+                #- AW12_AU_UN01
+                #- BS15_AU_PM05
+                #- AW15_AU_BS03
+                #- AL19_AU_UN01-a
+                #- BS19_AU_PM08
+                #- BS15_AU_PM04
+                #- AL16_AU_CC02
+                #- AW15_AU_NM01
+                #r13
+                #- BS14_AU_PM02-a
+                #- AW15_AU_NS01
+                #- AW13_AU_BS03
+                #- AW15_AU_KZ01
+                #- AW13_AU_NM01
+                #- AW14_AU_CL01
+                #- BS15_AU_PM02-b
+                #- CZ10_AU_IC01-03
+                #- BS12_AU_PM05
+                #- BS13_AU_PM04
+                #- BS12_AU_PM04
+                #- BS16_AU_PM05
+                #r14
+                #- AL16_AU_BS03
+                #- AL16_AU_CL01
+                #- AL16_AU_NM01
+                #- AW12_AU_BS01
+                #- AW12_AU_BS02
+                #- AW12_AU_KZ01
+                #- AW12_AU_PH01
+                ##- AW12_AU_WT01 #one row was bugged in peak calculation, no end time. 
+                #- AW13_AU_BF02
+                #- AW13_AU_BS01
+                #- AW13_AU_PB01
+                #- AW13_AU_WT01
+                #r15
+                #- AL16_AU_BS01
+                #- AL16_AU_BS02
+                #- AL16_AU_IC02
+                #- AL16_AU_IC03
+                #- AW14_AU_BF01
+                #- AW14_AU_BF02
+                #- AW14_AU_WT01
+                #- AW15_AU_BF02
+                #- AW15_AU_PB01
+                #- AW15_AU_PH01
+                #r16
+                #- AL16_AU_UM01
+                #- AL19_AU_BS09
+                #- AW12_AU_BF02
+                #- AW12_AU_BF03
+                #- AW12_AU_CL01
+                #- AW12_AU_IC01
+                #- AW12_AU_NM01
+                #try again 12 wt01
+                #- AW12_AU_WT01
+                #- AW13_AU_PH01
+                #- AW13_AU_UN01 #unsure if this one is good or not
+                #- BS15_AU_PM08
+                #r18 (16384)
+                #- AL16_AU_BS03
+                #- AL16_AU_CL01
+                #- AL16_AU_NM01
+                #- AL17_AU_IC02
+                #- AL19_AU_UN01-b
+                #- AW12_AU_BS01
+                #- AW12_AU_BS02
+                #- AW12_AU_BS03
+                #- AW12_AU_KZ01
+                #- AW12_AU_PH01
+                #- AW13_AU_BF02
+                #- AW13_AU_BS01
+                #- AW13_AU_CL01
+                #- AW13_AU_KZ01
+                #- AW13_AU_PB01
+                #r17 (8192)
+                #- BF07_AU_BF03
+                #- BF07_AU_BF04
+                #- BF07_AU_BF05
+                #- BF08_AU_BF04-01
+                #- BF09_AU_BF01
+                #- BF10_AU_BF01
+                #- BF11_AU_BF01
+                #- BF11_AU_BF03
+                #- BS08_AU_PM05
+                #- BS08_AU_PM08
+                #- BS09_AU_PM02-b
+                #- BS10_AU_PM02-a
+                #- BS10_AU_PM04
+                #- BS10_AU_PM05
+                #- IP08_AU_CH01
+                #r19 16348
+                #- AW13_AU_UN01
+                #- AW13_AU_WT01
+                #- AW15_AU_BS01
+                #- AW15_AU_IC01
+                #- BS12_AU_PM02-b
+                #- BS13_AU_PM02-a
+                #- CX13_AU_HS03
+                #- CX13_AU_IC02
+                #- CZ10_AU_IC02-03
+                #- CZ10_AU_IC03-03
+                #- CZ11_AU_IC02-03
+                #- CZ11_AU_IC03-03
+                #r20 (8192)
+                #- BS09_AU_PM02-b
+                #- BS10_AU_PM08
+                #- BS11_AU_PM04
+                #- BS11_AU_PM05
+                #- BS11_AU_PM08
+                #- BS12_AU_PM02-a
+                #- IP08_AU_NR01
+                #- IP09_AU_CH01
+                #- IP10_AU_GR01
+                #- IP11_AU_CH01
+                #- IP16_AU_CH01
+                #- IP19_AU_CH01
+                #r21 (8192)
+                #- BF07_AU_BF01
+                #- BF09_AU_BF04-02
+                #- BF10_AU_BF02
+                #- BF10_AU_BF03
+                #- BS09_AU_PM02-a
+                #- IP08_AU_GR01
+                #- IP10_AU_NR01
+                #- IP17_AU_CH01
+                #r22
+                #- AL17_AU_NS01
+                #- AL20_AU_UN01-b
+                #- AW14_AU_BS01
+                #- AW14_AU_BS02
+                #- AW14_AU_BS03
+                #- AW14_AU_BS05
+                #- AW14_AU_KZ01
+                #- AW14_AU_PB01
+                #- AW14_AU_PH01
+                #- BS13_AU_PM08
+                #- BS14_AU_PM08
+                #r23
+                #- CX12_AU_IC02
+                #- CX12_AU_IC03
+                #- CX12_AU_WT02
+                #- CX13_AU_IC03
+                #- CX14_AU_HS01
+                #- CX14_AU_HS02
+                #- CX15_AU_IC02
+                #- CX15_AU_IC03
+                #- IP22_AU_CH01
+                #- ST13_AU_NS01
+                #- ST14_AU_NS01
+                #r24 (40000)
+                #- BF11_EA_MA08-03
+                #- BF08_EA_MA01-01
+                #- BF10_EA_MA06-01
+                #- BF08_EA_MA02-03
+                #r25 (12500)
+                - BF09_EA_OK01
+                - BF08_EA_OK01
+                - BF11_EA_OK01
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [query_proc_37]
+            #query: [query_proc_30_31]
+            remove_proc_ovlp: n
+            standardize_sig_code: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-13
+        arguments:
+            fg_fill: n
+            hard_rerun: n
+            ignore_decimated: y
+            randomize_order: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+      parameters: 
+        methodID: rd-simple-w-metadata
+        methodvers: v1-5
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
+    EditRAVENx:
+      #this process always has an instructions parameter. changing these will change hash
+      parameters: 
+        instructions:
+          > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+          > Your job is to review 'peaks' of hourly percent presence. Each row represents the highest probability detection per 'peak'.
+          > To verify, change the 'label' field for your verifications. use numeric codes: 1 = yes, 0 = no, 2 = maybe. 
+          > Attempt to avoid maybes unless impossible.
+          > if airgun is encountered, change the signal code to 21, and mark the label as 1 (yes). 
+          > comments can and should be added as relevant.
+          > do not change other fields.  
+          >
+          > You will only be able to view the single detection in a peak. The column 'countsInPeak' refers to how many total detections were
+          > in the current peak, which can be useful information to classify the detection. 
+          >
+          > The assumption being made is that the highest probability detection is representative of the whole peak, so mostly just judge the detection. 
+          > The procedure is not perfect and additional consideration will be used to evaluate the results aside from your designations. 
+      arguments: 
+        #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+        rerun_key: 0
+        hard_rerun: n
+      descriptors:
+        runtype: no_method
+    CompareAndPublishDets:
+      parameters:
+        methodID: pgpamdb-default-compare-publish
+        methodvers: v1-10
+        assume_full_review: n
+        insert_ok: 38
+        on_behalf_of: Eric
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    CalcPeaks:
+      parameters:
+        methodID: calcpeaks-simple
+        methodvers: v1-4
+        #max or med
+        calc_type: max
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    PeaksAssoc:
+      parameters:
+        methodID: peaks-assoc-simple
+        methodvers: v1-1
+        allow_ambiguous_label: y
+        new_procedure: 37
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib

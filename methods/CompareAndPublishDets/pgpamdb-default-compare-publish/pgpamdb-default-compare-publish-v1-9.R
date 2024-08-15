@@ -1,4 +1,111 @@
+#table update with check (read query and compare with existing update dataset) removed. Query was returning stubborn
+#malloc error. 
+tmp_table_update = function (conn, tablename, dataset, colvector = NULL, idname = "id") 
+{
+  idname = as.character(idname)
+  if (colnames(dataset)[1] != idname) {
+    dataset = data.frame(dataset[[idname]], dataset[, which(colnames(dataset) != 
+                                                              idname)])
+    colnames(dataset)[1] = idname
+  }
+  for (i in 1:length(dataset)) {
+    if (class(dataset[, i]) == "integer64") {
+      dataset[, i] = as.integer(dataset[, i])
+    }
+  }
+  if (is.null(colvector)) {
+    colvector_wid = colnames(dataset)
+    colvector = colvector_wid[-which(colvector_wid == idname)]
+  }
+  else {
+    colvector_wid = c(idname, colvector)
+    colvector_wid = colvector_wid[which(!duplicated(colvector_wid))]
+    dataset = dataset[, which(colnames(dataset) %in% colvector_wid)]
+  }
+  if (any(!colvector_wid %in% colnames(dataset))) {
+    stop("insuffecient columns provided in dataset argument")
+  }
+  if (!all(is.finite(as.integer(dataset[[idname]])))) {
+    stop("invalid id values passed in dataset")
+  }
+  dataset[[idname]] = as.integer(dataset[[idname]])
+  cols = paste("('", paste(colvector_wid, collapse = "','"), 
+               "')", sep = "")
+  dtquery = paste("SELECT data_type,column_name\n               FROM information_schema.columns\n               WHERE table_schema = 'public'\n                  AND table_name ='", 
+                  tablename, "'\n                  AND column_name IN ", 
+                  cols, sep = "")
+  dtquery <- gsub("[\r\n]", " ", dtquery)
+  dtypes = dbFetch(dbSendQuery(conn, dtquery))
+  if (any(!colvector %in% dtypes$column_name)) {
+    stop("columns do not match database table names")
+  }
 
+  for (i in 1:length(dataset)) {
+    if (class(dataset[, i]) == "POSIXct") {
+      dataset[, i] = format(dataset[, i], "%Y-%m-%d %H:%M:%S%z")
+    }
+  }
+  dbBegin(conn)
+  try({
+    q1 = ""
+    tempnamesvec = c()
+    for (i in 1:length(colvector)) {
+      tempnamesvec = c(tempnamesvec, paste("c", i, 
+                                           sep = ""))
+      q1_sub = paste(colvector[i], paste("temp", 
+                                         tempnamesvec[i], sep = "."), sep = "=")
+      if (i != length(colvector)) {
+        q1_sub = paste(q1_sub, ",", sep = "")
+      }
+      q1 = paste(q1, q1_sub, sep = "")
+    }
+    q3 = paste("temp(", idname, ",", paste(tempnamesvec, 
+                                           collapse = ","), ")", sep = "")
+    q2 = ""
+    ds_ser = as.vector(t(unlist(dataset)))
+    vals = list()
+    for (i in 1:nrow(dataset)) {
+      vals[[i]] = seq(from = i, by = nrow(dataset), length.out = length(colvector_wid))
+    }
+    vals = do.call("c", vals)
+    ds_by_row = ds_ser[vals]
+    item_count = 0
+    start_ind = 1
+    for (i in 1:nrow(dataset)) {
+      q2_sub = "("
+      for (j in 1:length(colvector_wid)) {
+        item_count = item_count + 1
+        new_val = paste("$", item_count, "::", 
+                        dtypes[which(dtypes$column_name == colvector_wid[j]), 
+                               "data_type"], sep = "")
+        if (j != length(colvector_wid)) {
+          new_val = paste(new_val, ",", sep = "")
+        }
+        else {
+          new_val = paste(new_val, ")", sep = "")
+        }
+        q2_sub = paste(q2_sub, new_val, sep = "")
+      }
+      if (i == nrow(dataset) | object.size(q2) > 75000) {
+        q2 = paste(q2, q2_sub, sep = "")
+        query = paste("UPDATE", tablename, "AS m SET", 
+                      q1, "FROM (values", q2, ") AS", 
+                      q3, "WHERE", paste("m.", idname, 
+                                         sep = ""), "=", paste("temp.", 
+                                                               idname, sep = ""))
+        dbBind(dbSendQuery(conn, query), params = ds_by_row[start_ind:(i * 
+                                                                         length(colvector_wid))])
+        start_ind = (i * length(colvector_wid)) + 1
+        item_count = 0
+        q2 = ""
+      }
+      else {
+        q2 = paste(q2, q2_sub, ",", sep = "")
+      }
+    }
+  })
+  dbCommit(conn)
+}
 
 check_sf_dups = function(conn,sfs){
   
@@ -18,7 +125,7 @@ check_sf_dups = function(conn,sfs){
 library(pgpamdb)
 library(DBI)
 
-args="D:/Cache/151936/128921/254194/551277/755500 D:/Cache/151936/128921/254194 D:/Cache/151936/128921/254194/551277/755500/824393 n self pgpamdb-default-compare-publish-v1-9"
+args="C:/Apps/INSTINCT/Cache/197911/387042/108126/210862/198345 C:/Apps/INSTINCT/Cache/197911/387042/108126 C:/Apps/INSTINCT/Cache/197911/387042/108126/210862/198345/692012 n 38 Eric pgpamdb-default-compare-publish-v1-9"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -264,6 +371,8 @@ if(length(mod_keys)>0){
       
       colnames(FGred)=c("data_collection.id","soundfiles.name")
       
+      print('debug:1')
+      
       sfs = table_dataset_lookup(con,
                                  "SELECT DISTINCT ON (soundfiles.name,data_collection.id) soundfiles.id,soundfiles.name,data_collection.id FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id",
                                  FGred,
@@ -290,6 +399,7 @@ if(length(mod_keys)>0){
       
     }
     
+    #v1-7
     #EditMod$analyst=analyst
     
     colsums= colSums(testdf,na.rm=TRUE)
@@ -301,9 +411,6 @@ if(length(mod_keys)>0){
     
     EditMod = EditMod[sums>0,]
     testdf_reduce = testdf[sums>0,]
-    
-    #v1-9 stealth change- moved from above. maybe it will  now properly credit? looks like it was getting overwritten ealier
-    EditMod$analyst=analyst
     
     #new in 1-3: also check to see what columns have been modified. remove those which haven't
     
@@ -355,6 +462,7 @@ if(length(mod_keys)>0){
           #may not even be necessary since we're including start and end file in duplicated
           unq_ids = EditMod_proc_labelchange[which(!duplicated(data.frame(EditMod_proc_labelchange$start_file,EditMod_proc_labelchange$end_file,EditMod_proc_labelchange$bin_unq))),"id"]
          #print('1')
+          print('debug:2')
           affected_bins = dbFetch(dbSendQuery(con,paste("SELECT detections.id,detections.label,detections.probability,bins.* FROM detections JOIN bins_detections ON detections.id = bins_detections.detections_id JOIN bins ON 
                                                         bins.id = bins_detections.bins_id WHERE bins.id IN 
                                                         (SELECT DISTINCT bins_detections.bins_id FROM bins JOIN bins_detections ON bins.id = bins_detections.bins_id 
@@ -362,6 +470,7 @@ if(length(mod_keys)>0){
                                                         paste(unq_ids,sep="",collapse = ","),
                                                         ") AND type = ",check_row$negative_bin,")",
                                                         " AND detections.procedure = ",unique(EditMod$procedure)[i],sep="")))
+          print('debug:3')
           #print('2')
           #fill in the new labels for considered detections. using this table, make another table which 
           #represents each bin, and whether it contains a 1 detection or not. 
@@ -414,6 +523,7 @@ if(length(mod_keys)>0){
             
             #remove all bn_to_rem
             if(length(bn_to_rem)>0){
+              print('debug:4')
               table_delete(con,'detections',bn_to_rem,hard_delete = TRUE)
             }
             
@@ -443,6 +553,12 @@ if(length(mod_keys)>0){
               stop("duplicate soundfiles present in insert- need to revise process to correctly distinguish duplicate file names. aborting..")
             }
             
+            #v1-9 stealth change
+            #set analyst to analyst
+            adddets$analyst = analyst
+            
+            print('debug:5')
+            
             #add the new bin negatives
             out = dbAppendTable(con,'detections',adddets)
             
@@ -457,9 +573,17 @@ if(length(mod_keys)>0){
       
       #pare down edit mod to only necessary columns
       EditMod = EditMod[,c('id','procedure',names(colsums[which(colsums>0)]))]
-      #print('3')
+      
+      #v1-9 stealth change
+      #set analyst to analyst
+      EditMod$analyst = analyst
+      
+      print('debug:6')
+      
       #update editmod
-      table_update(con,'detections',EditMod)
+      tmp_table_update(con,'detections',EditMod)
+      
+      print('debug:7')
 
     }
     

@@ -1,0 +1,99 @@
+Global:
+    cache_root: D:/Cache
+    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    Wrapper: False
+    parameters:
+        signal_codes: BD
+        freq_start: 0
+        freq_size: 4096
+        native_height: 240
+        #native_window_size: 256
+        #npps: 128
+        native_window_size: 240
+        npps: 80
+        model_window_size: 240
+        model_name: EffecientNet
+        inf_batch_size: 175
+        #msp_inf: 10
+        msp_inf: 120
+        split_prot: within_file
+        querygt_only_10:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND detections.signal_code IN (15,12,45,46) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        blank_query:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: n
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-2
+            methodID2m: matlabdecimate
+            methodvers2m: V1s0
+            target_samp_rate: 8192
+            file_groupID:
+                - kotz_multipinni_training_sample1
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [querygt_only_10]
+            #below is "n" or the int signal code to standardize to
+            standardize_sig_code: n
+            remove_proc_ovlp: n
+        arguments:
+           hard_rerun: y
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-13
+        arguments:
+            fg_fill: y
+            hard_rerun: n
+            ignore_decimated: y
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+        parameters:
+            methodID: rd-simple-w-metadata
+            methodvers: v1-5
+        descriptors:
+            runtype: lib
+            language: R
+    CompareAndPublishDets:
+      parameters:
+        methodID: pgpamdb-default-compare-publish
+        methodvers: v1-10
+        assume_full_review: n
+        on_behalf_of: self
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    EditRAVENx:
+      #this process always has an instructions parameter. changing these will change hash
+      parameters: 
+        instructions:
+          > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+          > Review the contents for correctness, adding, modifying, or deleting as necessary.
+          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+      arguments: 
+        #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+        rerun_key: 0
+        hard_rerun: n
+      descriptors:
+        runtype: no_method

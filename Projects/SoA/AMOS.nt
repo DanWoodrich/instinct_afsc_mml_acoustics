@@ -64,9 +64,11 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 2048
             file_groupID:
+                - AL23_AU_PB01
+                - AL23_AU_BF02
                 #- AL22_AU_BF02
                 #- AL18_AU_WT01
-                - IP18_AU_CH01
+                #- IP18_AU_CH01
                 #- AL19_AU_WT01
                 #- IP19_AU_CH01
                 #- IP20_AU_CH01
@@ -74,7 +76,7 @@ Job:
                 #- IP22_AU_CH01
                 #- AL21_AU_WT01
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R
@@ -255,7 +257,8 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-10
+            #methodvers: v1-10 #update to latest
+            methodvers: v1-13
         arguments:
             fg_fill: y
             hard_rerun: n

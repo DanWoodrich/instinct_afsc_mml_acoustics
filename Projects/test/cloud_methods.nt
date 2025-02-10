@@ -1,0 +1,30 @@
+Global:
+    cache_root: D:/Cache
+    Wrapper: False
+    storage_service: gcp
+    test_fg:
+          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN 
+          > data_collection ON data_collection.id = soundfiles.data_collection_id join bins_effort ON 
+          > bins.id = bins_effort.bins_id JOIN effort ON bins_effort.effort_id = effort.id LIMIT 100"
+    FormatFG:
+        parameters:
+            #test cloud and not for both inpath as well as outpath.  
+            chunksize: 15
+            decimate_data: y
+            dest_service: local
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-3
+            methodID2m: matlabdecimate_flexchunk
+            methodvers2m: V1s0
+            src_service: gcp
+            target_samp_rate: 512
+            file_groupID:
+                - [test_fg]
+        arguments:
+            hard_rerun: y
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB

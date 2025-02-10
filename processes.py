@@ -6,6 +6,8 @@ from misc import get_param_names,file_peek,get_difftime
 import hashlib
 import pandas as pd
 import os
+import math
+import subprocess
 
 from pipe_shapes import *
 from .pipe_shapes import *
@@ -719,6 +721,19 @@ class FormatFG(INSTINCT_process):
     upstreamdef = ['GetFG']
 
     outfile = 'FileGroupFormat.csv.gz'
+    
+    def cloud_cp(self,src,dest):
+        
+        commands = []
+        for src, dest in zip(src,dest):
+            commands.append(f'"{src}""{dest}"')
+        #working on it...
+        #gsutil_command = ['gsutil','-m',"cp"] + sum(cmd.split() for cmd in commands], [])
+        
+        try:
+            subprocess.run(gsutil_command,check=True,sdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as e:
+            print(f"Error during upload:{e.stderr.decode()}")
 
     def infile(self):
         if self.ports[0]!=None:
@@ -746,9 +761,11 @@ class FormatFG(INSTINCT_process):
         elif self.descriptors["runtype"]=='lib':
 
             temppath = self.outpath()+"/tempFG.csv.gz"
-
+           
+    
+            #self.cmd_args=[temppath,self.parameters['file_groupID'],get_param_names(self.parameters)+" storage_service",self.param_string2+PARAMSET_GLOBALS['storage_service']]
+               
             self.cmd_args=[temppath,self.parameters['file_groupID'],get_param_names(self.parameters),self.param_string2]
-
             #import code
             #code.interact(local=dict(globals(), **locals()))
             
@@ -756,8 +773,6 @@ class FormatFG(INSTINCT_process):
 
             FG_dict = file_peek(temppath,fn_type = object,fp_type = object,st_type = object,dur_type = 'float64')
             FG = pd.read_csv(temppath, dtype=FG_dict)
-
-
 
             os.remove(temppath)
             
@@ -774,27 +789,22 @@ class FormatFG(INSTINCT_process):
             difftime_lim=None #default
 
         FG=get_difftime(FG,cap_consectutive=difftime_lim)
-        
-        if 'decimate_data' in self.parameters and self.parameters['decimate_data'] == 'y':
-            #if decimating, run decimate. Check will matter in cases where MATLAB supporting library is not installed.
-            #note that this can be pretty slow if not on a VM! Might want to figure out another way to perform this
-            #to speed up if running on slow latency.
 
+        #and self.parameters['methodID2m'] == 'matlabdecimate'
+        if 'decimate_data' in self.parameters and self.parameters['decimate_data'] == 'y':
+            
             FullFilePaths = FG['FullPath'].astype('str') + FG['FileName'].astype('str')
 
             #remove duplicates
             FullFilePaths=pd.Series(FullFilePaths.unique())
 
             ffpPath=self.outpath() + '/FullFilePaths.csv'
-
-            FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
-
-            #this is a little hacky- reset descriptors and methods vars to reflect the decimation method.
-
             
+            #this is a little hacky- reset descriptors and methods vars to reflect the decimation method
 
             #'unfreeze' parameters and descriptors. Couldn't hurt anything right? 
 
+        
             self.parameters = dict(self.parameters)
             self.descriptors = dict(self.descriptors)
 
@@ -803,21 +813,93 @@ class FormatFG(INSTINCT_process):
             self.descriptors['runtype']=self.descriptors['runtype2m']
             self.descriptors['language']=self.descriptors['language2m']
 
-            #import code
-            #code.interact(local=dict(globals(), **locals()))
+                
+            if self.parameters['methodID2m'] == 'matlabdecimate':
+                #if decimating, run decimate. Check will matter in cases where MATLAB supporting library is not installed.
+                #note that this can be pretty slow if not on a VM! Might want to figure out another way to perform this
+                #to speed up if running on slow latency.
+                
+                FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
 
-            self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
-            #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
+                #import code
+                #code.interact(local=dict(globals(), **locals()))
+
+                self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
+                #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
+                
+                self.run_cmd()
+
+                
+                os.remove(ffpPath)
             
-            self.run_cmd()
-
+            elif self.parameters['methodID2m'] == 'matlabdecimate_flexchunk':
             
-            os.remove(ffpPath)
+                #this method relies on formatFG parameters to define relative paths, for more flexible pathing in/out of cloud,
+                #ephemeral compute, and also allows for flexible chunking to
 
-            FG.to_csv(self.outfilegen(),index=False,compression='gzip')
-        else:
-            #do it this way, so that task will not 'complete' if decimation is on and doesn't work
-            FG.to_csv(self.outfilegen(),index=False,compression='gzip')
+                chunksize = self.parameters['chunksize']
+                #inpath = PARAMSET_GLOBALS['SF_raw'] #gs:// or local
+                #outpath = PARAMSET_GLOBALS['SF_foc'] #gs:// or local
+
+               #inpath_gs = True if inpath[0:5] == "gs://" else False
+                #outpath_gs = True if outpath[0:5] == "gs://" else False
+                
+                src_service  = self.parameters['src_service'] #gcp or local
+                dest_service = self.parameters['dest_service'] #gcp or local
+
+                #test for cloud storage and 
+                chunksize_in = chunksize if inpath_gs else FG.shape[0] #.nrows just a guess, replace with correct attribute
+                chunksize_out = chunksize if outpath_gs else FG.shape[0]
+                
+                local_temp = "./tmp"
+                
+                os.makedirs(local_temp,exist_ok = True)
+
+                #prestage data according to chunksize.
+                #could parallelize this once I get it working. 
+                for i in range(math.ceil(FG.shape[0]/chunksize_in)):
+                
+                    files = FullFilePaths[(chunksize_in*i):(chunksize_in*(i+1))] #need to make sure that the format
+                    #fg method can assume cloud paths, given a bucket!
+                    
+                    #load files - assume gsutil is installed and default credentials are in place (will be in GKE autopilot)
+                    if inpath_gs:
+                        local_files = [local_temp + os.path.basename(i) for i in files]
+                        cloud_cp(files,local_files)
+                    else:
+                        local_files = files
+                    
+                    #make ds of local files and desired output paths, pass to matlab exe
+                    dec_files = [local_temp + "decimated_" + os.path.basename(i) for i in files]
+                    FullFilePaths.to_csv(pd.Series(local_files),pd.Series(dec_files),index=False,header = None)
+                    
+                    self.cmd_args=[ffpPath,self.parameters['target_samp_rate']]
+                    
+                    self.run_cmd()
+                    
+                    import code
+                    code.interact(local=dict(globals(), **locals()))
+                                    
+                    #if the decimated files are going back to cloud, call this here
+                    #if outpath_gs:
+                          
+                    os.remove(ffpPath)
+                    
+                    
+                    
+                
+                #going to make a different decision here, and include both the full paths of the decimated and original file
+                #in FG.
+                 
+                #TODO 
+                #FG.decimated_path = #dec files path
+                
+            
+        #do it this way, so that task will not 'complete' if decimation is on and doesn't work
+       
+        
+        FG.to_csv(self.outfilegen(),index=False,compression='gzip')
+            
 
 class EditRAVENx(INSTINCT_userprocess):
     #pipeshape = OneUpstream

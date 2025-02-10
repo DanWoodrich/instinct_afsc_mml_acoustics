@@ -1,20 +1,13 @@
 Global:
-    cache_root: D:/Cache
+    cache_root: C:/Apps/INSTINCT/Cache
     SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        queryfg1:
-          > "SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
-          > bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id WHERE data_collection.name = 'BS15_AU_PM04' 
-          > AND bins.type = 2"
-        #can't query by bins since whole mooring is not a FG
-        querygt1:
-          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-          > WHERE detections.status = 1 AND detections.procedure =10 AND detections.signal_code = 1 AND bins.id IN {FG}"
-        #only works for full mooring deployments. 
-        querygt2:
-          > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 AND detections.procedure IN (4,16) AND detections.start_file IN {FG}"
+#need to modify this to be tolerant of review (pull in more than just status =1) 
+        query_proc_26:
+          > "SELECT DISTINCT detections.*,soundfiles.data_collection_id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > WHERE detections.procedure = 26 AND detections.start_file IN {FG} AND probability > 0.85"
 Job:
     FormatFG:
         parameters:
@@ -24,10 +17,10 @@ Job:
             methodvers: v1-2
             methodID2m: matlabdecimate
             methodvers2m: V1s0
-            target_samp_rate: 1024
+            target_samp_rate: 2048
             file_groupID: 
-              #- NOPP6_EST_20090328_files_All
-              - BS15_AU_PM02-a_files_1-104_rw_hg
+                #- AL23_AU_PB01
+                - AL23_AU_BF02
         arguments:
             hard_rerun: n
         descriptors:
@@ -39,11 +32,11 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [querygt1]
+            query: [query_proc_26]
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R
@@ -55,6 +48,7 @@ Job:
             fg_fill: n
             hard_rerun: n
             ignore_decimated: y
+            randomize_order: n
         descriptors:
             runtype: lib
             language: R
@@ -62,6 +56,8 @@ Job:
       parameters: 
         methodID: rd-simple-w-metadata
         methodvers: v1-5
+      arguments:
+        hard_rerun: n
       descriptors:
         runtype: lib
         language: R
@@ -70,8 +66,18 @@ Job:
       parameters: 
         instructions:
           > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
-          > Review the contents for correctness, adding, modifying, or deleting as necessary.
-          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+          > Your job is to review 'peaks' of hourly percent presence. Each row represents the highest probability detection per 'peak'.
+          > To verify, change the 'label' field for your verifications. use numeric codes: 1 = yes, 0 = no, 2 = maybe. 
+          > Attempt to avoid maybes unless impossible.
+          > if airgun is encountered, change the signal code to 21, and mark the label as 1 (yes). 
+          > comments can and should be added as relevant.
+          > do not change other fields.  
+          >
+          > You will only be able to view the single detection in a peak. The column 'countsInPeak' refers to how many total detections were
+          > in the current peak, which can be useful information to classify the detection. 
+          >
+          > The assumption being made is that the highest probability detection is representative of the whole peak, so mostly just judge the detection. 
+          > The procedure is not perfect and additional consideration will be used to evaluate the results aside from your designations. 
       arguments: 
         #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
         rerun_key: 0
@@ -81,9 +87,10 @@ Job:
     CompareAndPublishDets:
       parameters:
         methodID: pgpamdb-default-compare-publish
-        methodvers: v1-8
+        methodvers: v1-10
         assume_full_review: n
-        on_behalf_of: self
+        insert_ok: 26
+        on_behalf_of: Catherine
       arguments: 
         hard_rerun: n
       descriptors:

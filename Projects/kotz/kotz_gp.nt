@@ -1,3 +1,5 @@
+#note: for detector, not fully changed over from BD
+
 Global:
     cache_root: D:/Cache
     SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -18,12 +20,9 @@ Global:
         #msp_inf: 10
         msp_inf: 120
         split_prot: within_file
-        querygt1:
-            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28,29) AND bins.id IN {FG}"
         querygt_only_10:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND detections.signal_code IN (15,12,45,46) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
         blank_query:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
 Job:
@@ -69,59 +68,7 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 8192
             file_groupID:
-                #manolo moorings
                 - AL23_AU_BF02
-                - AL23_AU_BS10
-                - AL23_AU_BS11
-                - AL23_AU_IC01
-                - AL23_AU_IC03
-                - AL23_AU_PB01
-                - AL23_AU_PC01
-                - AL23_AU_SM01
-                - AL23_AU_UM01
-                - AL23_AU_UN01
-                - AL24_AU_UM01
-                - AL24_AU_UN01-a
-                #- BF12_AU_OK01 #bug in scores to detx, not all scores consumed. 
-                - BS11_AU_PM02-b
-                - BS22_AU_PM02
-                - BS23_AU_PM02
-                - BS23_AU_PM05
-                - CZ10_AU_IC01-01
-                - CZ10_AU_IC01-02
-                - CZ10_AU_IC01-04
-                - CZ10_AU_IC01-05
-                - CZ10_AU_IC02-01
-                - CZ10_AU_IC02-02
-                - CZ10_AU_IC02-04
-                - CZ10_AU_IC02-05
-                - CZ10_AU_IC03-01
-                - CZ10_AU_IC03-04
-                - CZ10_AU_IC03-05
-                - CZ11_AU_IC01-01
-                - CZ11_AU_IC01-02
-                - CZ11_AU_IC01-04
-                - CZ11_AU_IC01-05
-                - CZ11_AU_IC02-01
-                - CZ11_AU_IC02-02
-                - CZ11_AU_IC02-04
-                - CZ11_AU_IC02-05
-                - CZ11_AU_IC03-01
-                - CZ11_AU_IC03-04
-                - CZ11_AU_IC03-05
-                - XA08_AU_BF02
-                - XA08_AU_BF04-03
-                - XA09_AU_BF02
-                - XA09_AU_BF04-03
-                - XA10_AU_BF04
-                - XA11_AU_BF04
-                - XA12_AU_BF04
-                - XA12_AU_SO03
-                - XA12_AU_SO04
-                - XA12_AU_SO06
-                - XA12_AU_SO07
-                - XA12_AU_SO08
-                - XA13_AU_BF04
         arguments:
             hard_rerun: n
         descriptors:
@@ -139,7 +86,7 @@ Job:
                 standardize_sig_code: n
                 remove_proc_ovlp: n
             arguments:
-                hard_rerun: n
+                hard_rerun: y
             descriptors:
                 runtype: lib
                 language: R
@@ -153,13 +100,7 @@ Job:
                 methodvers2m: V1s0
                 target_samp_rate: 8192
                 file_groupID:
-                    - jasco_strat_subsample
-                    - high_prob_negative_bd_unverified_2
-                    - random_negative_bd_unverified_2
-                    - NM15_SC1_INS0
-                    - bearded_ribbon
-                    - BS22_AU_PM05_bowhead_for_bearded
-                    #- XA22_ST_KS04
+                    - kotz_multipinni_training_sample1
             arguments:
                 hard_rerun: n
             descriptors:
@@ -382,7 +323,7 @@ Job:
             hard_rerun: n
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
             #CHANGE WITH  INFERENCE!
-            remove_spec: y
+            remove_spec: n
         descriptors:
             runtype: lib
             language: R
@@ -425,3 +366,27 @@ Job:
         descriptors:
             runtype: lib
             language: R
+    CompareAndPublishDets:
+      parameters:
+        methodID: pgpamdb-default-compare-publish
+        methodvers: v1-10
+        assume_full_review: n
+        on_behalf_of: self
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    EditRAVENx:
+      #this process always has an instructions parameter. changing these will change hash
+      parameters: 
+        instructions:
+          > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+          > Review the contents for correctness, adding, modifying, or deleting as necessary.
+          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+      arguments: 
+        #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+        rerun_key: 0
+        hard_rerun: n
+      descriptors:
+        runtype: no_method

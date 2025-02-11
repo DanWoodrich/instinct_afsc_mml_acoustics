@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "D:/Cache/862107/tempFG.csv.gz XB17_AM_OG01 decimate_data difftime_limit file_groupID methodID2m methodvers2m target_samp_rate n 3600 XB17_AM_OG01 matlabdecimate V1s0 1024 pampgdb-standard-pullfg-v1-0"
+args = "C:/Cache/953148/tempFG.csv.gz kotz_multipinni_training_sample1 decimate_data difftime_limit file_groupID methodID2m methodvers2m target_samp_rate n 3600 kotz_multipinni_training_sample1 matlabdecimate V1s0 8192 pampgdb-standard-pullfg-v1-3"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -34,7 +34,7 @@ if("storage_service" %in% ParamNames){
     prefix = "//"
   }
   
-else{
+}else{
   prefix = "/"
 }
 
@@ -70,7 +70,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
 
   if(FGname %in% FGnames){
     #pull FG from effort
-    query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
+    query = paste("SELECT data_collection.name AS dname,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
           bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id
           JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort on bins_effort.effort_id = effort.id 
           WHERE effort.name = '",FGname,"'",sep="")
@@ -87,7 +87,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
     if(FGname %in% depnames_new){
       #pull FG from new deployment name
 
-      query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end
+      query = paste("SELECT data_collection.name AS dname,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles.duration AS seg_end
                     FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id 
                     WHERE data_collection.name='",FGname,"' ORDER BY soundfiles.datetime",sep="")
       
@@ -99,7 +99,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
     }else if(FGname %in% depnames_old){
       #pull FG from old deployment name
       
-      query = paste("SELECT data_collection.name,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles_duration AS seg_end
+      query = paste("SELECT data_collection.name as dname,soundfiles.name,soundfiles.datetime,soundfiles.duration,0 AS seg_start, soundfiles_duration AS seg_end
                     FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id 
                     WHERE data_collection.historic_name='",FGname,"' ORDER BY soundfiles.datetime",sep="")
       
@@ -122,7 +122,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
 
 #print(str(FGdata))
 
-FGdataout = data.frame(FGdata$name..2,paste(prefix,FGdata$name,"/",format(FGdata$datetime,"%m"),"_",format(FGdata$datetime,"%Y"),"/",sep=""),
+FGdataout = data.frame(FGdata$name,paste(prefix,FGdata$dname,"/",format(FGdata$datetime,"%m"),"_",format(FGdata$datetime,"%Y"),"/",sep=""),
                        format(FGdata$datetime,"%y%m%d-%H%M%S"),FGdata$duration,FGdata$name,FGdata$seg_start,FGdata$seg_end-FGdata$seg_start,FGname)
 colnames(FGdataout)=c("FileName","FullPath","StartTime","Duration","Deployment","SegStart","SegDur","Name")
 

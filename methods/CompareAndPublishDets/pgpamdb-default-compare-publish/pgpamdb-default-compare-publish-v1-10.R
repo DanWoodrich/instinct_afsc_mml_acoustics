@@ -16,7 +16,7 @@ check_sf_dups = function(conn,sfs){
 library(pgpamdb)
 library(DBI)
 
-args="C:/Cache/953148/323687/43703/193985/152748 C:/Cache/953148/323687/43703/222397 C:/Cache/953148/323687/43703/193985/152748/448301 n self pgpamdb-default-compare-publish-v1-10"
+args="C:/Cache/953148/323687/43703/193985/152748 C:/Cache/953148/323687/43703/222397 C:/Cache/953148/323687/43703/193985/152748/341337 n 99 self pgpamdb-default-compare-publish-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -200,8 +200,10 @@ names(operations)<-c("Modify","Insert","Delete")
 
 #find the unique procedures present in prior_data. If none of them are i_neg, don't worry about
 #relaculating i_neg later for edited detections (very relevant to avoid in detection review workflows)
-
-i_neg_proc_prior = dbFetch(dbSendQuery(con,paste("SELECT * FROM effort_procedures WHERE procedures_id IN (",paste(unique(PriorData$procedure),collapse=",",sep=","),") AND effproc_assumption = 'i_neg'",sep="")))
+#stealh change v1-10: conditional so it doesn't fail when no prior data exists. 
+if(nrow(PriorData)>0){
+  i_neg_proc_prior = dbFetch(dbSendQuery(con,paste("SELECT * FROM effort_procedures WHERE procedures_id IN (",paste(unique(PriorData$procedure),collapse=",",sep=","),") AND effproc_assumption = 'i_neg'",sep="")))
+}
 
 affected_ids_total = c()
 
@@ -518,7 +520,10 @@ if(length(mod_keys)>0){
     print(i_neg_proc_prior$procedures_id)
     typeof(i_neg_proc_prior$procedures_id)
     
-    affected_ids_total = c(affected_ids_total,EditMod[which(EditMod$procedure %in% i_neg_proc_prior$procedures_id),"id"])
+    if(nrow(PriorData)>0){
+      affected_ids_total = c(affected_ids_total,EditMod[which(EditMod$procedure %in% i_neg_proc_prior$procedures_id),"id"])
+    }
+    
 
   }else{
     operations[[1]]="0 records UPDATED. No bin negatives modified."

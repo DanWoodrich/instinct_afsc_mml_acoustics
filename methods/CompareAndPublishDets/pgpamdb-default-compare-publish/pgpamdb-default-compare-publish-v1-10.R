@@ -16,7 +16,7 @@ check_sf_dups = function(conn,sfs){
 library(pgpamdb)
 library(DBI)
 
-args="C:/Apps/INSTINCT/Cache/915396/426232/843987/507076/378231 C:/Apps/INSTINCT/Cache/915396/426232/843987 C:/Apps/INSTINCT/Cache/915396/426232/843987/507076/378231/157859 n 38 Eric pgpamdb-default-compare-publish-v1-10"
+args="C:/Cache/953148/323687/43703/193985/152748 C:/Cache/953148/323687/43703/222397 C:/Cache/953148/323687/43703/193985/152748/448301 n self pgpamdb-default-compare-publish-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 

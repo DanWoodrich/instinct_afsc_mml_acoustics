@@ -79,6 +79,7 @@ Job:
         methodID: pgpamdb-default-compare-publish
         methodvers: v1-10
         assume_full_review: n
+        insert_ok: 99
         on_behalf_of: self
       arguments: 
         hard_rerun: n

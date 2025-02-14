@@ -67,13 +67,15 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
   #determine if the name corresponds to an existing filegroup:
 
   FGnames =dbFetch(dbSendQuery(con,"SELECT name FROM effort"))$name
+  
+  #v1-3 stealth change: give a standard order most likely to result in consecutive difftime where present
 
   if(FGname %in% FGnames){
     #pull FG from effort
     query = paste("SELECT data_collection.name AS dname,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON 
           bins.soundfiles_id = soundfiles.id JOIN data_collection ON data_collection.id = soundfiles.data_collection_id
           JOIN bins_effort ON bins.id = bins_effort.bins_id JOIN effort on bins_effort.effort_id = effort.id 
-          WHERE effort.name = '",FGname,"'",sep="")
+          WHERE effort.name = '",FGname,"' ORDER BY data_collection.name,soundfiles.datetime,bins.seg_start",sep="")
     
     query = gsub("[\r\n]", "", query)
 

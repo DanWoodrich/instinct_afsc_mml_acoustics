@@ -1,7 +1,3 @@
-MethodID<-"rv-simple-w-metadata-v1-12"
-
-#this is going to skip over v-11 (not documentted what the change was), add ability to randomize select # from v-10. 
-
 library(foreach)
 
 formatToDets<-function(data,data2){
@@ -235,8 +231,15 @@ if(nrow(DetsFG)>=1){
   out<-data.frame(1:nrow(DetsFG),"Spectrogram 1",1,DetsFG$StartTime,DetsFG$EndTime,DetsFG$LowFreq,DetsFG$HighFreq,DetsFG$StartFile,
                   DetsFG$EndFile,DetsFG$FileOffset,DetsFG$DeltaTime,DetsFGxtra)
   
-  if(randomize_order=="y"){
+  if(randomize_order!="n"){
   
+    if(randomize_order=="y"){
+      seed = sample(9999)
+    }else{
+      #assume you give an integer for the seed if not n/y. 
+      seed = as.integer(randomize_order)
+    }
+    set.seed(seed)
     
     out = out[sample(1:nrow(out)), ]
     out[,1]=1:nrow(out)

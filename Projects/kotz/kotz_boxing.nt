@@ -59,10 +59,11 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-13
+            methodvers: v1-14
+            randomize_order: 1
         arguments:
             fg_fill: y
-            hard_rerun: n
+            hard_rerun: y
             ignore_decimated: y
         descriptors:
             runtype: lib
@@ -76,7 +77,6 @@ Job:
             language: R
     CompareAndPublishDets:
       parameters:
-        #methodID: pgpamdb-default-compare-publish
         methodID: pgpamdb-fork-sophia-hardcode
         methodvers: v1-0
         assume_full_review: n

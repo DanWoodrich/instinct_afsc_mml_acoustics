@@ -123,7 +123,7 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
 #print(str(FGdata))
 
 FGdataout = data.frame(FGdata$name,paste(prefix,FGdata$dname,"/",format(FGdata$datetime,"%m"),"_",format(FGdata$datetime,"%Y"),"/",sep=""),
-                       format(FGdata$datetime,"%y%m%d-%H%M%S"),FGdata$duration,FGdata$name,FGdata$seg_start,FGdata$seg_end-FGdata$seg_start,FGname)
+                       format(FGdata$datetime,"%y%m%d-%H%M%S"),FGdata$duration,FGdata$dname,FGdata$seg_start,FGdata$seg_end-FGdata$seg_start,FGname)
 colnames(FGdataout)=c("FileName","FullPath","StartTime","Duration","Deployment","SegStart","SegDur","Name")
 
 dbDisconnect(con)

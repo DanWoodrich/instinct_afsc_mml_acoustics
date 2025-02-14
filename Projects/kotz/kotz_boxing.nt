@@ -37,7 +37,7 @@ Job:
             file_groupID:
                 - kotz_multipinni_training_sample1
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R
@@ -76,8 +76,9 @@ Job:
             language: R
     CompareAndPublishDets:
       parameters:
-        methodID: pgpamdb-default-compare-publish
-        methodvers: v1-10
+        #methodID: pgpamdb-default-compare-publish
+        methodID: pgpamdb-fork-sophia-hardcode
+        methodvers: v1-0
         assume_full_review: n
         insert_ok: 99
         on_behalf_of: self

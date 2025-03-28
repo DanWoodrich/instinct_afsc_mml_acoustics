@@ -30,7 +30,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="C:/Cache/953148/323687 C:/Cache/953148 C:/Cache/953148/323687/43703 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/8192 y n y 1 rv-simple-w-metadata-v1-13 //161.55.120.117/NMML_AcousticsData/Audio_Data"
+args="C:/Cache/953148/323687 C:/Cache/953148 C:/Cache/953148/323687/635265 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/8192 y y y 1 1 rv-simple-w-metadata-v1-14 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))
@@ -239,9 +239,18 @@ if(nrow(DetsFG)>=1){
       #assume you give an integer for the seed if not n/y. 
       seed = as.integer(randomize_order)
     }
-    set.seed(seed)
     
-    out = out[sample(1:nrow(out)), ]
+    #BUGFIX stealth v1-14: make the sample be for just the acoustic files (unchanged between editing sessions)
+    #instead of for the full dataset with labels
+    FG_files = unique(c(DetsFG$StartFile,DetsFG$EndFile))
+    FG_files = sort(FG_files)
+    
+    set.seed(seed)
+    #tested: should work consistently even if decimated levels are changing. 
+    FG_files_consistent_shuffle = FG_files[sample(1:length(FG_files))]
+    
+    out = out[order(match(out$DetsFG.StartFile,FG_files_consistent_shuffle),out$DetsFG.StartTime),]
+    
     out[,1]=1:nrow(out)
     
   }

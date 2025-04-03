@@ -179,7 +179,7 @@ DetsFG<-merge(Dets,FG,by="StartFile")
 #reorder to original order
 DetsFG<-DetsFG[order(DetsFG$order),]
 
-DetsFG$order<-NULL
+#DetsFG$order<-NULL
 
 #calculate delta time for each detection
 #process these seperately
@@ -195,7 +195,8 @@ DetsFGdiffFile$DeltaTime<-(DetsFGdiffFile$Duration-DetsFGdiffFile$StartTime)+Det
 DetsFG<-rbind(DetsFGSameFile,DetsFGdiffFile)
 
 #reorder to original order
-#DetsFG<-DetsFG[order(DetsFG$order),]
+DetsFG<-DetsFG[order(DetsFG$order),]
+DetsFG$order<-NULL
 
 #DetsFG<-DetsFG[order(DetsFG$StartFile,DetsFG$StartTime),]
 

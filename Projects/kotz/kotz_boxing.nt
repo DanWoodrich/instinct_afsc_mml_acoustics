@@ -21,7 +21,7 @@ Global:
         split_prot: within_file
         querygt_only_10:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code IN (15,12,45,46) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND detections.signal_code IN (15,12,45,46,22) AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
         blank_query:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
 Job:

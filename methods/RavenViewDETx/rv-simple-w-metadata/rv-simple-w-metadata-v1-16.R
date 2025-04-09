@@ -215,7 +215,7 @@ EFFP<-EFFP[order(EFFP$order),]
 
 if(nrow(DetsFG)>=1){
   DetsFG$StartFile<-paste(dataPath,DetsFG$FullPath,DetsFG$StartFile,sep="")
-  DetsFG$EndFile<-paste(dataPath,EFFP$FullPath,DetsFG$EndFile,sep="")
+  DetsFG$EndFile<-paste(dataPath,EFFP$FullPath,EFFP$EndFile,sep="")
 }
 
 #strike several metadata fields

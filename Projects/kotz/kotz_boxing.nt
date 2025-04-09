@@ -59,7 +59,7 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-15
+            methodvers: v1-16
             randomize_order: 1
         arguments:
             fg_fill: y

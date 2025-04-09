@@ -69,61 +69,19 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 8192
             file_groupID:
-                #manolo moorings
-                - AL23_AU_BF02
-                - AL23_AU_BS10
-                - AL23_AU_BS11
-                - AL23_AU_IC01
-                - AL23_AU_IC03
-                - AL23_AU_PB01
-                - AL23_AU_PC01
-                - AL23_AU_SM01
-                - AL23_AU_UM01
-                - AL23_AU_UN01
-                - AL24_AU_UM01
-                - AL24_AU_UN01-a
-                #- BF12_AU_OK01 #bug in scores to detx, not all scores consumed. 
-                - BS11_AU_PM02-b
-                - BS22_AU_PM02
-                - BS23_AU_PM02
-                - BS23_AU_PM05
-                - CZ10_AU_IC01-01
-                - CZ10_AU_IC01-02
-                - CZ10_AU_IC01-04
-                - CZ10_AU_IC01-05
-                - CZ10_AU_IC02-01
-                - CZ10_AU_IC02-02
-                - CZ10_AU_IC02-04
-                - CZ10_AU_IC02-05
-                - CZ10_AU_IC03-01
-                - CZ10_AU_IC03-04
-                - CZ10_AU_IC03-05
-                - CZ11_AU_IC01-01
-                - CZ11_AU_IC01-02
-                - CZ11_AU_IC01-04
-                - CZ11_AU_IC01-05
-                - CZ11_AU_IC02-01
-                - CZ11_AU_IC02-02
-                - CZ11_AU_IC02-04
-                - CZ11_AU_IC02-05
-                - CZ11_AU_IC03-01
-                - CZ11_AU_IC03-04
-                - CZ11_AU_IC03-05
-                - XA08_AU_BF02
-                - XA08_AU_BF04-03
-                - XA09_AU_BF02
-                - XA09_AU_BF04-03
-                - XA10_AU_BF04
-                - XA11_AU_BF04
-                - XA12_AU_BF04
-                - XA12_AU_SO03
-                - XA12_AU_SO04
-                - XA12_AU_SO06
-                - XA12_AU_SO07
-                - XA12_AU_SO08
-                - XA13_AU_BF04
+              - XA23_ST_KS01-b
+              - XA23_ST_KS02-b
+              - XA23_ST_KS03-b
+              - XA23_ST_KS04-b
+              - XA23_ST_KS07-b
+              - XA23_ST_KS08-b
+              - XA24_ST_KS02-a
+              - XA24_ST_KS03-a
+              - XA24_ST_KS04-a
+              - XA24_ST_KS07-a
+              - XA24_ST_KS08-a
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R

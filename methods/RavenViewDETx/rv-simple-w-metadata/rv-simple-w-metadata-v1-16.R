@@ -85,9 +85,11 @@ FGfull<-FG
 FG<-FG[which(!duplicated(FG$FileName)),]
 
 #if true, populate Dets for every file in FG which is not already present
+#v1-16: this should actually fill for every file not present in startfiles, because
+#Raven will not populate if file is only present in endfiles. 
 if(fillDat=="y"){
-  if(any(!FG$FileName %in% allFiles)){
-    files<-FG$FileName[!FG$FileName %in% allFiles]
+  if(any(!FG$FileName %in% Dets$StartFile)){
+    files<-FG$FileName[!FG$FileName %in% Dets$StartFile]
     rows<-foreach(n=1:length(files)) %do% {
       row<-c(0,0.1,0,0,files[n],files[n],NA,"Placeholder",NA)
       return(row)

@@ -1,7 +1,7 @@
 Global:
     cache_root: D:/Cache
-    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
-    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    SF_raw: //161.55.120.117/NMML_AcousticsData2/Working_Folders/SoundTrap_UnalteredAmplitudes
+    SF_foc: //161.55.120.117/NMML_AcousticsData2/Working_Folders/SoundTrap_UnalteredAmplitudes/DecimatedWaves
     Wrapper: False
     parameters:
         signal_codes: BD
@@ -70,7 +70,7 @@ Job:
             target_samp_rate: 8192
             file_groupID:
               - XA23_ST_KS01-b
-              #- XA23_ST_KS02-b
+              - XA23_ST_KS02-b
               - XA23_ST_KS03-b
               - XA23_ST_KS04-b
               - XA23_ST_KS07-b
@@ -79,7 +79,7 @@ Job:
               - XA24_ST_KS03-a
               - XA24_ST_KS04-a
               - XA24_ST_KS07-a
-              #- XA24_ST_KS08-a
+              - XA24_ST_KS08-a
         arguments:
             hard_rerun: y
         descriptors:

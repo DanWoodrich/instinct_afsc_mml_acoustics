@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "C:/Cache/953148/tempFG.csv.gz kotz_multipinni_training_sample1 decimate_data difftime_limit file_groupID methodID2m methodvers2m target_samp_rate n 3600 kotz_multipinni_training_sample1 matlabdecimate V1s0 8192 pampgdb-standard-pullfg-v1-3"
+args = "C:/Cache/731263/tempFG.csv.gz [queryfg] decimate_data difftime_limit file_groupID methodID2m methodvers2m target_samp_rate y 3600 query matlabdecimate V1s0 4000 pampgdb-standard-pullfg-v1-3"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -60,6 +60,13 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
   #pull FG by query.
 
   FGdata = dbFetch(dbSendQuery(con,ParamArgs[which(ParamNames=="file_groupID")]))
+  
+  if(all(c("name","name..2") %in% colnames(FGdata))){
+    
+    colnames(FGdata)[which(colnames(FGdata)=='name')] = 'dname'
+    colnames(FGdata)[which(colnames(FGdata)=='name..2')] = 'name'
+  }
+  
 
 
 }else{

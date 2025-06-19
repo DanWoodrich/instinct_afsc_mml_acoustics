@@ -2,7 +2,7 @@
 library(pgpamdb)
 library(DBI)
 
-args = "C:/Cache/953148/323687/DETx.csv.gz kotz_multipinni_training_sample1 query remove_proc_ovlp standardize_sig_code query n n pampgdb-standard-pullgt-v1-4"
+args = "C:/Cache/256799/696732/DETx.csv.gz [queryfg] query remove_proc_ovlp standardize_sig_code query n n pampgdb-standard-pullgt-v1-4"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -89,6 +89,11 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="query")])){
     FGred = data.frame(FG$Deployment,as.POSIXct(FG$StartTime,tz='utc'))
     
     colnames(FGred)=c("data_collection.name","soundfiles.datetime")
+    
+    #little more fault tolerant
+    if(any(duplicated(FGred))){
+      FGred = FGred[-which(duplicated(FGred)),]
+    }
     
     sfs = table_dataset_lookup(con,
                                "SELECT DISTINCT ON (soundfiles.datetime,data_collection.name) soundfiles.id FROM soundfiles JOIN data_collection ON soundfiles.data_collection_id = data_collection.id",

@@ -183,9 +183,18 @@ if __name__ == "__main__":
     FG["outlier_perc"] = outlier_perc
     
     cpus = mp.cpu_count()
-
     unqvalues = FG.DiffTime.unique()
+
+    #fix condition where num cpus > files:
+
+    cpus = len(unqvalues) if len(unqvalues) < cpus else cpus
+
+
     #np.random.shuffle(unqvalues)
+
+    #import code
+    #code.interact(local=dict(globals(), **locals()))
+    
     chunksize = len(unqvalues)//cpus
 
     chunks = [i for i in unqvalues[::chunksize]] #would like to randomize. optimize later
@@ -197,8 +206,7 @@ if __name__ == "__main__":
 
     FG_chunks = [FG.DiffTime[(FG.DiffTime >= x[0]) & (FG.DiffTime < x[1])] for x in chunk_margins]
        
-    #import code
-    #code.interact(local=dict(globals(), **locals()))
+
     
     FG_chunks_fullds = [FG[FG.DiffTime.isin(i)] for i in FG_chunks]
     

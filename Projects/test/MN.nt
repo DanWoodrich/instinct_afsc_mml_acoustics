@@ -19,8 +19,6 @@ Global:
         #msp_inf: 10
         msp_inf: 120
         split_prot: within_file
-        queryfg:
-            > "SELECT data_collection.name AS dname,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN data_collection ON soundfiles.data_collection_id = data_collection.id WHERE type=1 AND soundfiles.name IN ('EA-RWBS02-100921-190816.wav','AU-GASU01-240522-205000.wav','AU-GASU01-240522-204000.wav','AU-GASU01-240522-202000.wav')" 
         querygt:
            > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 
            > AND detections.signal_code = 47 AND  label = 1 AND procedure = 10 AND detections.start_file IN {FG}"
@@ -69,7 +67,9 @@ Job:
             methodvers2m: V1s0
             target_samp_rate: 2048
             file_groupID:
-                - [queryfg]
+              - acoustics_lan_training_library
+              - known_ascending_tonal_blips_mystery_signal
+              - random_sample_s_of_M5
         arguments:
             hard_rerun: n
         descriptors:
@@ -82,7 +82,7 @@ Job:
             parameters:
                 methodID: pampgdb-standard-pullgt
                 methodvers: v1-4
-                query: [querygt_only_10]
+                query: [querygt]
                 #below is "n" or the int signal code to standardize to
                 standardize_sig_code: n
                 remove_proc_ovlp: n
@@ -96,12 +96,14 @@ Job:
                 decimate_data: y
                 difftime_limit: 3600
                 methodID: pampgdb-standard-pullfg
-                methodvers: v1-2
+                methodvers: v1-3
                 methodID2m: matlabdecimate
                 methodvers2m: V1s0
                 target_samp_rate: 2048
                 file_groupID:
-                  - [queryfg]
+                  - acoustics_lan_training_library
+                  - known_ascending_tonal_blips_mystery_signal
+                  - random_sample_s_of_M5
             arguments:
                 hard_rerun: n
             descriptors:
@@ -139,12 +141,12 @@ Job:
                     do_val: y
                     do_weight: n
                     gt_depth: [signal_codes]
-                    learn_rate: 0.00015
+                    learn_rate: 0.0001
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
-                    perc_fp: 0.9975
-                    perc_tp: 0.0025
+                    perc_fp: 0.975
+                    perc_tp: 0.025
                     prop_fp: 0.75
                     prop_tp: 0.25
                     #CHANGE PROC 30: 0.0005 -> 0.005: see if it is resonable with higher epoch size + longer stride pix
@@ -153,7 +155,7 @@ Job:
                     #stride_pix: 120 
                     stride_pix: 48
                     tp_weight: 2
-                    view_plots: n
+                    view_plots: y
                     win_size: [model_window_size]
                     win_size_native: [native_window_size]
                     zero_drop: n
@@ -192,8 +194,8 @@ Job:
             native_height: [native_height]
             native_pix_per_sec: [npps]
             outlier_perc: 99.99
-            view_mode: y
-            window_length: 448
+            view_mode: n
+            window_length: 512
             #window_length: 1024
         arguments:
             hard_rerun: n

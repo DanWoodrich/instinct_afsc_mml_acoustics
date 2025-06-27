@@ -1,0 +1,368 @@
+Global:
+    cache_root: D:/Cache
+    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    Wrapper: False
+    parameters:
+        signal_codes: DK
+        freq_start: 0
+        freq_size: 750
+        native_height: 240
+        #native_window_size: 256
+        #npps: 128
+        native_window_size: 240
+        #npps: 120
+        npps: 48
+        model_window_size: 240
+        model_name: EffecientNet
+        inf_batch_size: 175
+        #msp_inf: 10
+        msp_inf: 120
+        split_prot: within_file
+        queryfg:
+            > "SELECT data_collection.name AS dname,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN data_collection ON soundfiles.data_collection_id = data_collection.id WHERE type=1 AND soundfiles.name IN ('EA-RWBS02-100921-190816.wav','AU-GASU01-240522-205000.wav','AU-GASU01-240522-204000.wav','AU-GASU01-240522-202000.wav')" 
+        querygt:
+           > "SELECT DISTINCT detections.* FROM detections WHERE detections.status = 1 
+           > AND detections.signal_code = 47 AND  label = 1 AND procedure = 10 AND detections.start_file IN {FG}"
+        blank_query:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
+Job:
+    ModelEval_NN:
+        parameters:
+            methodID: simple-eval
+            methodvers: v1-3
+            gt_depth: [signal_codes]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+    DLmodel*:
+        parameters:
+            methodID: train-win-slide-dl
+            methodvers: v1-21
+            augstr: 0.25,0.25,0.5
+            gt_depth: [signal_codes]
+            model_name: [model_name]
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+            only_labs: n
+            stride_pix: [msp_inf]
+            #stride_pix: 40
+            win_size: [model_window_size]
+            win_size_native: [native_window_size]
+        arguments:
+            batch_size: [inf_batch_size]
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+            venv: Conda
+            venv_name: tf-gpu4
+    FormatFG:
+        parameters:
+            decimate_data: y
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-3
+            methodID2m: matlabdecimate
+            methodvers2m: V1s0
+            target_samp_rate: 2048
+            file_groupID:
+                - [queryfg]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    TrainModel_paramset:
+        FormatGT:
+            parameters:
+                methodID: pampgdb-standard-pullgt
+                methodvers: v1-4
+                query: [querygt_only_10]
+                #below is "n" or the int signal code to standardize to
+                standardize_sig_code: n
+                remove_proc_ovlp: n
+            arguments:
+                hard_rerun: n
+            descriptors:
+                runtype: lib
+                language: R
+        FormatFG:
+            parameters:
+                decimate_data: y
+                difftime_limit: 3600
+                methodID: pampgdb-standard-pullfg
+                methodvers: v1-2
+                methodID2m: matlabdecimate
+                methodvers2m: V1s0
+                target_samp_rate: 2048
+                file_groupID:
+                  - [queryfg]
+            arguments:
+                hard_rerun: n
+            descriptors:
+                runtype: lib
+                language: R
+                runtype2m: bin
+                language2m: MATLAB
+        seperate_ds_train:
+            SplitTensor:
+                parameters:
+                    methodID: tens-simple-split
+                    methodvers: v1-3
+                    native_pix_per_sec: [npps]
+                    seed_val: 1
+                    split_protocol: [split_prot]
+                    test_split: n
+                    train_test_split: 1.0
+                    train_val_split: 0.75
+                    use_seed: y    
+                arguments:
+                    hard_rerun: n
+                descriptors:
+                    runtype: lib
+                    language: R
+        test1:
+            DLmodel*:
+                parameters:
+                    methodID: train-win-slide-dl
+                    methodvers: v1-21
+                    addnoise_mean: 0.5
+                    addnoise_stddev: 0.25
+                    augstr: 0.25,0.25,0.5
+                    do_aug: y
+                    do_spec_averaging: half_pos
+                    do_val: y
+                    do_weight: n
+                    gt_depth: [signal_codes]
+                    learn_rate: 0.00015
+                    model_name: [model_name]
+                    native_height: [native_height]
+                    native_pix_per_sec: [npps]
+                    perc_fp: 0.9975
+                    perc_tp: 0.0025
+                    prop_fp: 0.75
+                    prop_tp: 0.25
+                    #CHANGE PROC 30: 0.0005 -> 0.005: see if it is resonable with higher epoch size + longer stride pix
+                    shuf_size: 0.05 
+                    #CHANGE PROC 30: 30 -> 120 not sure why this was so low in the first place
+                    #stride_pix: 120 
+                    stride_pix: 48
+                    tp_weight: 2
+                    view_plots: n
+                    win_size: [model_window_size]
+                    win_size_native: [native_window_size]
+                    zero_drop: n
+                arguments:
+                    batch_size: 75
+                    batch_size_inf: [inf_batch_size]
+                    #CHANGE PROC 30: increase 10 -> 15
+                    epoch: 15  
+                    epoch_steps: 500
+                    a_val_steps: 0
+                    a_val_tp_heavy: n
+                    hard_rerun: n
+                descriptors:
+                    runtype: lib
+                    language: Python
+                    wrapper: True
+                    pass_sub_to_wrapper: True
+                    venv: Conda
+                    venv_name: tf-gpu4
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [blank_query]
+            remove_proc_ovlp: n
+            standardize_sig_code: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    GenBigSpec:
+        parameters:
+            methodID: mel
+            methodvers: v1-1
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+            outlier_perc: 99.99
+            view_mode: y
+            window_length: 448
+            #window_length: 1024
+        arguments:
+            hard_rerun: n
+            #rerun_key: 2
+        descriptors:
+            runtype: lib
+            language: Python
+            venv: Conda
+            venv_name: mel-spec
+    LabelTensor:
+        parameters:
+            methodID: tens-simple-label
+            methodvers: v1-9
+            dimensions: 2
+            freq_size: [freq_size]
+            freq_start: [freq_start]
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    SplitTensor:
+        parameters:
+            methodID: tens-simple-split
+            methodvers: v1-3
+            native_pix_per_sec: [npps]
+            seed_val: 1
+            split_protocol: within_file
+            test_split: y
+            train_test_split: 0.80
+            train_val_split: 0.75
+            use_seed: y    
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    seperate_ds_test:
+        SplitTensor:
+            parameters:
+                methodID: tens-simple-split
+                methodvers: v1-3
+                native_pix_per_sec: [npps]
+                seed_val: 1
+                split_protocol: within_file
+                test_split: n
+                train_test_split: 0
+                train_val_split: 0.75
+                use_seed: y    
+            arguments:
+                hard_rerun: n
+            descriptors:
+                runtype: lib
+                language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-13
+        arguments:
+            fg_fill: y
+            hard_rerun: n
+            ignore_decimated: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+        parameters:
+            methodID: rd-simple-w-metadata
+            methodvers: v1-5
+        descriptors:
+            runtype: lib
+            language: R
+    AssignLabels:
+        parameters:
+            methodID: labels-w-iou-simple
+            methodvers: v1-10
+            iou_thresh: 0.001
+            write_GT: y
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    PerfEval2DL:
+        parameters:
+            methodID: pe2dl-simple
+            methodvers: v1-4
+            cexmod: 2
+            suppress_test: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    PublishDetswFG:
+        parameters: 
+            methodID: pampgdb-standard-publish
+            methodvers: v1-3
+            bin_fill_code: REG
+            procedure_id: 15
+            signal_code: [signal_codes]
+            #Standard DL methods will always be loose bound detection. 
+            strength: loose
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    ScoresToDETx:
+        parameters:
+            methodID: moving-smooth
+            methodvers: v1-13
+            difftime_cap: 3600
+            freq_low: [freq_start]
+            freq_size: [freq_size]
+            #setting below to msp_inf negates action..?
+            group_pixels: 120
+            mod_size_1: [native_window_size]
+            mod_size_2: [model_window_size]
+            native_pix_per_sec: [npps]
+            smooth_method: mean
+            split_protocol: [split_prot]
+            stride_pix: [msp_inf]
+        arguments:
+            hard_rerun: n
+            #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
+            #CHANGE WITH  INFERENCE!
+            remove_spec: n
+        descriptors:
+            runtype: lib
+            language: R
+    ApplyCutoff:
+        parameters:
+            cutoff: 0.8
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: no_method
+    stats_calc:
+        ApplyCutoff:
+            parameters:
+                append_cutoff: y
+                cutoff:
+                    - 0.0
+                    #- 0.1
+                    - 0.4
+                    - 0.25
+                    - 0.5
+                    - 0.6
+                    - 0.75
+                    - 0.8
+                    - 0.85
+                    - 0.9
+                    #- 0.95
+                    #- 0.99
+                    #- 0.999
+            arguments:
+                hard_rerun: n
+            descriptors:
+                runtype: no_method
+    PerfEval1DL:
+        parameters:
+            methodID: pe1dl-simple
+            methodvers: v1-2
+            suppress_test: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R

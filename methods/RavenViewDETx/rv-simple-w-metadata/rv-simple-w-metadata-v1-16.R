@@ -30,7 +30,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="C:/Cache/953148/258047 C:/Cache/953148 C:/Cache/953148/258047/149794 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/8192 y y y 1 1 rv-simple-w-metadata-v1-15 //161.55.120.117/NMML_AcousticsData/Audio_Data"
+args="C:/Cache/444746/795462 C:/Cache/444746 C:/Cache/444746/795462/943183 //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves/4000 y y y 1 1 rv-simple-w-metadata-v1-16 //161.55.120.117/NMML_AcousticsData/Audio_Data"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))
@@ -119,7 +119,13 @@ colnames(FG)[which(colnames(FG)=="FileName")]<-"StartFile"
 
 FG$StartTime<-NULL
 
-FG$cumsum=c(0,cumsum(FG$Duration)[1:(nrow(FG)-1)])
+#stealth fix: breaks if only 1 soundfile in FG
+if(nrow(FG)>1){
+  FG$cumsum=c(0,cumsum(FG$Duration)[1:(nrow(FG)-1)])
+}else{
+  FG$cumsum=0
+}
+
 
 #stick the null space data onto dets, so it gets formatted the same way!
 #calculate the empty spaces in each file.

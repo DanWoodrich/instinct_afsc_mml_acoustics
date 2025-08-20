@@ -18,4 +18,9 @@ for(n in Packages){
 
 }
 
-install.packages("//nmfs/akc-nmml/CAEP/Acoustics/Matlab Code/Other code/R/pgpamdb/pgpamdb_0.1.28.tar.gz", source = TRUE, repos=NULL)
+# Find the script's own directory
+args <- commandArgs(trailingOnly = FALSE)
+script_path <- normalizePath(sub("--file=", "", args[grep("--file=", args)]))
+script_dir <- dirname(script_path)
+
+install.packages(file.path(script_dir, "pgpamdb_latest.tar.gz"), source = TRUE, repos=NULL)

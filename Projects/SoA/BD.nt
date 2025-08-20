@@ -70,7 +70,7 @@ Job:
             target_samp_rate: 8192
             file_groupID:
               - XA23_ST_KS01-b
-              #- XA23_ST_KS02-b
+              - XA23_ST_KS02-b
               - XA23_ST_KS03-b
               - XA23_ST_KS04-b
               - XA23_ST_KS07-b
@@ -79,9 +79,9 @@ Job:
               - XA24_ST_KS03-a
               - XA24_ST_KS04-a
               - XA24_ST_KS07-a
-              #- XA24_ST_KS08-a
+              - XA24_ST_KS08-a
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R

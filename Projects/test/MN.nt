@@ -4,7 +4,7 @@ Global:
     SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
     Wrapper: False
     parameters:
-        signal_codes: DK
+        signal_codes: MN
         freq_start: 0
         freq_size: 750
         native_height: 240
@@ -121,7 +121,7 @@ Job:
                     split_protocol: [split_prot]
                     test_split: n
                     train_test_split: 1.0
-                    train_val_split: 0.75
+                    train_val_split: 0.90
                     use_seed: y    
                 arguments:
                     hard_rerun: n
@@ -137,11 +137,11 @@ Job:
                     addnoise_stddev: 0.25
                     augstr: 0.25,0.25,0.5
                     do_aug: y
-                    do_spec_averaging: half_pos
+                    do_spec_averaging: y
                     do_val: y
                     do_weight: n
                     gt_depth: [signal_codes]
-                    learn_rate: 0.0001
+                    learn_rate: 0.00001
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
@@ -155,7 +155,7 @@ Job:
                     #stride_pix: 120 
                     stride_pix: 48
                     tp_weight: 2
-                    view_plots: y
+                    view_plots: n
                     win_size: [model_window_size]
                     win_size_native: [native_window_size]
                     zero_drop: n
@@ -163,8 +163,8 @@ Job:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
                     #CHANGE PROC 30: increase 10 -> 15
-                    epoch: 15  
-                    epoch_steps: 500
+                    epoch: 6  
+                    epoch_steps: 6000
                     a_val_steps: 0
                     a_val_tp_heavy: n
                     hard_rerun: n
@@ -227,8 +227,8 @@ Job:
             seed_val: 1
             split_protocol: within_file
             test_split: y
-            train_test_split: 0.80
-            train_val_split: 0.75
+            train_test_split: 1.0
+            train_val_split: 0.90
             use_seed: y    
         arguments:
             hard_rerun: n
@@ -245,7 +245,7 @@ Job:
                 split_protocol: within_file
                 test_split: n
                 train_test_split: 0
-                train_val_split: 0.75
+                train_val_split: 0.90
                 use_seed: y    
             arguments:
                 hard_rerun: n

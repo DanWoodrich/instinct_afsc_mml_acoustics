@@ -1,0 +1,50 @@
+pipe: DLmodel_Test.pipe
+DLmodel_Test.pipe:
+  process: DLmodel_Test
+  GetModel:
+    process: FetchStaticModel
+  GetFG: 
+    pipe: FormatFG.pipe
+    #loop_on: FormatFG
+    FormatFG.pipe:
+      process: FormatFG
+  GetSpec: 
+    pipe: GenBigSpec.pipe
+    #loop_on: FormatFG
+    GenBigSpec.pipe:
+      process: GenBigSpec
+      GetFG:
+        process: FormatFG
+  GetLabels: 
+    pipe: LabelTensor.pipe
+    #loop_on: FormatFG
+    LabelTensor.pipe:
+      process: LabelTensor
+      GetFG:
+        process: FormatFG
+      GetGT:
+        pipe: FormatGT.pipe
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG:
+            process: FormatFG
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            process: FormatFG
+  GetSplits: 
+    pipe: SplitTensor.pipe
+    #loop_on: FormatFG
+    params_drop: seperate_ds_test
+    SplitTensor.pipe:
+      process: SplitTensor
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            process: FormatFG
+      GetFG:
+        process: FormatFG

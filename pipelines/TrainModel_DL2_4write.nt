@@ -1,0 +1,73 @@
+pipe: DLmodel_Train.pipe
+#call splits params drop if needed before invoking this fxn. 
+params_drop: TrainModel_paramset-seperate_ds_train-test1
+DLmodel_Train.pipe:
+  process: DLmodel_Train
+  GetFG: 
+    pipe: FormatFG.pipe
+    loop_on: FormatFG
+    FormatFG.pipe:
+      process: FormatFG
+  GetSpec: 
+    pipe: GenBigSpec.pipe
+    loop_on: FormatFG
+    GenBigSpec.pipe:
+      process: GenBigSpec
+      GetFG:
+        process: FormatFG
+        #pipe: FormatFG.pipe
+        #loop_on: FormatFG
+        #FormatFG.pipe:
+        #  process: FormatFG
+  GetLabels: 
+    pipe: LabelTensor.pipe
+    loop_on: FormatFG
+    LabelTensor.pipe:
+      process: LabelTensor
+      GetFG:
+        process: FormatFG
+        #pipe: FormatFG.pipe
+        #loop_on: FormatFG
+        #FormatFG.pipe:
+        #  process: FormatFG
+      GetGT:
+        pipe: FormatGT.pipe
+        #loop_on: FormatFG
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG:
+            process: FormatFG
+            #pipe: FormatFG.pipe
+            #FormatFG.pipe:
+            #  process: FormatFG
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            process: FormatFG
+            #pipe: FormatFG.pipe
+            #loop_on: FormatFG
+            #FormatFG.pipe:
+            #  process: FormatFG
+  GetSplits: 
+    pipe: SplitTensor.pipe
+    loop_on: FormatFG
+    SplitTensor.pipe:
+      process: SplitTensor
+      GetImg:
+        pipe: GenBigSpec.pipe
+        GenBigSpec.pipe:
+          process: GenBigSpec
+          GetFG:
+            process: FormatFG
+            #pipe: FormatFG.pipe
+            #loop_on: FormatFG
+            #FormatFG.pipe:
+            #  process: FormatFG
+      GetFG:
+        process: FormatFG
+        #pipe: FormatFG.pipe
+        #loop_on: FormatFG
+        #FormatFG.pipe:
+        #  process: FormatFG

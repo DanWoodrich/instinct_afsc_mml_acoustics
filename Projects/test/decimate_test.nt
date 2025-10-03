@@ -1,0 +1,59 @@
+Global:
+    cache_root: C:/Cache
+    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_foc: T:/DecimatedWaves
+    Wrapper: False
+    GCS_output: True
+    GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/test_output
+    parameters:
+        signal_codes: BD
+        freq_start: 0
+        freq_size: 4096
+        native_height: 240
+        #native_window_size: 256
+        #npps: 128
+        native_window_size: 240
+        npps: 80
+        model_window_size: 240
+        model_name: EffecientNet
+        inf_batch_size: 175
+        #msp_inf: 10
+        msp_inf: 120
+        split_prot: within_file
+        querygt1:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28,29) AND bins.id IN {FG}"
+        querygt_only_10:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        blank_query:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: y
+            difftime_limit: 3600
+            methodID: makara-download
+            methodvers: v1-0
+            methodID2m: matlabdecimate
+            methodvers2m: V1s1
+            target_samp_rate: 8192
+            file_groupID:
+              #get a valid mooring name from makara
+              - NAVFAC_FL_201507_JAXD
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: dummy_empty
+            methodvers: v1-0
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R

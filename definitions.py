@@ -4,9 +4,7 @@ jobs = {
 "TTplus":["PE2_FG_novel","PE2all","PerfEval_MPE_TT","PE2_FG","PE2all_novel","Graph_RFNwAL_AC","ViewRFN"],
 "NewJob":["ViewGT","ViewED"],
 "MPE_DL_SS":["DLModelTrain_Eval_SS","PE2DL_all_SS","PE2DL_FG_SS","ViewScoresDL_w_AL_SS","Model_Stats_SS"], #Training/test: assumes splits from same set of FGs. 
-#todo: for best reproducibility, should write out cache path in case one wants to run dynamic model again on object. need a process to just write out
-#resultpath. 
-"MPE_DL_Train": ["DLModelTrain_Eval_Train","PE2DL_all_Train","PE2DL_FG_Train","ViewScoresDL_w_AL_Train","Model_Stats_Train","TrainModel_DL2_4write"],#Training: assumes test split sourced from different data than FGs
+"MPE_DL_Train": ["DLModelTrain_Eval_Train","PE2DL_all_Train","PE2DL_FG_Train","ViewScoresDL_w_AL_Train","Model_Stats_Train"],#Training: assumes test split sourced from different data than FGs
 "MPE_DL_Train_nopp": ["DLModelTrain_Eval_Train","PE2DL_all_Train","PE2DL_FG_Train","ViewScoresDL_w_AL_Train_allGT","Model_Stats_Train"],
 "Test_DL_novel":["PE2DL_all_novel","PE2DL_FG_novel","Model_Stats_novel"],#,"ViewScoresDL_w_AL_novel"]#,""] #add MPE_DL_TT when complete #Test: assumes test split sourced from different data than FGs
 "DL_TT":["Model_Stats_TT"] #"MPE_DL_Train","Test_DL_novel",

@@ -2,7 +2,9 @@ pipe: DLmodel_Test.pipe
 DLmodel_Test.pipe:
   process: DLmodel_Test
   GetModel:
-    process: FetchStaticModel
+    pipe: FetchStaticModel.pipe
+    FetchStaticModel.pipe:
+      process: FetchStaticModel
   GetFG: 
     pipe: FormatFG.pipe
     #loop_on: FormatFG

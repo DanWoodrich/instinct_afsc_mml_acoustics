@@ -4,7 +4,7 @@ Global:
     SF_foc: T:/DecimatedWaves
     Wrapper: False
     GCS_output: True
-    GCS_path: gs://afsc-1-working/instinct_models/bearded_test_cloudGPU
+    GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/instinct_inf_test_prod_model_makaraDL
     parameters:
         signal_codes: BD
         freq_start: 0
@@ -33,7 +33,8 @@ Job:
         parameters:
             methodID: gcs-pull-adc
             methodvers: v1-0
-            uri: gs://...
+            #uri: gs://afsc-1-working/instinct_models/bearded_test_cloudGPU/TrainModel_DL2_test_model.keras
+            uri: gs://afsc-1-working/instinct_models/production/BD10/229546/model.keras
         arguments:
             hard_rerun: n
         descriptors:
@@ -75,8 +76,10 @@ Job:
         parameters:
             decimate_data: y
             difftime_limit: 3600
-            methodID: pampgdb-standard-pullfg
-            methodvers: v1-2
+            #methodID: pampgdb-standard-pullfg
+            #methodvers: v1-2
+            methodID: makara-download
+            methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s1
             target_samp_rate: 8192
@@ -90,13 +93,14 @@ Job:
               #- XA24_ST_KS02-a
               #- XA24_ST_KS03-a
               #- XA24_ST_KS04-a
-              - XA24_ST_KS07-a
+              #- XA24_ST_KS07-a
               #- XA24_ST_KS08-a
+              - BERCHOK_SAMANA_200901_1
         arguments:
             hard_rerun: n
         descriptors:
             runtype: lib
-            language: R
+            language: Python
             runtype2m: bin
             language2m: MATLAB
     TrainModel_paramset:

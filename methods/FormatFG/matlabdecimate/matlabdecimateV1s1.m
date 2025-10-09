@@ -4,9 +4,6 @@
 %TestDecimate 512 "//161.55.120.117/NMML_AcousticsData/Audio_Data/Waves/AW12_AU_BS02/01_2013/AU-AWBS02-130101-020000.wav,//161.55.120.117/NMML_AcousticsData/Audio_Data/Waves/AW12_AU_BS02/01_2013/AU-AWBS02-130101-021000.wav"
 
 %TestDecimate 512 //161.55.120.117/NMML_AcousticsData/Audio_Data/Waves/AW12_AU_BS02/01_2013/AU-AWBS02-130101-020000.wav#//161.55.120.117/NMML_AcousticsData/Audio_Data/Waves/AW12_AU_BS02/01_2013/AU-AWBS02-130101-021000.wav
-
-%C:/pamdata_mount/afsc-1/bottom_mounted X:/Daniel_Woodrich/test/DecimatedWaves C:/Cache/561536/FullFilePaths.csv 4000
-
 function mDecimate(sfRootPathRaw,sfRootPathDec,filelistPath,target_fs_str,varargin)
 
     target_fs = str2num(target_fs_str);
@@ -38,11 +35,12 @@ function mDecimate(sfRootPathRaw,sfRootPathDec,filelistPath,target_fs_str,vararg
             info = audioinfo(prefilepath);
 
             rs2 = resample(audioread(prefilepath),target_fs,info.SampleRate);
-            
-            %suppress warning
-            [status, msg, msgID] = mkdir(dirpath);
+
+            mkdir(dirpath);
 
             audiowrite(filepathout,rs2,target_fs);
         end
     end
 end
+
+

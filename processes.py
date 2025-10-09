@@ -580,6 +580,20 @@ class PeaksAssoc(INSTINCT_process):
 
         self.run_cmd()
 
+class FetchStaticModel(INSTINCT_process):
+
+    pipeshape = NoUpstream
+    upstreamdef = [None]
+
+    outfile = 'model.keras'
+
+    def run(self):
+
+        self.cmd_args=[self.outpath(),self.param_string2]#self.ports[0].outpath()
+
+        self.run_cmd()
+        
+
 class ProcedureProgress(INSTINCT_process):
 
     pipeshape = OneUpstream
@@ -814,28 +828,21 @@ class FormatFG(INSTINCT_process):
 
                 
             if self.parameters['methodID2m'] == 'matlabdecimate':
-
                 #if decimating, run decimate. Check will matter in cases where MATLAB supporting library is not installed.
                 #note that this can be pretty slow if not on a VM! Might want to figure out another way to perform this
                 #to speed up if running on slow latency.
-                                    
+                
                 FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
 
-                #very ugly if/else here, to force backwards compatibility with local/cloud with minimal change
+                #import code
+                #code.interact(local=dict(globals(), **locals()))
 
-                if self.parameters['methodvers'] == "V1s0":
-                
-                    import code
-                    code.interact(local=dict(globals(), **locals()))
-
-                    self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
-
-                else:
-
-                    self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],PARAMSET_GLOBALS['SF_foc'],ffpPath,self.parameters['target_samp_rate']]
+                self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
+                #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
                 
                 self.run_cmd()
 
+                
                 os.remove(ffpPath)
             
             elif self.parameters['methodID2m'] == 'matlabdecimate_flexchunk':
@@ -907,21 +914,6 @@ class FormatFG(INSTINCT_process):
         FG.to_csv(self.outfilegen(),index=False,compression='gzip')
             
 
-
-class FetchStaticModel(INSTINCT_process):
-    
-    pipeshape = OneUpstream
-    upstreamdef = ['GetModel']
-
-    outfile = 'model.keras'
-
-    def run(self):
-
-        self.cmd_args=[self.ports[0].outpath(),self.outfilegen(),self.param_string2]
-
-        self.run_cmd()
-
-    
 class EditRAVENx(INSTINCT_userprocess):
     #pipeshape = OneUpstream
     #upstreamdef = ['GetViewFile']

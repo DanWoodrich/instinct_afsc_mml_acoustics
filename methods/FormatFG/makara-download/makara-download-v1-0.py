@@ -2,6 +2,10 @@ import pandas as pd
 from google.cloud import bigquery
 import concurrent.futures
 import os
+import sys
+
+sys.path.append(os.getcwd())
+from user.misc import arg_loader
 
 args=arg_loader()
 
@@ -17,13 +21,23 @@ if "SELECT " in instruction:
 else:
     #assume a deployment code
 
-    query = f"SELECT recording_code AS 'FileName', recording_uri AS 'FullPath', recording_start_datetime AS 'StartTime', recording_duration_secs AS 'Duration', deployment_code AS 'Deployment',0 AS 'SegStart', recording_duration_secs AS 'SegDur', {instruction} AS 'Name',FROM ggn-nmfs-pacm-dev-1.makara.recordings JOIN ggn-nmfs-pacm-dev-1.makara.deployments ON deployment_id = deployments.id WHERE recording_channel = 1 AND deployment_code = {instruction}"
+    query = query = f"SELECT recording_code AS `FileName`, recording_uri AS `FullPath`, recording_start_datetime AS `StartTime`, recording_duration_secs AS `Duration`, deployment_code AS `Deployment`,0 AS `SegStart`, recording_duration_secs AS `SegDur`, '{instruction}' AS `Name`,FROM `ggn-nmfs-pacm-dev-1.makara.recordings` AS r JOIN `ggn-nmfs-pacm-dev-1.makara.deployments` AS d ON r.deployment_id = d.id WHERE r.recording_channel = 1 AND d.deployment_code = '{instruction}'"
 
 client = bigquery.Client()
 
 query_job = client.query(query)
 
 df = query_job.to_dataframe()
+
+#ensure the data are available
+try:
+    is_valid = df['FullPath'].notna() & (df['FullPath'].str.strip() != '')
+    assert is_valid.all(), "String column has invalid values (null, empty, or whitespace)."
+except AssertionError as e:
+    print(f"Assertion Failed: {e}")
+
+import code
+code.interact(local=dict(globals(), **locals()))
 
 #use metadata and perform parallelized download.
 

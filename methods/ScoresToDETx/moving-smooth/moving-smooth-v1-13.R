@@ -15,7 +15,7 @@
 
 #v1-3:
 #add FGID to column to it is retained in outputs. 
-args = "C:/Cache/522979/999001/FileGroupFormat.csv.gz C:/Cache/50895/846818/328003/590168/271775/564006 C:/Cache/546853/515424/820453 C:/Cache/50895/846818/328003/590168 C:/Cache/50895/846818/328003/590168/977604 3600 0 4096 120 240 240 80 mean within_file 120 moving-smooth-v1-13 n y 1"
+args = "D:/Cache/455811/FileGroupFormat.csv.gz D:/Cache/455811/700864/845723/272613/328436 D:/Cache/455811/700864 D:/Cache/455811/700864/845723 D:/Cache/455811/700864/845723/994499 3600 0 1028 120 240 240 48 mean within_file 120 moving-smooth-v1-13 n n 1"
 #args = "D:/Cache/691880/FileGroupFormat.csv.gz D:/Cache/766359/707095/85667/505872/229546/502877 D:/Cache/691880/372121 D:/Cache/691880/372121/669253 D:/Cache/691880/372121/669253/542624 3600 0 4096 120 240 240 80 mean within_file 120 moving-smooth-v1-13 n y 1"
 
 args<-strsplit(args,split=" ")[[1]]

@@ -1,13 +1,16 @@
 #can choose to import in global namespace
 from classes import INSTINCT_process,Split_process,SplitRun_process,Unify_process,INSTINCT_userprocess
 from getglobals import PARAMSET_GLOBALS
-from misc import get_param_names,file_peek,get_difftime
+from misc import get_param_names,file_peek,get_difftime,download_blob
 
 import hashlib
 import pandas as pd
 import os
 import math
 import subprocess
+from urllib.parse import urlparse
+from google.cloud import storage
+import concurrent.futures
 
 from pipe_shapes import *
 from .pipe_shapes import *
@@ -309,7 +312,7 @@ class RavenViewDETx(INSTINCT_process):
         self.cmd_args=[self.ports[0].outpath(),self.ports[1].outpath(),self.outpath(),\
                        PARAMSET_GLOBALS['SF_foc'] + "/" + find_decimation_level(self,1),\
                        os.environ["INS_ARG_SEP"].join(self.arguments.values()).strip(),self.param_string2.strip(),\
-                       PARAMSET_GLOBALS['SF_raw']]
+                       PARAMSET_GLOBALS.get("SF_temp",PARAMSET_GLOBALS['SF_raw'])]
         
         
         self.run_cmd()
@@ -735,19 +738,6 @@ class FormatFG(INSTINCT_process):
     upstreamdef = ['GetFG']
 
     outfile = 'FileGroupFormat.csv.gz'
-    
-    def cloud_cp(self,src,dest):
-        
-        commands = []
-        for src, dest in zip(src,dest):
-            commands.append(f'"{src}""{dest}"')
-        #working on it...
-        #gsutil_command = ['gsutil','-m',"cp"] + sum(cmd.split() for cmd in commands], [])
-        
-        try:
-            subprocess.run(gsutil_command,check=True,sdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError as e:
-            print(f"Error during upload:{e.stderr.decode()}")
 
     def infile(self):
         if self.ports[0]!=None:
@@ -803,8 +793,74 @@ class FormatFG(INSTINCT_process):
 
         FG=get_difftime(FG,cap_consectutive=difftime_lim)
 
+        #use this to determine later if temp path was used
+        file_read_path = None
+
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
+            
+        FG['FullPath'] = FG['FullPath'].astype(str)
+        
+        #for prestage data to work, need to
+        #1.define a SF_temp
+        #2.define argument specifying that prestage_data = y.  If not set,  formatFG will skip it.
+        #this is useful when a mount is not configured it is preferable to optimize CPU utilization at cost of disk space. 
+        if self.arguments.get('prestage_data')=='y':
+            write_dir = PARAMSET_GLOBALS["SF_temp"]
+            file_read_path = write_dir #set this correctly for decimation step
+
+            #parse each  uri
+            #parsed_uri = urlparse(gcs_uri) #format and extract as list
+            parsed_uri = FG['FullPath'].apply(urlparse).tolist()
+            #df.FullPath : set to the expected local path now prior to DL
+
+            FG['FullPath'] = [os.path.dirname(x.path)+"/" for x in parsed_uri]
+
+            #reduce parsed_uri to unique files for more effecient download
+            parsed_uri = list(set(parsed_uri))
+
+            #use metadata and perform parallelized download.
+            storage_client = storage.Client()
+            max_workers = os.cpu_count()
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Create a future for each download task
+                future_to_blob = {
+                    executor.submit(download_blob, storage_client, gsuri, write_dir): gsuri
+                    for gsuri in parsed_uri
+                }
+
+                success_count = 0
+                error_count = 0
+                    
+                # As each future completes, process the result
+                for future in concurrent.futures.as_completed(future_to_blob):
+                    blob_name = future_to_blob[future]
+                    try:
+                        name, result = future.result()
+                        if "Success" in result:
+                            success_count += 1
+                        else:
+                            error_count += 1
+                            print(f"Failed download details for {name}: {result}")
+                    except Exception as exc:
+                        error_count += 1
+                        print(f"An exception was generated for blob {blob_name}: {exc}")
+
+                print("\n--- Download Summary ---")
+                print(f"Successfully downloaded: {success_count}")
+                print(f"Failed downloads: {error_count}")
+                print("Batch download process complete.")
+
+            assert error_count==0, "Errors in download step, aborting"
+
+        #to make consistent between different data sources, just ignore bottom_mounted...
+        FG['FullPath'] = FG['FullPath'].str.replace('bottom_mounted/', '')
+
         #and self.parameters['methodID2m'] == 'matlabdecimate'
         if 'decimate_data' in self.parameters and self.parameters['decimate_data'] == 'y':
+
+            file_read_path = PARAMSET_GLOBALS['SF_raw'] if file_read_path==None else file_read_path
             
             FullFilePaths = FG['FullPath'].astype('str') + FG['FileName'].astype('str')
 
@@ -816,7 +872,6 @@ class FormatFG(INSTINCT_process):
             #this is a little hacky- reset descriptors and methods vars to reflect the decimation method
 
             #'unfreeze' parameters and descriptors. Couldn't hurt anything right? 
-
         
             self.parameters = dict(self.parameters)
             self.descriptors = dict(self.descriptors)
@@ -826,7 +881,6 @@ class FormatFG(INSTINCT_process):
             self.descriptors['runtype']=self.descriptors['runtype2m']
             self.descriptors['language']=self.descriptors['language2m']
 
-                
             if self.parameters['methodID2m'] == 'matlabdecimate':
                 #if decimating, run decimate. Check will matter in cases where MATLAB supporting library is not installed.
                 #note that this can be pretty slow if not on a VM! Might want to figure out another way to perform this
@@ -834,31 +888,28 @@ class FormatFG(INSTINCT_process):
                 
                 FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
 
-                #import code
-                #code.interact(local=dict(globals(), **locals()))
 
-                self.cmd_args=[PARAMSET_GLOBALS['SF_raw'],ffpPath,self.parameters['target_samp_rate']]
-                #wrap it into run cmd later.. will need to change it so that matlab recieves args in order of paths, args, parameters 
+                #mod this: if prestaged, call num_cores-1 matlab processes here. If not, 1 is ok (read limited). 
+                
+                #hacky but makes backwards compatible. 
+                if self.parameters['methodvers'] == "V1s0":
+
+                    self.cmd_args=[file_read_path,ffpPath,self.parameters['target_samp_rate']]
+
+                else:
+
+                    self.cmd_args=[file_read_path,PARAMSET_GLOBALS['SF_foc'],ffpPath,self.parameters['target_samp_rate']]
                 
                 self.run_cmd()
 
-                
                 os.remove(ffpPath)
             
-            elif self.parameters['methodID2m'] == 'matlabdecimate_flexchunk':
-            
-                #this method relies on formatFG parameters to define relative paths, for more flexible pathing in/out of cloud,
-                #ephemeral compute, and also allows for flexible chunking to
+            elif self.parameters['methodID2m'] == 'matlabdecimate_parallelize':
 
-                chunksize = self.parameters['chunksize']
-                #inpath = PARAMSET_GLOBALS['SF_raw'] #gs:// or local
-                #outpath = PARAMSET_GLOBALS['SF_foc'] #gs:// or local
+                #delete this section, migrate up to previous. Automatically parallelize if prestage is selected. 
 
-               #inpath_gs = True if inpath[0:5] == "gs://" else False
-                #outpath_gs = True if outpath[0:5] == "gs://" else False
                 
-                src_service  = self.parameters['src_service'] #gcp or local
-                dest_service = self.parameters['dest_service'] #gcp or local
+                #split work evenly between available cores. If prestage, do numcores-1, if not, d
 
                 #test for cloud storage and 
                 chunksize_in = chunksize if inpath_gs else FG.shape[0] #.nrows just a guess, replace with correct attribute
@@ -890,8 +941,7 @@ class FormatFG(INSTINCT_process):
                     
                     self.run_cmd()
                     
-                    import code
-                    code.interact(local=dict(globals(), **locals()))
+
                                     
                     #if the decimated files are going back to cloud, call this here
                     #if outpath_gs:

@@ -2,6 +2,7 @@ Global:
     cache_root: C:/Cache
     SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
     SF_foc: T:/DecimatedWaves
+    SF_temp: ../temp
     Wrapper: False
     GCS_output: True
     GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/instinct_inf_test_prod_model_makaraDL
@@ -78,7 +79,7 @@ Job:
             difftime_limit: 3600
             #methodID: pampgdb-standard-pullfg
             #methodvers: v1-2
-            methodID: makara-download
+            methodID: makara-query
             methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s1
@@ -95,12 +96,16 @@ Job:
               #- XA24_ST_KS04-a
               #- XA24_ST_KS07-a
               #- XA24_ST_KS08-a
-              - BERCHOK_SAMANA_200901_1
+              #- BERCHOK_SAMANA_200901_1 #doesn't have gsuri yet
+              #spoof, manual df for now
+              - GA23_AU_SU01 
         arguments:
-            hard_rerun: n
+            hard_rerun: y
+            prestage_data: y
         descriptors:
             runtype: lib
             language: Python
+            #language: R
             runtype2m: bin
             language2m: MATLAB
     TrainModel_paramset:

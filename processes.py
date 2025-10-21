@@ -804,6 +804,7 @@ class FormatFG(INSTINCT_process):
         #for prestage data to work, need to
         #1.define a SF_temp
         #2.define argument specifying that prestage_data = y.  If not set,  formatFG will skip it.
+        #3. ensure method you are  using for metadata query returns fully qualified gs:// paths. 
         #this is useful when a mount is not configured it is preferable to optimize CPU utilization at cost of disk space. 
         if self.arguments.get('prestage_data')=='y':
             write_dir = PARAMSET_GLOBALS["SF_temp"]
@@ -882,27 +883,75 @@ class FormatFG(INSTINCT_process):
             self.descriptors['language']=self.descriptors['language2m']
 
             if self.parameters['methodID2m'] == 'matlabdecimate':
-                #if decimating, run decimate. Check will matter in cases where MATLAB supporting library is not installed.
-                #note that this can be pretty slow if not on a VM! Might want to figure out another way to perform this
-                #to speed up if running on slow latency.
-                
-                FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
 
 
-                #mod this: if prestaged, call num_cores-1 matlab processes here. If not, 1 is ok (read limited). 
-                
-                #hacky but makes backwards compatible. 
-                if self.parameters['methodvers'] == "V1s0":
+                #just make another argument to determine if user wants to parallelize matlab or not.
+                #options: par_matlab : num_cores > |x|, x!=0
 
-                    self.cmd_args=[file_read_path,ffpPath,self.parameters['target_samp_rate']]
+                if self.arguments.get('parallel_matlab','n')!='n':
+                    max_workers = os.cpu_count()
+                    
+                    if self.arguments['parallel_matlab']=='y':
+                        max_workers = max_workers-1 #default
+                    else:
+                        #if not yes, has to be numeric
+                        opted_cores = int(self.arguments['parallel_matlab'])
+                        if opted_cores <= 0:
+                            requested_workers = max_workers+opted_cores 
+                            max_workers = requested_workers if requested_workers > 0 else 1
+                        else:
+                            max_workers  = opted_cores if opted_cores < max_workers else max_workers
+
+                    #determine # rows. chunk the job into n chunks.
+                    max_workers = len(FullFilePaths) if len(FullFilePaths) < max_workers else max_workers
+
+                    chunk_size = math.ceil(len(FullFilePaths) / max_workers)
+
+                    #write out the component csv files for the matlab process.
+                    [FullFilePaths[(chunk * chunk_size):((chunk + 1) * chunk_size)].to_csv(f"{self.outpath()}/FullFilePaths_chunk{chunk}.csv", index=False,header = None) for chunk in range(max_workers)]
+
+                    #record file names to give to matlab processes
+                    chunk_files = [f"{self.outpath()}/FullFilePaths_chunk{chunk}.csv" for chunk in range(max_workers)]
+
+                    #hacky but makes backwards compatible. 
+                    if self.parameters['methodvers'] == "V1s0":
+                    
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                            
+                            future_to_cmd_ex = {executor.submit(self.run_cmd, [file_read_path,ffpPath_,self.parameters['target_samp_rate']]): ffpPath_ for ffpPath_ in chunk_files}
+
+                            for future in concurrent.futures.as_completed(future_to_cmd_ex):
+                                status = future.result() 
+                    
+                    else:
+
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                            
+                            future_to_cmd_ex = {executor.submit(self.run_cmd, [file_read_path,PARAMSET_GLOBALS['SF_foc'],ffpPath_,self.parameters['target_samp_rate']]): ffpPath_ for ffpPath_ in chunk_files}
+
+                            for future in concurrent.futures.as_completed(future_to_cmd_ex):
+                                status = future.result()
+                        
+                    #delete all component files
+                    [os.remove(path) for path in chunk_files]
 
                 else:
+                    #run single matlab job
+                            
+                    FullFilePaths.to_csv(ffpPath,index=False,header = None) #don't do gz since don't want to deal with it in MATLAB!
+                    
+                    #hacky but makes backwards compatible. 
+                    if self.parameters['methodvers'] == "V1s0":
 
-                    self.cmd_args=[file_read_path,PARAMSET_GLOBALS['SF_foc'],ffpPath,self.parameters['target_samp_rate']]
-                
-                self.run_cmd()
+                        self.cmd_args=[file_read_path,ffpPath,self.parameters['target_samp_rate']]
 
-                os.remove(ffpPath)
+                    else:
+
+                        self.cmd_args=[file_read_path,PARAMSET_GLOBALS['SF_foc'],ffpPath,self.parameters['target_samp_rate']]
+                    
+                    self.run_cmd()
+
+                    os.remove(ffpPath)
             
             elif self.parameters['methodID2m'] == 'matlabdecimate_parallelize':
 

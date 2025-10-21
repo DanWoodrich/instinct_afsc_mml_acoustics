@@ -29,7 +29,7 @@ ParamArgs<-args[(3+argsSep):(length(args)-1)]
 #if there is bucket root, add a prefex to the outpath representing the bucket root. 
 if("storage_service" %in% ParamNames){
   if(ParamArgs[which(ParamNames=="storage_service")] =="gcp"){
-    prefix = "gs://"
+    prefix = "gs://afsc-1/bottom_mounted/"
   }else if(ParamArgs[which(ParamNames=="storage_service")] =="local"){
     prefix = "//"
   }
@@ -131,8 +131,13 @@ if(grepl('SELECT ',ParamArgs[which(ParamNames=="file_groupID")])){
 
 #print(str(FGdata))
 
-FGdataout = data.frame(FGdata$name,paste(prefix,FGdata$dname,"/",format(FGdata$datetime,"%m"),"_",format(FGdata$datetime,"%Y"),"/",sep=""),
-                       format(FGdata$datetime,"%y%m%d-%H%M%S"),FGdata$duration,FGdata$dname,FGdata$seg_start,FGdata$seg_end-FGdata$seg_start,FGname)
+if(prefix!="/"){
+  full_files = paste(prefix,FGdata$dname,"/",format(FGdata$datetime,"%m"),"_",format(FGdata$datetime,"%Y"),"/",FGdata$name,sep="")
+}else{
+  full_files =  paste("/",FGdata$dname,"/",format(FGdata$datetime,"%m"),"_",format(FGdata$datetime,"%Y"),"/",sep="")
+}
+
+FGdataout = data.frame(FGdata$name,full_files,format(FGdata$datetime,"%y%m%d-%H%M%S"),FGdata$duration,FGdata$dname,FGdata$seg_start,FGdata$seg_end-FGdata$seg_start,FGname)
 colnames(FGdataout)=c("FileName","FullPath","StartTime","Duration","Deployment","SegStart","SegDur","Name")
 
 dbDisconnect(con)

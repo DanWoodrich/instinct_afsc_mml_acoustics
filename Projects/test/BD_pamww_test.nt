@@ -4,8 +4,9 @@ Global:
     SF_foc: T:/DecimatedWaves
     SF_temp: ../temp
     Wrapper: False
+    #set both of below for INSTINCT job to automatically export outputs to gcs
     GCS_output: True
-    GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/instinct_inf_test_prod_model_makaraDL
+    GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/testt
     parameters:
         signal_codes: BD
         freq_start: 0
@@ -102,7 +103,7 @@ Job:
               #- GA23_AU_SU01
               - BS13_AU_PM02-a
         arguments:
-            hard_rerun: y
+            hard_rerun: n
             prestage_data: y
             parallel_matlab: y
         descriptors:
@@ -363,7 +364,7 @@ Job:
             split_protocol: [split_prot]
             stride_pix: [msp_inf]
         arguments:
-            hard_rerun: n
+            hard_rerun: y
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
             #CHANGE WITH  INFERENCE!
             remove_spec: n

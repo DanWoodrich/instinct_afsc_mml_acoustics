@@ -16,6 +16,7 @@ args=arg_loader()
 
 #test to make sure it works!
 
+
 result_path = args[6] #assume this stays constant for this process
             
 logpath = result_path + "/model_history_log.csv"

@@ -1,8 +1,10 @@
 Global:
-    cache_root: D:/Cache
-    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
-    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    cache_root: C:/Cache
+    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_foc: T:/DecimatedWaves
+    SF_temp: ../temp
     Wrapper: False
+    GCS_output: True
     parameters:
         signal_codes: MN
         freq_start: 0
@@ -64,14 +66,17 @@ Job:
             methodID: pampgdb-standard-pullfg
             methodvers: v1-3
             methodID2m: matlabdecimate
-            methodvers2m: V1s0
+            methodvers2m: V1s1
             target_samp_rate: 2048
+            storage_service: gcp
             file_groupID:
               - acoustics_lan_training_library
               - known_ascending_tonal_blips_mystery_signal
               - random_sample_s_of_M5
         arguments:
             hard_rerun: n
+            prestage_data: y
+            parallel_matlab: y
         descriptors:
             runtype: lib
             language: R
@@ -98,14 +103,17 @@ Job:
                 methodID: pampgdb-standard-pullfg
                 methodvers: v1-3
                 methodID2m: matlabdecimate
-                methodvers2m: V1s0
+                methodvers2m: V1s1
                 target_samp_rate: 2048
+                storage_service: gcp
                 file_groupID:
                   - acoustics_lan_training_library
                   - known_ascending_tonal_blips_mystery_signal
                   - random_sample_s_of_M5
             arguments:
                 hard_rerun: n
+                prestage_data: y
+                parallel_matlab: y
             descriptors:
                 runtype: lib
                 language: R
@@ -150,7 +158,7 @@ Job:
                     prop_fp: 0.75
                     prop_tp: 0.25
                     #CHANGE PROC 30: 0.0005 -> 0.005: see if it is resonable with higher epoch size + longer stride pix
-                    shuf_size: 0.05 
+                    shuf_size: 0.01 
                     #CHANGE PROC 30: 30 -> 120 not sure why this was so low in the first place
                     #stride_pix: 120 
                     stride_pix: 48

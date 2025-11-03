@@ -1,0 +1,98 @@
+Global:
+    cache_root: C:/Cache
+    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    #SF_foc: T:/DecimatedWaves
+    #querying on 2019 matlab machine, needs raw path w/o 'Waves'
+    #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    SF_temp: ../temp
+    #raven doesn't let you use relative path lol
+    SF_foc: C:/Users/pam_user/INSTINCT/temp/decimated_temp
+    Wrapper: False
+    #set both of below for INSTINCT job to automatically export outputs to gcs
+    GCS_output: True
+    GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/dk_check
+    parameters:
+        querygt:
+           > "SELECT DISTINCT detections.id,detections.start_time,detections.end_time,detections.low_freq,LEAST(detections.high_freq,4096),detections.start_file,detections.end_file,detections.probability,detections.comments,detections.procedure,detections.label,detections.signal_code,detections.strength,detections.modified,detections.analyst,detections.status,detections.original_id,detections.date_created FROM detections WHERE detections.status = 1 
+           > AND detections.signal_code = 15 AND procedure = 10 AND detections.start_file IN {FG}"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: y
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-3
+            #methodID: makara-query
+            #methodvers: v1-0
+            methodID2m: matlabdecimate
+            methodvers2m: V1s1
+            target_samp_rate: 8192
+            storage_service: gcp
+            file_groupID:
+              - dk_r1_handpicked
+              #- dk_r1_rand
+        arguments:
+            hard_rerun: n
+            prestage_data: y
+            parallel_matlab: y
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [querygt]
+            remove_proc_ovlp: y
+            standardize_sig_code: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-13
+        arguments:
+            fg_fill: y
+            hard_rerun: n
+            ignore_decimated: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+        parameters:
+            methodID: rd-simple-w-metadata
+            methodvers: v1-5
+        descriptors:
+            runtype: lib
+            language: R
+    EditRAVENx:
+      #this process always has an instructions parameter. changing these will change hash
+      parameters: 
+        instructions:
+          > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+          > Review the contents for correctness, adding, modifying, or deleting as necessary.
+          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+      arguments: 
+        #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+        rerun_key: 0
+        hard_rerun: n
+      descriptors:
+        runtype: no_method
+    CompareAndPublishDets:
+      parameters:
+        methodID: pgpamdb-fork-sophia-hardcode
+        methodvers: v1-0
+        assume_full_review: n
+        insert_ok: 99
+        on_behalf_of: self
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib

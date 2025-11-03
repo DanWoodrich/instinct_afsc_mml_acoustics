@@ -32,8 +32,6 @@ COPY . .
 
 #install matlab runtime R2025b, ensure ENV variables set to be able to run matlab executible later
 
-#define 
-
 ENTRYPOINT = ["/bin/sh/","-c","python3 .//lib/user/pull_secrets_write.py expected_path.R && exec ./bin/instinct \"@\""]
 
 #define command at run time, job and parameters .nt gcs path. 

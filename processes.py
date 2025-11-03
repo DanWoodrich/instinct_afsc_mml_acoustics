@@ -862,6 +862,8 @@ class FormatFG(INSTINCT_process):
         if 'decimate_data' in self.parameters and self.parameters['decimate_data'] == 'y':
 
             file_read_path = PARAMSET_GLOBALS['SF_raw'] if file_read_path==None else file_read_path
+
+            print(f"FILE READ PATH: {file_read_path}")
             
             FullFilePaths = FG['FullPath'].astype('str') + FG['FileName'].astype('str')
 

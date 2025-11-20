@@ -2,7 +2,7 @@ options(timeout=1800)
 
 #gh used to query the object we use to install the pgpamdb file later
 
-Packages<-c("gh","doParallel","dplyr","tuneR","signal","foreach","imager","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
+Packages<-c("gh","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
 
 for(n in Packages){
   if(require(n,character.only=TRUE)){
@@ -19,6 +19,10 @@ for(n in Packages){
   }
 
 }
+
+#imager on linux tries to install X11 dependencies. Forbid it from doing so (should be harmless on windows) 
+install.packages('imager', configure.args='--without-X11')
+
 
 # 1. Define the repository owner and name
 repo_owner <- "DanWoodrichNOAA"

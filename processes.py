@@ -901,7 +901,6 @@ class FormatFG(INSTINCT_process):
 
             if self.parameters['methodID2m'] == 'matlabdecimate':
 
-
                 #just make another argument to determine if user wants to parallelize matlab or not.
                 #options: par_matlab : num_cores > |x|, x!=0
 
@@ -970,63 +969,7 @@ class FormatFG(INSTINCT_process):
 
                     os.remove(ffpPath)
             
-            elif self.parameters['methodID2m'] == 'matlabdecimate_parallelize':
-
-                #delete this section, migrate up to previous. Automatically parallelize if prestage is selected. 
-
-                
-                #split work evenly between available cores. If prestage, do numcores-1, if not, d
-
-                #test for cloud storage and 
-                chunksize_in = chunksize if inpath_gs else FG.shape[0] #.nrows just a guess, replace with correct attribute
-                chunksize_out = chunksize if outpath_gs else FG.shape[0]
-                
-                local_temp = "./tmp"
-                
-                os.makedirs(local_temp,exist_ok = True)
-
-                #prestage data according to chunksize.
-                #could parallelize this once I get it working. 
-                for i in range(math.ceil(FG.shape[0]/chunksize_in)):
-                
-                    files = FullFilePaths[(chunksize_in*i):(chunksize_in*(i+1))] #need to make sure that the format
-                    #fg method can assume cloud paths, given a bucket!
-                    
-                    #load files - assume gsutil is installed and default credentials are in place (will be in GKE autopilot)
-                    if inpath_gs:
-                        local_files = [local_temp + os.path.basename(i) for i in files]
-                        cloud_cp(files,local_files)
-                    else:
-                        local_files = files
-                    
-                    #make ds of local files and desired output paths, pass to matlab exe
-                    dec_files = [local_temp + "decimated_" + os.path.basename(i) for i in files]
-                    FullFilePaths.to_csv(pd.Series(local_files),pd.Series(dec_files),index=False,header = None)
-                    
-                    self.cmd_args=[ffpPath,self.parameters['target_samp_rate']]
-                    
-                    self.run_cmd()
-                    
-
-                                    
-                    #if the decimated files are going back to cloud, call this here
-                    #if outpath_gs:
-                          
-                    os.remove(ffpPath)
-                    
-                    
-                    
-                
-                #going to make a different decision here, and include both the full paths of the decimated and original file
-                #in FG.
-                 
-                #TODO 
-                #FG.decimated_path = #dec files path
-                
-            
-        #do it this way, so that task will not 'complete' if decimation is on and doesn't work
-       
-        
+               
         FG.to_csv(self.outfilegen(),index=False,compression='gzip')
             
 

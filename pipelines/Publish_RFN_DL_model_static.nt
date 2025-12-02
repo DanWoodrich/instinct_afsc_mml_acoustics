@@ -1,0 +1,15 @@
+pipe: PublishDetswFG.pipe
+loop_on: FormatFG
+PublishDetswFG.pipe: 
+  process: PublishDetswFG
+  GetData:
+    pipe: ApplyCutoff.pipe
+    loop_on: FormatFG
+    ApplyCutoff.pipe: 
+      process: ApplyCutoff
+      GetDETx:
+        pipe: ScoresToDETx.pipe
+        pipe_link: 
+          name: EvalScores_novel_static_noloop.nt
+  GetFG:
+    process: FormatFG

@@ -806,7 +806,7 @@ class FormatFG(INSTINCT_process):
         #2.define argument specifying that prestage_data = y.  If not set,  formatFG will skip it.
         #3. ensure method you are  using for metadata query returns fully qualified gs:// paths. 
         #this is useful when a mount is not configured it is preferable to optimize CPU utilization at cost of disk space. 
-        if self.arguments.get('prestage_data')=='y':
+        if self.arguments.get('prestage_data')!='n':
             write_dir = PARAMSET_GLOBALS["SF_temp"]
             file_read_path = write_dir #set this correctly for decimation step
 
@@ -823,6 +823,21 @@ class FormatFG(INSTINCT_process):
             #use metadata and perform parallelized download.
             storage_client = storage.Client()
             max_workers = os.cpu_count()
+            
+            if self.arguments.get('prestage_data')=='y':
+                #if yes, assume max
+                max_workers = os.cpu_count()-1
+            else:
+                opted_cores = int(self.arguments['prestage_data'])
+                
+                if opted_cores <= 0:
+                    requested_workers = max_workers+opted_cores 
+                    max_workers = requested_workers if requested_workers > 0 else 1
+                else:
+                    max_workers = opted_cores if opted_cores < max_workers else max_workers
+            
+            #check that # files not greater than max_workers, and set lower if true
+            max_workers = len(parsed_uri) if len(parsed_uri) < max_workers else max_workers
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                 # Create a future for each download task

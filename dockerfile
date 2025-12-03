@@ -11,7 +11,7 @@
 #at runtime: assume that on instance (like in batch), populate the cache locally if working off a previous step, and populate the local .nt file.
 
 #ubuntu image with nvidia drivers for gcp server gpus. Look below to see specific libraries requested for GPU but ignore any that shouldn't affect reproducibility of tensorflow/keras inference
-FROM nvidia/cuda:12.6.3-base-ubuntu22.04 AS base
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 AS base
 
 WORKDIR /app 
 

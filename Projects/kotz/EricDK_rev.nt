@@ -58,7 +58,7 @@ Job:
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R

@@ -116,7 +116,8 @@ Job:
         methodvers: v1-10
         assume_full_review: n
         insert_ok: 40
-        on_behalf_of: Eric
+        #on_behalf_of: Eric
+        on_behalf_of: self
       arguments: 
         hard_rerun: n
       descriptors:

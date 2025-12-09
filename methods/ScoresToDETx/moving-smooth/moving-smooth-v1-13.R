@@ -15,7 +15,7 @@
 
 #v1-3:
 #add FGID to column to it is retained in outputs. 
-args = "D:/Cache/455811/FileGroupFormat.csv.gz D:/Cache/455811/700864/845723/272613/328436 D:/Cache/455811/700864 D:/Cache/455811/700864/845723 D:/Cache/455811/700864/845723/994499 3600 0 1028 120 240 240 48 mean within_file 120 moving-smooth-v1-13 n n 1"
+args = "C:/Cache/495660/FileGroupFormat.csv.gz C:/Cache/688715/390743 C:/Cache/495660/363538 C:/Cache/495660/363538/218755 C:/Cache/495660/363538/218755/463516 3600 0 1028 120 240 240 48 mean within_file 120 moving-smooth-v1-13 n y 1"
 #args = "D:/Cache/691880/FileGroupFormat.csv.gz D:/Cache/766359/707095/85667/505872/229546/502877 D:/Cache/691880/372121 D:/Cache/691880/372121/669253 D:/Cache/691880/372121/669253/542624 3600 0 4096 120 240 240 80 mean within_file 120 moving-smooth-v1-13 n y 1"
 
 args<-strsplit(args,split=" ")[[1]]
@@ -224,11 +224,19 @@ if(vertical_bins==1){
     
     for(p in unique(indFG$DiffTime)){
       
-      #if(p == 3639){
+      FGdt = indFG[which(indFG$DiffTime==p),]
+      
+      
+      #stealth bugfix: 
+      #> nrow(Scores)
+      #[1] 2664783
+      #> end_ind
+      #[1] 2664782
+      
+      #scores is +1 more than end ind.  There is a  very small file in this data
+      #if(FGdt$FileName == "ST-XAKS01_b-240514-222002.wav"){
       #  stop()
       #}
-
-      FGdt = indFG[which(indFG$DiffTime==p),]
       
       dur = sum(FGdt$SegDur)
       
@@ -239,10 +247,14 @@ if(vertical_bins==1){
       #end_ind = (scores_ind+floor((round(dur)-model_s_size)*native_pix_per_sec/stride_pix))
     
       #stealth  change v1-13
-      #algorithm doesn't give a score to len 1 segments.
+      #algorithm doesn't give a score to len 1 segments. (<- looking back on this later... statement doesn't seem true, but does seem to be working as written)
+      
+      #does match the way infernce works currently
       num_steps = floor((dur-model_s_size)*native_pix_per_sec/stride_pix)
-       
-      if(num_steps>=1){
+      
+      #stealth  fix v1-13. Allow a num step of 0 (confusingly named, as this will correctly consume 1 score)
+
+      if(num_steps>=0){
       
         end_ind = scores_ind+num_steps
       
@@ -252,7 +264,9 @@ if(vertical_bins==1){
         new_size = length(scores)*(stride_pix/group_pix)
         
         #stealth  change v1-13
-        scores = approx(scores, n=new_size)$y
+        if(length(scores)!=new_size){
+          scores = approx(scores, n=new_size)$y
+        }
         
         scores_starts= seq(0,length(scores)*group_pix/native_pix_per_sec-group_pix/native_pix_per_sec,group_pix/native_pix_per_sec)
         

@@ -92,14 +92,14 @@ Job:
               - XA23_ST_KS04-b
               - XA23_ST_KS07-b
               - XA23_ST_KS08-b
-              - XA24_ST_KS01-a
+              #- XA24_ST_KS01-a
               - XA24_ST_KS02-a
               - XA24_ST_KS03-a
               - XA24_ST_KS04-a
               - XA24_ST_KS07-a
               - XA24_ST_KS08-a
         arguments:
-            hard_rerun: y
+            hard_rerun: n
             #try without prestage, otherwise need to build in more to clear intermediates
             #in batch inference, don't need to worry about this. 
             prestage_data: n

@@ -4,7 +4,6 @@ PublishDetswFG.pipe:
   process: PublishDetswFG
   GetData:
     pipe: ApplyCutoff.pipe
-    loop_on: FormatFG
     ApplyCutoff.pipe: 
       process: ApplyCutoff
       GetDETx:

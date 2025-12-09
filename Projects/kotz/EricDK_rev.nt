@@ -1,7 +1,9 @@
 Global:
     cache_root: C:/Apps/INSTINCT/Cache
-    SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
-    SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
+    #SF_foc: //161.55.120.117/NMML_AcousticsData/Audio_Data/DecimatedWaves
+    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_foc: T:/DecimatedWaves
     Wrapper: False
     parameters:
 #need to modify this to be tolerant of review (pull in more than just status =1) 
@@ -11,26 +13,37 @@ Global:
 Job:
     FormatFG:
         parameters:
-            decimate_data: n
+            decimate_data: y
             #decimate_data: n
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
-            methodvers: v1-2
+            methodvers: v1-3
             methodID2m: matlabdecimate
-            methodvers2m: V1s0
-            #target_samp_rate: 4096
-            target_samp_rate: 8192
+            methodvers2m: V1s1
+            target_samp_rate: 4096
+            #target_samp_rate: 8192
             file_groupID: 
-                - XA22_ST_KS02
-                - XA22_ST_KS04
-                - XA23_ST_KS02
-                - XA23_ST_KS04
-                #- AL16_AU_IC03
-                #- AL16_AU_PH01
-                #- AL16_AU_CC02
-                #- AL19_AU_IC01
+              - XA22_ST_KS01
+              - XA22_ST_KS03
+              - XA23_ST_KS01
+              - XA23_ST_KS03
+              - XA23_ST_KS07
+              - XA23_ST_KS01-b
+              - XA23_ST_KS02-b
+              - XA23_ST_KS03-b
+              - XA23_ST_KS04-b
+              - XA23_ST_KS07-b
+              - XA23_ST_KS08-b
+              #- XA24_ST_KS01-a
+              - XA24_ST_KS02-a
+              - XA24_ST_KS03-a
+              - XA24_ST_KS04-a
+              - XA24_ST_KS07-a
+              - XA24_ST_KS08-a
         arguments:
-            hard_rerun: y
+            hard_rerun: n
+            prestage_data: n
+            parallel_matlab: y
         descriptors:
             runtype: lib
             language: R
@@ -45,19 +58,23 @@ Job:
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
-            hard_rerun: y
+            hard_rerun: n
         descriptors:
             runtype: lib
             language: R
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-13
+            #methodvers: v1-13
+            methodvers: v1-17
         arguments:
             fg_fill: n
-            hard_rerun: n
-            ignore_decimated: y
+            hard_rerun: y
+            ignore_decimated: n
             randomize_order: n
+            #stage_data can be n, or a new path to replace the stage_prefix. stage_prefix must be the existing path to match and replace (ignore if stage_data = n)
+            stage_data: T:/DecimatedWaves
+            stage_prefix: C:/Users/pam_user/INSTINCT/temp
         descriptors:
             runtype: lib
             language: R

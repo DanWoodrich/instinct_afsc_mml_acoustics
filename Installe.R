@@ -1,6 +1,8 @@
 options(timeout=1800)
 
 #gh used to query the object we use to install the pgpamdb file later
+#remove.packages("curl")
+#install.packages("curl")
 
 Packages<-c("gh","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
 
@@ -20,9 +22,33 @@ for(n in Packages){
 
 }
 
-#imager on linux tries to install X11 dependencies. Forbid it from doing so (should be harmless on windows) 
-install.packages('imager', configure.args='--without-X11')
+#if on windows, check for curl verion. Since this requires Rtools, will involve some manual setup in the case that curl 
+if(.Platform$OS.type == "windows"){
+  curl_version <- packageVersion("curl")
+  
+  # too early
+  too_early_version <- "5.0.0"
+  
+  # Assert that the installed version is greater than the minimum
+  stopifnot(
+    "The 'curl' package version must be greater than 5.0.0. Please update it: requires Rtools for versions > 5.0.0" = 
+      curl_version > too_early_version
+  )
+  
+  
+}
 
+if(require("imager",character.only=TRUE)){
+  print("imager is installed")
+}else{
+  #imager on linux tries to install X11 dependencies. Forbid it from doing so (should be harmless on windows) 
+  install.packages('imager', configure.args='--without-X11', repos = "http://cran.us.r-project.org")
+  if(require("imager",character.only=TRUE)){
+    print("imager is installed")
+  }else{
+    stop("could not install imager")
+  }
+}
 
 # 1. Define the repository owner and name
 repo_owner <- "DanWoodrichNOAA"

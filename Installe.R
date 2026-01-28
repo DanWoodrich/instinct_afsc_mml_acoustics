@@ -4,7 +4,7 @@ options(timeout=1800)
 #remove.packages("curl")
 #install.packages("curl")
 
-Packages<-c("gh","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
+Packages<-c("imager","gh","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
 
 for(n in Packages){
   if(require(n,character.only=TRUE)){
@@ -36,18 +36,6 @@ if(.Platform$OS.type == "windows"){
   )
   
   
-}
-
-if(require("imager",character.only=TRUE)){
-  print("imager is installed")
-}else{
-  #imager on linux tries to install X11 dependencies. Forbid it from doing so (should be harmless on windows) 
-  install.packages('imager', configure.args='--without-X11', repos = "http://cran.us.r-project.org")
-  if(require("imager",character.only=TRUE)){
-    print("imager is installed")
-  }else{
-    stop("could not install imager")
-  }
 }
 
 # 1. Define the repository owner and name

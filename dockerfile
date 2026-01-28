@@ -93,6 +93,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY ./lib/user/Installe.R ./lib/user/
 
+RUN apt-get update && apt-get install -y \
+    libfftw3-dev \
+    libtiff5-dev \
+    libx11-dev \
+    libxt-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN Rscript ./lib/user/Installe.R
 
 # Set python3.11 as the default 'python3'

@@ -18,7 +18,7 @@ instruction = args[2]
 #if instruction starts with SELECT, assume query.
 #if not, assume a deployment
 
-makara_ready = False
+makara_ready = True
 
 if makara_ready:
 
@@ -27,14 +27,24 @@ if makara_ready:
         query = instruction
     else:
         #assume a deployment code
-
-        query = query = f"SELECT recording_code AS `FileName`, recording_uri AS `FullPath`,  FORMAT_DATETIME('%y%m%d-%H%M%S',recording_start_datetime) AS `StartTime`, recording_duration_secs AS `Duration`, deployment_code AS `Deployment`,0 AS `SegStart`, recording_duration_secs AS `SegDur`, '{instruction}' AS `Name`,FROM `ggn-nmfs-pacm-dev-1.makara.recordings` AS r JOIN `ggn-nmfs-pacm-dev-1.makara.deployments` AS d ON r.deployment_id = d.id WHERE r.recording_channel = 1 AND d.deployment_code = '{instruction}'"
+        #hmm, makara does not go down to the individual soundfile level. So, need to go down as far as possible, then look for waves in there.
+        #Full steps:
+        #1. query for recording data
+        #2. list all files in bucket, build df out of that, also return their object size
+        #3. use the queried recording data + object level uris to supply datetime
+        #byte_rate = sampleRate * Channels * (BitDepth / 8)
+        #duration= (GCS Object Size - 44) / byte_rate
+        
+        #4. How to determine start time? Trust makara recording data and do the math? Can I assume orderdness based on naming? Does naming encode starttime? 
+        query = f"SELECT recording_code AS `FileName`, recording_uri AS `FullPath`,  FORMAT_DATETIME('%y%m%d-%H%M%S',recording_start_datetime) AS `StartTime`, recording_duration_secs AS `Duration`, deployment_code AS `Deployment`,0 AS `SegStart`, recording_duration_secs AS `SegDur`, '{instruction}' AS `Name`,FROM `ggn-nmfs-pacm-dev-1.makara.recordings` AS r JOIN `ggn-nmfs-pacm-dev-1.makara.deployments` AS d ON r.deployment_id = d.id WHERE r.recording_channel = 1 AND d.deployment_code = '{instruction}'"
 
     client = bigquery.Client()
 
     query_job = client.query(query)
 
     df = query_job.to_dataframe()
+
+    print(df)
 
     #ensure the data are available
     try:

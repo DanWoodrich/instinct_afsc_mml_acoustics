@@ -1,3 +1,4 @@
+#run a static model on the pam-ww, or in another location with ADC and requisite mounts configured. 
 Global:
     #cache_root: D:/Cache
     #SF_raw: //161.55.120.117/NMML_AcousticsData/Audio_Data
@@ -82,24 +83,24 @@ Job:
             target_samp_rate: 4096
             file_groupID:
               - XA22_ST_KS01
-              - XA22_ST_KS03
-              - XA23_ST_KS01
-              - XA23_ST_KS03
-              - XA23_ST_KS07
-              - XA23_ST_KS01-b
-              - XA23_ST_KS02-b
-              - XA23_ST_KS03-b
-              - XA23_ST_KS04-b
-              - XA23_ST_KS07-b
-              - XA23_ST_KS08-b
-              #- XA24_ST_KS01-a
-              - XA24_ST_KS02-a
-              - XA24_ST_KS03-a
-              - XA24_ST_KS04-a
-              - XA24_ST_KS07-a
-              - XA24_ST_KS08-a
+              #- XA22_ST_KS03
+              #- XA23_ST_KS01
+              #- XA23_ST_KS03
+              #- XA23_ST_KS07
+              #- XA23_ST_KS01-b
+              #- XA23_ST_KS02-b
+              #- XA23_ST_KS03-b
+              #- XA23_ST_KS04-b
+              #- XA23_ST_KS07-b
+              #- XA23_ST_KS08-b
+              ##- XA24_ST_KS01-a
+              #- XA24_ST_KS02-a
+              #- XA24_ST_KS03-a
+              #- XA24_ST_KS04-a
+              #- XA24_ST_KS07-a
+              #- XA24_ST_KS08-a
         arguments:
-            hard_rerun: n
+            hard_rerun: y
             #try without prestage, otherwise need to build in more to clear intermediates
             #in batch inference, don't need to worry about this. 
             prestage_data: n

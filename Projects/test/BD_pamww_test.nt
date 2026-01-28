@@ -78,10 +78,10 @@ Job:
         parameters:
             decimate_data: y
             difftime_limit: 3600
-            methodID: pampgdb-standard-pullfg
-            methodvers: v1-3
-            #methodID: makara-query
-            #methodvers: v1-0
+            #methodID: pampgdb-standard-pullfg
+            #methodvers: v1-3
+            methodID: makara-query
+            methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s1
             target_samp_rate: 8192
@@ -98,18 +98,19 @@ Job:
               #- XA24_ST_KS04-a
               #- XA24_ST_KS07-a
               #- XA24_ST_KS08-a
-              #- BERCHOK_SAMANA_200901_1 #doesn't have gsuri yet
+              - BERCHOK_SAMANA_200901_1 
+              #doesn't have gsuri yet
               #spoof, manual df for now
               #- GA23_AU_SU01
-              - BS13_AU_PM02-a
+              #- BS13_AU_PM02-a
         arguments:
             hard_rerun: n
             prestage_data: y
             parallel_matlab: y
         descriptors:
             runtype: lib
-            #language: Python
-            language: R
+            language: Python
+            #language: R
             runtype2m: bin
             language2m: MATLAB
     TrainModel_paramset:

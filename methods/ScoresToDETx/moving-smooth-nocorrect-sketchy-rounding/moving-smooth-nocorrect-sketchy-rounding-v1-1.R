@@ -34,8 +34,8 @@ difftime_cap = as.integer(args[6])
 freq_low = as.integer(args[7])
 freq_size = as.integer(args[8])
 group_pix = as.integer(args[9])
-win_size_native = as.integer(args[10])
-manual_round = as.numeric(args[11]) #ultra sketchy fudge factor to help resolve cases where python/R (maybe soundfiles intake idk) rounding strikes
+manual_round = as.numeric(args[10]) #ultra sketchy fudge factor to help resolve cases where python/R (maybe soundfiles intake idk) rounding strikes
+win_size_native = as.integer(args[11])
 model_win_size = as.integer(args[12])
 native_pix_per_sec= as.integer(args[13])
 smooth_method= eval(parse(text=args[14]))

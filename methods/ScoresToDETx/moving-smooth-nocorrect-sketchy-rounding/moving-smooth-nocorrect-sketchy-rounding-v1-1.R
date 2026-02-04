@@ -35,11 +35,12 @@ freq_low = as.integer(args[7])
 freq_size = as.integer(args[8])
 group_pix = as.integer(args[9])
 win_size_native = as.integer(args[10])
-model_win_size = as.integer(args[11])
-native_pix_per_sec= as.integer(args[12])
-smooth_method= eval(parse(text=args[13]))
-split_protocol= args[14]
-stride_pix= as.integer(args[15])
+manual_round = as.numeric(args[11]) #ultra sketchy fudge factor to help resolve cases where python/R (maybe soundfiles intake idk) rounding strikes
+model_win_size = as.integer(args[12])
+native_pix_per_sec= as.integer(args[13])
+smooth_method= eval(parse(text=args[14]))
+split_protocol= args[15]
+stride_pix= as.integer(args[16])
 
 #argument for inference to remove images if no longer needed: 
 remove_spec= args[18]
@@ -250,11 +251,15 @@ if(vertical_bins==1){
       
       #does match the way infernce works currently
       
-      #native_pix_per_sec/stride_pix #this time, happens to equal 0.5
-      #(dur-model_s_size)*native_pix_per_sec/stride_pix
-      #[1] 270.665
-      #FIX: instead of flooring to the nearest 0, need to floor to the nearest native_pix_per_sec/stride_pix (0.5 in this case)
-      num_steps = floor((dur-model_s_size)*native_pix_per_sec/stride_pix)
+      #implement sketchy rounding: use only in cases where main method fails. Can walk this down if I notice any trends, and if it
+      #stabilizes, possibly implement. 
+      num_steps = (dur-model_s_size)*native_pix_per_sec/stride_pix
+      if(num_steps %% 1 <manual_round){
+        num_steps = floor(num_steps)
+      }else{
+        num_steps = ceiling(num_steps)
+      }
+      
 
       #if remainder of num_steps
       #floor((

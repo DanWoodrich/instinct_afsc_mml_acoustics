@@ -1,0 +1,212 @@
+Global:
+    cache_root: ../cache
+    #SF_raw: pull from gcs
+    SF_foc: ../temp/DecimatedWaves
+    SF_temp: ../temp
+    Wrapper: False
+    GCS_output: False
+    GCS_path: overwriten_by_batch
+    parameters:
+        signal_codes: FW
+        freq_start: 0
+        freq_size: 96
+        native_height: 256
+        npps: 20
+        native_window_size: 80
+        model_window_size: 240
+        model_name: EffecientNet
+        inf_batch_size: 175
+        msp_inf: 40
+        split_prot: within_file
+        blank_query: "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
+Job:
+    FetchStaticModel:
+        parameters:
+            methodID: gcs-pull-adc
+            methodvers: v1-0
+            uri: gs://afsc-1-working/instinct_models/production/FW2gen/model.keras
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+    ModelEval_NN:
+        parameters:
+            methodID: simple-eval
+            methodvers: v1-3
+            gt_depth: [signal_codes]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+    DLmodel*:
+        parameters:
+            methodID: train-win-slide-dl
+            methodvers: v1-20
+            augstr: 0.20,0.55,1
+            gt_depth: [signal_codes]
+            model_name: [model_name]
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+            only_labs: n
+            stride_pix: [msp_inf]
+            #stride_pix: 40
+            win_size: [model_window_size]
+            win_size_native: [native_window_size]
+        arguments:
+            batch_size: [inf_batch_size]
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+            venv: Conda
+            venv_name: tf-gpu4
+    FormatFG:
+        parameters:
+            decimate_data: y
+            difftime_limit: 1200
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-3
+            methodID2m: matlabdecimate
+            methodvers2m: V1s1
+            target_samp_rate: 256
+            storage_service: gcp
+            file_groupID:
+              - BS24_AU_PM02
+              #- SF16_AC_SD53
+              #- GA23_AU_SU01
+        arguments:
+            hard_rerun: n
+            prestage_data: 3
+            #matlab workers seem to fail spontaneously, scale down to test if it helps.
+            parallel_matlab: 7
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [blank_query]
+            remove_proc_ovlp: n
+            standardize_sig_code: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    GenBigSpec:
+        parameters:
+            methodID: con_bright_no_rep
+            methodvers: v1-5
+            crop_freq: y
+            crop_freq_size: [freq_size]
+            crop_freq_start: [freq_start]
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+            window_length: 128
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    LabelTensor:
+        parameters:
+            methodID: tens-simple-label
+            methodvers: v1-9
+            dimensions: 2
+            freq_size: [freq_size]
+            freq_start: [freq_start]
+            native_height: [native_height]
+            native_pix_per_sec: [npps]
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    SplitTensor:
+        parameters:
+            methodID: tens-simple-split
+            methodvers: v1-3
+            native_pix_per_sec: [npps]
+            seed_val: 1
+            split_protocol: within_file
+            test_split: y
+            train_test_split: 0.80
+            train_val_split: 0.75
+            use_seed: y    
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    seperate_ds_test:
+        SplitTensor:
+            parameters:
+                methodID: tens-simple-split
+                methodvers: v1-3
+                native_pix_per_sec: [npps]
+                seed_val: 1
+                split_protocol: within_file
+                test_split: n
+                train_test_split: 0
+                train_val_split: 0.75
+                use_seed: y    
+            arguments:
+                hard_rerun: n
+            descriptors:
+                runtype: lib
+                language: R
+    PublishDetswFG:
+        parameters:
+            methodID: pampgdb-standard-publish
+            methodvers: v1-3
+            bin_fill_code: LOW
+            procedure_id: 25
+            signal_code: [signal_codes]
+            strength: loose
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    ScoresToDETx:
+        parameters:
+            methodID: moving-smooth
+            methodvers: v1-13
+            difftime_cap: 1200
+            freq_low: [freq_start]
+            freq_size: [freq_size]
+            group_pixels: 80
+            mod_size_1: [native_window_size]
+            mod_size_2: [model_window_size]
+            native_pix_per_sec: [npps]
+            smooth_method: mean
+            split_protocol: [split_prot]
+            stride_pix: [msp_inf]
+        arguments:
+            hard_rerun: n
+            remove_spec: n
+        descriptors:
+            runtype: lib
+            language: R
+    ApplyCutoff:
+        parameters:
+            cutoff: 0.25
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: no_method
+    PerfEval1DL:
+        parameters:
+            methodID: pe1dl-simple
+            methodvers: v1-2
+            suppress_test: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R

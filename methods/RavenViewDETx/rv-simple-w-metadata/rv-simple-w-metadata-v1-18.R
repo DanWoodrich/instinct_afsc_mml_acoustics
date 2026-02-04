@@ -30,7 +30,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="C:/Apps/INSTINCT/Cache/286722/798465/871740/298362 C:/Apps/INSTINCT/Cache/439872/677951 C:/Apps/INSTINCT/Cache/286722/798465/871740/298362/808966 T:/DecimatedWaves/4096 n n n n T:/DecimatedWaves C:/temp 1 rv-simple-w-metadata-v1-17 C:/pamdata_mount/afsc-1/bottom_mounted"
+args="C:/Users/pam_user/INSTINCT/cache/379084 C:/Users/pam_user/INSTINCT/cache/379084/359062 ../temp/DecimatedWaves/256 BS24_AU_PM02 y 96 0 256 20 128 con_bright_no_rep-v1-6"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))

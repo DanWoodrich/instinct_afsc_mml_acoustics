@@ -381,6 +381,35 @@ class AssignLabels(INSTINCT_process):
         
         self.run_cmd()
 
+class VoxaboxenTrainEval(INSTINCT_process):
+
+    pipeshape = OneUpstream
+    upstreamdef = ["GetManifests"] #doesn't actually use this, just needs for it be run prior. 
+
+    outfile = 'Voxaboxen_results.tar.gz'
+
+    def run(self):
+
+        self.cmd_args=[self.ports[0].outpath(),self.outpath(),self.param_string2]#self.ports[0].outpath()
+
+        self.run_cmd()
+
+class VoxaboxenFormat(INSTINCT_process):
+
+    pipeshape = TwoUpstream
+    upstreamdef = ["GetFG","GetDETx"]
+
+    outfile = 'VoxaboxenManifests.zip'
+    #FG,LAB,AC
+    def run(self):
+
+        #import code
+        #code.interact(local=locals())
+        
+        self.cmd_args=[self.ports[1].outpath(),self.ports[0].outpath(),self.outpath(),PARAMSET_GLOBALS.get("SF_foc"),self.param_string2]
+        
+        self.run_cmd()
+
 class PerfEval1_s1(INSTINCT_process):
 
     pipeshape = TwoUpstream

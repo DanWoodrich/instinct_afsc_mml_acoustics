@@ -21,7 +21,7 @@ MethodID<-"labels-w-iou-simple-v1-3"
 #v1-6: retain cutoff if present. Leapfrogged 1-5, which I am not sure if it is in use. 
 #v1-10: parallelize long comparison step. 
 
-args<-"D:/Cache/264078 D:/Cache/264078/421141 D:/Cache/865375/401113/370627/843649/777039/772363 D:/Cache/264078/421141/277887 0.001 y labels-w-iou-simple-v1-10"
+args<-"../cache/752391 ../cache/752391/481451 ../cache/752391/564579/86528/739531/541859/406037 ../cache/752391/481451/174418 0.001 y labels-w-iou-simple-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -43,7 +43,8 @@ FGpath <- args[1]
 GTpath <- args[2]
 DETpath <- args[3]
 resultPath <- args[4]
-IoUThresh<-args[5]
+#stealth fix v-10: convert to numeric, was bugging out for sci notation / low prob files. 
+IoUThresh<-as.numeric(args[5])
 WriteGT<-args[6]
 
 
@@ -75,7 +76,6 @@ outData<-read.csv(paste(DETpath,"DETx.csv.gz",sep="/"))
 
 
 #order datasets: v1-3, do it by FG order
-
 
 FGdata$order<-1:nrow(FGdata)
 
@@ -195,8 +195,8 @@ outLong<-outLong[order(outLong$StartTime),]
 #GTdata = GTdata[which(GTdata$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
 #outData = outData[which(outData$StartFile=="AU-ALPM02_b-210228-211000.wav"),]
 
-GTlongIn=GTlong[which(GTlong$StartFile=="AU-ALPM02_b-210228-210000.wav"),]
-outLongIn=outLong[which(outLong$StartFile=="AU-ALPM02_b-210228-210000.wav"),]
+#GTlongIn=GTlong[which(GTlong$StartFile=="AU-BSPM08-130814-211000.wav"),]
+#outLongIn=outLong[which(outLong$StartFile=="AU-BSPM08-130814-211000.wav"),]
 
 #calculate iou GT
 if(nrow(GTlong)>0){

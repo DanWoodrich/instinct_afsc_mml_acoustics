@@ -1,0 +1,78 @@
+Global:
+    cache_root: ../cache
+    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_foc: ../temp/DecimatedWaves
+    #SF_temp: ../temp
+    Wrapper: False
+    parameters:
+        querygt_only_10:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+Job:
+    VoxaboxenTrainEval:
+        parameters:
+            methodID: simple
+            methodvers: v1-0
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: Python
+            venv: Conda
+            venv_name: bearded_voxaboxen
+    VoxaboxenFormat:
+        parameters:
+            methodID: prune-associate
+            methodvers: v1-1
+            #decimation required, make sure matches below
+            samping_rate: 8192
+            seed_val: 1
+            test_split: y
+            #train_test_split: 0.80
+            train_test_split: 0.02
+            train_val_split: 0.75
+            use_seed: y
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    FormatFG:
+        parameters:
+            decimate_data: y
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-3
+            methodID2m: matlabdecimate
+            methodvers2m: V1s1
+            target_samp_rate: 8192
+            #storage_service: gcp
+            file_groupID:
+              - jasco_strat_subsample
+              - high_prob_negative_bd_unverified_2
+              - random_negative_bd_unverified_2
+              - NM15_SC1_INS0
+              - bearded_ribbon
+              - BS22_AU_PM05_bowhead_for_bearded
+        arguments:
+            hard_rerun: n
+            prestage_data: n
+            #matlab workers seem to fail spontaneously, scale down to test if it helps.
+            parallel_matlab: 7
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [querygt_only_10]
+            standardize_sig_code: n
+            remove_proc_ovlp: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R

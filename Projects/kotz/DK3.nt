@@ -1,31 +1,31 @@
 Global:
-    cache_root: C:/Cache
+    cache_root: ../cache
     SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
     SF_foc: T:/DecimatedWaves
-    #depending on how you are running might be needed
     #SF_temp: ../temp
     Wrapper: False
+    GCS_output: True
+    GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/dk3_training
     parameters:
-        signal_codes: BD
+        signal_codes: DK
         freq_start: 0
-        freq_size: 4096
+        #freq_size: 1028 #CHANGE: increase
+        freq_size: 1542
         native_height: 240
         #native_window_size: 256
         #npps: 128
         native_window_size: 240
-        npps: 80
+        #npps: 48 #CHANGE: increase
+        npps: 60
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
         #msp_inf: 10
         msp_inf: 120
         split_prot: within_file
-        querygt1:
+        querygt_cull_the_weak:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28,29) AND bins.id IN {FG}"
-        querygt_only_10:
-            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+            > WHERE detections.status = 1 AND detections.signal_code = 15 AND label = 1 AND procedure = 10 AND comments NOT LIKE '%#confidence:weak%' AND bins.id IN {FG}"
         blank_query:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
 Job:
@@ -50,7 +50,6 @@ Job:
             native_pix_per_sec: [npps]
             only_labs: n
             stride_pix: [msp_inf]
-            #stride_pix: 40
             win_size: [model_window_size]
             win_size_native: [native_window_size]
         arguments:
@@ -66,13 +65,19 @@ Job:
             decimate_data: y
             difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
-            methodvers: v1-2
+            methodvers: v1-3
             methodID2m: matlabdecimate
             methodvers2m: V1s1
-            target_samp_rate: 8192
-            #storage_service: gcp
+            target_samp_rate: 4096
             file_groupID:
-              - XA24_ST_KS07-a
+                - XA22_ST_KS02
+                - XA22_ST_KS04
+                - XA23_ST_KS02
+                - XA23_ST_KS04
+                - AL16_AU_IC03
+                - AL16_AU_PH01
+                - AL16_AU_CC02
+                - AL19_AU_IC01
         arguments:
             hard_rerun: n
         descriptors:
@@ -85,7 +90,7 @@ Job:
             parameters:
                 methodID: pampgdb-standard-pullgt
                 methodvers: v1-4
-                query: [querygt_only_10]
+                query: [querygt_cull_the_weak]
                 #below is "n" or the int signal code to standardize to
                 standardize_sig_code: n
                 remove_proc_ovlp: n
@@ -99,20 +104,21 @@ Job:
                 decimate_data: y
                 difftime_limit: 3600
                 methodID: pampgdb-standard-pullfg
-                methodvers: v1-2
+                methodvers: v1-3
                 methodID2m: matlabdecimate
-                methodvers2m: V1s0
-                target_samp_rate: 8192
+                methodvers2m: V1s1
+                target_samp_rate: 4096
                 file_groupID:
-                    - jasco_strat_subsample
-                    - high_prob_negative_bd_unverified_2
-                    - random_negative_bd_unverified_2
-                    - NM15_SC1_INS0
-                    - bearded_ribbon
-                    - BS22_AU_PM05_bowhead_for_bearded
-                    #- XA22_ST_KS04
+                  - kotz_multipinni_training_sample1
+                  - kotz_sample2
+                  #? maybe worth including for more varied other examples? try it- if it contains ex of positive signal, will make better training once identified. 
+                  - acoustics_lan_training_library 
+                  #also since experimental: try eric's data as well
+                  - dk_r1_handpicked
             arguments:
                 hard_rerun: n
+                prestage_data: n
+                parallel_matlab: 7
             descriptors:
                 runtype: lib
                 language: R
@@ -140,8 +146,9 @@ Job:
                 parameters:
                     methodID: train-win-slide-dl
                     methodvers: v1-21
-                    addnoise_mean: 0.5
-                    addnoise_stddev: 0.25
+                    #CHANGE: decrease from 0.5 to .35. increase stddev .25 to .35 so it fills out range better
+                    addnoise_mean: 0.35
+                    addnoise_stddev: 0.35
                     augstr: 0.25,0.25,0.5
                     do_aug: y
                     do_spec_averaging: half_pos
@@ -152,30 +159,29 @@ Job:
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
-                    perc_fp: 0.975
-                    perc_tp: 0.025
+                    perc_fp: 0.9975
+                    #liking the results of increasing this lately
+                    #perc_tp: 0.0025
+                    perc_tp: 0.2
                     prop_fp: 0.75
                     prop_tp: 0.25
                     #CHANGE PROC 30: 0.0005 -> 0.005: see if it is resonable with higher epoch size + longer stride pix
                     shuf_size: 0.05 
                     #CHANGE PROC 30: 30 -> 120 not sure why this was so low in the first place
-                    stride_pix: 120 
+                    #stride_pix: 120 
+                    stride_pix: 30
                     tp_weight: 2
                     view_plots: n
                     win_size: [model_window_size]
                     win_size_native: [native_window_size]
                     zero_drop: n
                 arguments:
-                    batch_size: 75
+                    batch_size: 75 
                     batch_size_inf: [inf_batch_size]
-                    #CHANGE PROC 30: increase 10 -> 15
                     epoch: 15  
-                    #CHANGE PROC 30: double both of below
-                    epoch_steps: 9000
-                    #epoch_steps: 900
-                    a_val_steps: 6000
-                    #a_val_steps: 600
-                    a_val_tp_heavy: y
+                    epoch_steps: 5000
+                    a_val_steps: 0
+                    a_val_tp_heavy: n
                     hard_rerun: n
                 descriptors:
                     runtype: lib
@@ -204,7 +210,8 @@ Job:
             native_pix_per_sec: [npps]
             outlier_perc: 99.99
             view_mode: n
-            window_length: 512
+            window_length: 448
+            #window_length: 1024
         arguments:
             hard_rerun: n
             #rerun_key: 2
@@ -217,7 +224,8 @@ Job:
         parameters:
             methodID: tens-simple-label
             methodvers: v1-9
-            dimensions: 2
+            #switch to 1 instead of 2. Make sure respects lower DK just as much. 
+            dimensions: 1
             freq_size: [freq_size]
             freq_start: [freq_start]
             native_height: [native_height]
@@ -304,8 +312,8 @@ Job:
         parameters: 
             methodID: pampgdb-standard-publish
             methodvers: v1-3
-            bin_fill_code: SHI
-            procedure_id: 37
+            bin_fill_code: REG
+            #procedure_id: 40
             signal_code: [signal_codes]
             #Standard DL methods will always be loose bound detection. 
             strength: loose
@@ -321,7 +329,7 @@ Job:
             difftime_cap: 3600
             freq_low: [freq_start]
             freq_size: [freq_size]
-            #PROC 30 CHANGE: attempt to lower the total # of dets. 
+            #setting below to msp_inf negates action..?
             group_pixels: 120
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
@@ -333,7 +341,7 @@ Job:
             hard_rerun: n
             #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
             #CHANGE WITH  INFERENCE!
-            remove_spec: y
+            remove_spec: n
         descriptors:
             runtype: lib
             language: R

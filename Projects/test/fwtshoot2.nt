@@ -1,33 +1,24 @@
 Global:
-    cache_root: C:/Cache
+    cache_root: ../cache
     SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
     SF_foc: T:/DecimatedWaves
-    #depending on how you are running might be needed
-    #SF_temp: ../temp
     Wrapper: False
     parameters:
-        signal_codes: BD
+        signal_codes: FW
         freq_start: 0
-        freq_size: 4096
+        freq_size: 64
+        #native_height: 128
         native_height: 240
-        #native_window_size: 256
-        #npps: 128
-        native_window_size: 240
-        npps: 80
+        npps: 5
+        native_window_size: 40
         model_window_size: 240
         model_name: EffecientNet
         inf_batch_size: 175
-        #msp_inf: 10
-        msp_inf: 120
+        msp_inf: 20
         split_prot: within_file
-        querygt1:
+        querygt_low:
             > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label IN (1,21) AND procedure IN (10,27,28,29) AND bins.id IN {FG}"
-        querygt_only_10:
-            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND detections.signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
-        blank_query:
-            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
+            > WHERE detections.status = 1 AND detections.signal_code IN (4,5,6) AND low_freq < 25 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
 Job:
     ModelEval_NN:
         parameters:
@@ -43,14 +34,13 @@ Job:
         parameters:
             methodID: train-win-slide-dl
             methodvers: v1-21
-            augstr: 0.25,0.25,0.5
+            augstr: 0.20,0.55,1
             gt_depth: [signal_codes]
             model_name: [model_name]
             native_height: [native_height]
             native_pix_per_sec: [npps]
             only_labs: n
             stride_pix: [msp_inf]
-            #stride_pix: 40
             win_size: [model_window_size]
             win_size_native: [native_window_size]
         arguments:
@@ -61,34 +51,14 @@ Job:
             language: Python
             venv: Conda
             venv_name: tf-gpu4
-    FormatFG:
-        parameters:
-            decimate_data: y
-            difftime_limit: 3600
-            methodID: pampgdb-standard-pullfg
-            methodvers: v1-2
-            methodID2m: matlabdecimate
-            methodvers2m: V1s1
-            target_samp_rate: 8192
-            #storage_service: gcp
-            file_groupID:
-              - XA24_ST_KS07-a
-        arguments:
-            hard_rerun: n
-        descriptors:
-            runtype: lib
-            language: R
-            runtype2m: bin
-            language2m: MATLAB
     TrainModel_paramset:
         FormatGT:
             parameters:
                 methodID: pampgdb-standard-pullgt
                 methodvers: v1-4
-                query: [querygt_only_10]
-                #below is "n" or the int signal code to standardize to
-                standardize_sig_code: n
-                remove_proc_ovlp: n
+                query: [querygt_low]
+                standardize_sig_code: 4
+                remove_proc_ovlp: y
             arguments:
                 hard_rerun: n
             descriptors:
@@ -99,20 +69,22 @@ Job:
                 decimate_data: y
                 difftime_limit: 3600
                 methodID: pampgdb-standard-pullfg
-                methodvers: v1-2
+                methodvers: v1-3
                 methodID2m: matlabdecimate
-                methodvers2m: V1s0
-                target_samp_rate: 8192
+                methodvers2m: V1s1
+                target_samp_rate: 128
                 file_groupID:
-                    - jasco_strat_subsample
-                    - high_prob_negative_bd_unverified_2
-                    - random_negative_bd_unverified_2
-                    - NM15_SC1_INS0
-                    - bearded_ribbon
-                    - BS22_AU_PM05_bowhead_for_bearded
-                    #- XA22_ST_KS04
+                    - fw_og_train
+                    - fw2gen_hardneg_ds
+                    - fw2gen_strat_pos_fewfin1
+                    - fw2gen_strat_pos_somefin1
+                    - fw2gen_strat_pos_manyfin1
+                    - fw1difficult
+                    - fw2gen_oddtp
             arguments:
                 hard_rerun: n
+                prestage_data: n
+                parallel_matlab: 7
             descriptors:
                 runtype: lib
                 language: R
@@ -140,26 +112,24 @@ Job:
                 parameters:
                     methodID: train-win-slide-dl
                     methodvers: v1-21
-                    addnoise_mean: 0.5
+                    addnoise_mean: 0.40
                     addnoise_stddev: 0.25
-                    augstr: 0.25,0.25,0.5
+                    augstr: 0.25,0.25,0.50
                     do_aug: y
                     do_spec_averaging: half_pos
                     do_val: y
                     do_weight: n
                     gt_depth: [signal_codes]
-                    learn_rate: 0.00015
+                    learn_rate: 0.0001
                     model_name: [model_name]
                     native_height: [native_height]
                     native_pix_per_sec: [npps]
-                    perc_fp: 0.975
-                    perc_tp: 0.025
-                    prop_fp: 0.75
-                    prop_tp: 0.25
-                    #CHANGE PROC 30: 0.0005 -> 0.005: see if it is resonable with higher epoch size + longer stride pix
-                    shuf_size: 0.05 
-                    #CHANGE PROC 30: 30 -> 120 not sure why this was so low in the first place
-                    stride_pix: 120 
+                    perc_fp: 1.000
+                    perc_tp: 0.25
+                    prop_fp: 0.70
+                    prop_tp: 0.30
+                    shuf_size: 0.01
+                    stride_pix: 10
                     tp_weight: 2
                     view_plots: n
                     win_size: [model_window_size]
@@ -168,13 +138,9 @@ Job:
                 arguments:
                     batch_size: 75
                     batch_size_inf: [inf_batch_size]
-                    #CHANGE PROC 30: increase 10 -> 15
-                    epoch: 15  
-                    #CHANGE PROC 30: double both of below
-                    epoch_steps: 9000
-                    #epoch_steps: 900
-                    a_val_steps: 6000
-                    #a_val_steps: 600
+                    epoch: 8
+                    epoch_steps: 4500
+                    a_val_steps: 0
                     a_val_tp_heavy: y
                     hard_rerun: n
                 descriptors:
@@ -188,9 +154,9 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [blank_query]
-            remove_proc_ovlp: n
-            standardize_sig_code: n
+            query: [querygt_low]
+            remove_proc_ovlp: y
+            standardize_sig_code: 4
         arguments:
             hard_rerun: n
         descriptors:
@@ -204,10 +170,10 @@ Job:
             native_pix_per_sec: [npps]
             outlier_perc: 99.99
             view_mode: n
-            window_length: 512
+            #window_length: 360
+            window_length: 256
         arguments:
             hard_rerun: n
-            #rerun_key: 2
         descriptors:
             runtype: lib
             language: Python
@@ -217,7 +183,7 @@ Job:
         parameters:
             methodID: tens-simple-label
             methodvers: v1-9
-            dimensions: 2
+            dimensions: 1
             freq_size: [freq_size]
             freq_start: [freq_start]
             native_height: [native_height]
@@ -263,7 +229,7 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-13
+            methodvers: v1-18
         arguments:
             fg_fill: y
             hard_rerun: n
@@ -300,14 +266,32 @@ Job:
         descriptors:
             runtype: lib
             language: R
+    EditRAVENx:
+        parameters:
+            instructions:
+                >
+                > INSTRUCTIONS: 
+                >
+                > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+                > Review the outputs and populate label column. Allowable labels are y/m/n (yes, maybe, or no).  
+                > Comments can be made and will be retained in the database. Adding, deleting, or modifying timestamps or frequency of
+                > detections is forbidden by protocol. 
+                >
+                > To revise your review, do not run this task again if it has been published! This will result in duplicates in the database. 
+                > Instead, use the EditGTpublish pipeline. 
+                >
+                > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: no_method
     PublishDetswFG:
-        parameters: 
+        parameters:
             methodID: pampgdb-standard-publish
             methodvers: v1-3
-            bin_fill_code: SHI
-            procedure_id: 37
+            bin_fill_code: LOW
+            procedure_id: 42
             signal_code: [signal_codes]
-            #Standard DL methods will always be loose bound detection. 
             strength: loose
         arguments:
             hard_rerun: n
@@ -321,8 +305,7 @@ Job:
             difftime_cap: 3600
             freq_low: [freq_start]
             freq_size: [freq_size]
-            #PROC 30 CHANGE: attempt to lower the total # of dets. 
-            group_pixels: 120
+            group_pixels: 20
             mod_size_1: [native_window_size]
             mod_size_2: [model_window_size]
             native_pix_per_sec: [npps]
@@ -331,15 +314,13 @@ Job:
             stride_pix: [msp_inf]
         arguments:
             hard_rerun: n
-            #make sure remove spec is not on when running model perf eval and want to hang onto spectrograms!
-            #CHANGE WITH  INFERENCE!
-            remove_spec: y
+            remove_spec: n
         descriptors:
             runtype: lib
             language: R
     ApplyCutoff:
         parameters:
-            cutoff: 0.8
+            cutoff: 0.00
         arguments:
             hard_rerun: n
         descriptors:
@@ -350,18 +331,13 @@ Job:
                 append_cutoff: y
                 cutoff:
                     - 0.0
-                    #- 0.1
-                    - 0.4
-                    - 0.25
-                    - 0.5
                     - 0.6
                     - 0.75
                     - 0.8
                     - 0.85
                     - 0.9
-                    #- 0.95
-                    #- 0.99
-                    #- 0.999
+                    - 0.95
+                    - 0.99
             arguments:
                 hard_rerun: n
             descriptors:

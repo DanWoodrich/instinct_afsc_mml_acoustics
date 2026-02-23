@@ -1,0 +1,19 @@
+pipe: VoxaboxenTrainEval.pipe
+VoxaboxenTrainEval.pipe:
+  process: VoxaboxenTrainEval
+  GetManifests:
+    pipe: VoxaboxenFormat.pipe
+    VoxaboxenFormat.pipe:
+      process: VoxaboxenFormat
+      GetDETx:
+        pipe: FormatGT.pipe
+        loop_on: FormatFG
+        FormatGT.pipe:
+          process: FormatGT
+          GetFG: 
+            process: FormatFG
+      GetFG:
+        loop_on: FormatFG
+        pipe: FormatFG.pipe
+        FormatFG.pipe:
+          process: FormatFG

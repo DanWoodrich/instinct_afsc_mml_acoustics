@@ -3,7 +3,8 @@ library(flux)
 #library(tidyverse)
 #v1-1: make sure FG information makes it into the outputs. 
 
-args<-"D:/Cache/942573/199414/268525 D:/Cache/942573/199414/268525/761024 D:/Cache/942573/199414/330016/664458/840531 2 n pe2dl-simple-v1-4"
+args<-"../cache/752391/282082/769203 ../cache/752391/282082/769203/595764 ../cache/752391/282082/363041/416932/872905 2 n pe2dl-simple-v1-4"
+args<-"../cache/342424/319398/750473 ../cache/342424/319398/750473/551774 ../cache/342424/319398/534472/565714/164153 2 n pe2dl-simple-v1-4"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep="")) 

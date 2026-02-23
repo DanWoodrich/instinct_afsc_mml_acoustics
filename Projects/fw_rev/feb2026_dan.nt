@@ -1,0 +1,131 @@
+Global:
+    cache_root: ../cache
+    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_foc: T:/DecimatedWaves
+    Wrapper: False
+    parameters:
+#need to modify this to be tolerant of review (pull in more than just status =1) 
+        query_proc_41:
+          > "SELECT DISTINCT detections.*,soundfiles.data_collection_id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id 
+          > WHERE detections.procedure = 41 AND detections.start_file IN {FG}"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: y
+            #decimate_data: n
+            difftime_limit: 200
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-3
+            methodID2m: matlabdecimate
+            methodvers2m: V1s1
+            #target_samp_rate: 4096
+            target_samp_rate: 512
+            #storage_service: gcp
+            file_groupID: 
+              #- GA23_ST_CR01 #no seis spotted
+              #- GA23_AU_CR01 #no seis spotted
+              ##- GA24_ST_CR01
+              #- GA23_ST_PT01 #no seis spotted
+              #- GA23_AU_PT01 #no seis spotted
+        arguments:
+            hard_rerun: n
+            prestage_data: n
+            #matlab workers seem to fail spontaneously, scale down to test if it helps.
+            parallel_matlab: y
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [query_proc_41]
+            remove_proc_ovlp: n
+            standardize_sig_code: n
+        arguments:
+            hard_rerun: n
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-17
+        arguments:
+            fg_fill: n
+            hard_rerun: n
+            ignore_decimated: n
+            randomize_order: n
+            stage_data: T:/DecimatedWaves
+            stage_prefix: C:/Users/pam_user/INSTINCT/temp
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+      parameters: 
+        methodID: rd-simple-w-metadata
+        methodvers: v1-5
+      arguments:
+        hard_rerun: n
+      descriptors:
+        runtype: lib
+        language: R
+    EditRAVENx:
+      #this process always has an instructions parameter. changing these will change hash
+      parameters: 
+        instructions:
+          > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
+          > Your job is to review 'peaks' of hourly percent presence. Each row represents the highest probability detection per 'peak'.
+          > To verify, change the 'label' field for your verifications. use numeric codes: 1 = yes, 0 = no, 2 = maybe. 
+          > Attempt to avoid maybes unless impossible.
+          > if airgun is encountered, change the signal code to 21, and mark the label as 1 (yes). 
+          > comments can and should be added as relevant.
+          > do not change other fields.  
+          >
+          > You will only be able to view the single detection in a peak. The column 'countsInPeak' refers to how many total detections were
+          > in the current peak, which can be useful information to classify the detection. 
+          >
+          > The assumption being made is that the highest probability detection is representative of the whole peak, so mostly just judge the detection. 
+          > The procedure is not perfect and additional consideration will be used to evaluate the results aside from your designations. 
+      arguments: 
+        #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
+        rerun_key: 0
+        hard_rerun: n
+      descriptors:
+        runtype: no_method
+    CompareAndPublishDets:
+      parameters:
+        methodID: pgpamdb-default-compare-publish
+        methodvers: v1-10
+        assume_full_review: n
+        insert_ok: 41
+        on_behalf_of: self
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    CalcPeaks:
+      parameters:
+        methodID: calcpeaks-simple
+        methodvers: v1-4
+        #max or med
+        calc_type: max
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    PeaksAssoc:
+      parameters:
+        methodID: peaks-assoc-simple
+        methodvers: v1-1
+        allow_ambiguous_label: y
+        new_procedure: 41
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib

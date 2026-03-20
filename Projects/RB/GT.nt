@@ -14,8 +14,8 @@ Job:
         methodvers: V1s0
         target_samp_rate: 8192
         file_groupID:
-          - RW10_EA_BS03_files_All_rb_hg.csv
-          - RW10_EA_BS02_files_All_rb_hg.csv
+          #- RW10_EA_BS03_files_All_rb_hg.csv low sampling rate
+          #- RW10_EA_BS02_files_All_rb_hg.csv low sampling rate
           - BS12_AU_PM08_files_All_rb_hg.csv
           - BS12_AU_PM05_files_All_rb_hg.csv
           - BS12_AU_PM04_files_241-315_rb_hg.csv

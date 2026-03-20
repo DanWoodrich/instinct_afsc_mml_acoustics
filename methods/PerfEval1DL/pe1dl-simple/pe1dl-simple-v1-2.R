@@ -2,7 +2,7 @@
 #for no unnecessary rerun when swapping out fg. 
 
 
-args<-"D:/Cache/705031 D:/Cache/705031/309947/862566/651102 D:/Cache/705031/309947/862566/651102/503161 n pe1dl-simple-v1-2"
+args<-"../cache/9151 ../cache/9151/495859/430657/394210 ../cache/9151/495859/430657/394210/549942 n pe1dl-simple-v1-2"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep="")) 
@@ -32,11 +32,17 @@ calc_stats = function(FGID,data,FG,rsp,cutoff_){
   HitMissCor<-cor(TPvec,FNvec)
   
   #stats related to dispersion of calls over time 
-  EffortHours<-sum(FG$SegDur)/3600 * as.numeric(rsp[i])
-  TPperHour<-numTPtruth/((sum(FG$SegDur)/3600)* as.numeric(rsp[i]))
-  TPdetperHour<-numTP/((sum(FG$SegDur)/3600)* as.numeric(rsp[i]))
-  FPperHours<-numFP/((sum(FG$SegDur)/3600)* as.numeric(rsp[i]))
-  numFNperHOur<-numFN/((sum(FG$SegDur)/3600)* as.numeric(rsp[i]))
+  if(nrow(data)!=0){
+    factor_ = as.numeric(rsp[i])
+  }else{
+    factor_ = 1
+  }
+  
+  EffortHours = sum(FG$SegDur)/3600 * factor_
+  TPperHour<-numTPtruth/((sum(FG$SegDur)/3600)* factor_)
+  TPdetperHour<-numTP/((sum(FG$SegDur)/3600)* factor_)
+  FPperHours<-numFP/((sum(FG$SegDur)/3600)* factor_)
+  numFNperHOur<-numFN/((sum(FG$SegDur)/3600)* factor_)
   
   split = data$split[1]
   
@@ -72,7 +78,7 @@ data = read.csv(paste(dataPath,"DETx.csv.gz",sep="/"))
 if(length(unique(data$FGID))>1){
   FGname = "all"
 }else{
-  FGname =  data$FGID[1]
+  FGname =  FG$Name[1]
 }
 
 if('signal_code' %in% colnames(data)){
@@ -81,12 +87,22 @@ if('signal_code' %in% colnames(data)){
 
 datanotp = data[which(data$SignalCode=="out"),]
 
+#if(nrow(data)!=0){
+#  #just return an NA, handle it in next method. 
+#  write.csv(NA,gzfile(paste(resultPath,"Stats.csv.gz",sep="/")),row.names = FALSE)
+#  
+#}
+
 #do this for the minumum cutoff. If a very low value is not supplied (preferably 0) this estimate could be off. 
 #actually, just enforce that there is a 0 cutoff: 
-
 if((! 0 %in% unique(data$cutoff))){
-  stop("must provide 0  as a reference point to correctly calculate stats.")
+    if(nrow(data)!=0){
+      stop("must provide 0  as a reference point to correctly calculate stats.")
+    }
 }
+
+
+
 
 zerocutdata = datanotp[which(datanotp$cutoff==0),]
 
@@ -187,13 +203,22 @@ if(FGname=='all'){
 }else{
 
 count=length(outtab)+1
-for(k in 1:length(unique(data$FGID))){
+
+len_ = max(length(unique(data$FGID)),1)
+
+for(k in 1:len_){
   
-  focal_FG = FG[which(FG$Name==unique(data$FGID)[k]),] #v1-1 some of the naming and subsetting are unnecessary now, grandfather from v1-0 behavior
+  if(nrow(data)>0){
+    focal_FG = FG[which(FG$Name==unique(data$FGID)[k]),] #v1-1 some of the naming and subsetting are unnecessary now, grandfather from v1-0 behavior
+    cur_FG = unique(data$FGID)[k]
+  }else{
+    focal_FG = FG 
+    cur_FG = FG$Name[1]
+  }
   
   #rough_split_effort = sum(focal_FG$SegDur)*rough_split_prop
   
-  focal_data = data[which(data$FGID==unique(data$FGID)[k]),]
+  focal_data = data[which(data$FGID==cur_FG),]
   
   focal_datanotp = data[which(data$SignalCode=="out"),]
   
@@ -202,19 +227,23 @@ for(k in 1:length(unique(data$FGID))){
   focal_rough_split_prop=table(round(focal_zerocutdata$splits))/nrow(focal_zerocutdata)
   focal_rough_split_prop=round(focal_rough_split_prop,3) #round to 2 digits
   
-  for(i in 1:length(focal_rough_split_prop)){
+  len_2 = max(length(focal_rough_split_prop),1)
+  
+  for(i in 1:len_2){
     
     focal_data_split = focal_data[which(focal_data$splits==as.numeric(names(focal_rough_split_prop)[i])),]
     
     #subset to split
     
-    for(p in 1:length(unique(focal_data_split$cutoff))){
+    len_3 = max(length(unique(focal_data_split$cutoff)),1)
+    
+    for(p in 1:len_3){
       
       focal_data_split_cutoff = focal_data_split[which(focal_data_split$cutoff==unique(focal_data_split$cutoff)[p]),]
       
       #subset to cutoffs
       
-      outtab[[count]]<- calc_stats(unique(data$FGID)[k],focal_data_split_cutoff,focal_FG,focal_rough_split_prop,as.numeric(unique(focal_data_split$cutoff)[p]))
+      outtab[[count]]<- calc_stats(cur_FG,focal_data_split_cutoff,focal_FG,focal_rough_split_prop,as.numeric(unique(focal_data_split$cutoff)[p]))
       
       count= count+1
       

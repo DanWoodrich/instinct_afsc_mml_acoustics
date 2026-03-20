@@ -1,0 +1,69 @@
+Global:
+    cache_root: ../cache
+    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_foc: T:/DecimatedWaves
+    Wrapper: False
+    #set both of below for INSTINCT job to automatically export outputs to gcs
+    GCS_output: True
+    GCS_path: gs://pam-ww-tmp/Daniel_Woodrich/random_bearded_artifact
+    parameters:
+        queryfg:
+           > "SELECT data_collection.name AS dname,soundfiles.name,soundfiles.datetime,soundfiles.duration,bins.* FROM bins JOIN soundfiles ON bins.soundfiles_id = soundfiles.id JOIN data_collection ON soundfiles.data_collection_id = data_collection.id WHERE type=2 AND soundfiles.name IN ('AU-BSPM05-230308-031000.wav','AU-BSPM05-230308-070000.wav','AU-BSPM04-120512-174000.wav','AU-ALPH01-221212-151000.wav')"
+        querygt:
+           > "SELECT DISTINCT detections.id,detections.start_time,detections.end_time,detections.low_freq,LEAST(detections.high_freq,4096),detections.start_file,detections.end_file,detections.probability,detections.comments,detections.procedure,detections.label,detections.signal_code,detections.strength,detections.modified,detections.analyst,detections.status,detections.original_id,detections.date_created FROM detections WHERE detections.status = 1 
+           > AND detections.signal_code = 17 AND detections.start_file IN {FG}"
+Job:
+    FormatFG:
+        parameters:
+            decimate_data: y
+            difftime_limit: 3600
+            methodID: pampgdb-standard-pullfg
+            methodvers: v1-3
+            methodID2m: matlabdecimate
+            methodvers2m: V1s1
+            target_samp_rate: 8192
+            #storage_service: gcp
+            file_groupID:
+              - [queryfg]
+        arguments:
+            hard_rerun: n
+            prestage_data: n
+            parallel_matlab: 3
+        descriptors:
+            runtype: lib
+            language: R
+            runtype2m: bin
+            language2m: MATLAB
+    FormatGT:
+        parameters:
+            methodID: pampgdb-standard-pullgt
+            methodvers: v1-4
+            query: [querygt]
+            remove_proc_ovlp: n
+            standardize_sig_code: n
+        arguments:
+            hard_rerun: y
+        descriptors:
+            runtype: lib
+            language: R
+    RavenViewDETx:
+        parameters:
+            methodID: rv-simple-w-metadata
+            methodvers: v1-18
+        arguments:
+            fg_fill: y
+            hard_rerun: n
+            ignore_decimated: n
+            randomize_order: n
+            stage_data: n
+            stage_prefix: ignored
+        descriptors:
+            runtype: lib
+            language: R
+    RavenToDETx:
+        parameters:
+            methodID: rd-simple-w-metadata
+            methodvers: v1-5
+        descriptors:
+            runtype: lib
+            language: R

@@ -21,7 +21,7 @@ MethodID<-"labels-w-iou-simple-v1-3"
 #v1-6: retain cutoff if present. Leapfrogged 1-5, which I am not sure if it is in use. 
 #v1-10: parallelize long comparison step. 
 
-args<-"../cache/752391 ../cache/752391/481451 ../cache/752391/564579/86528/739531/541859/406037 ../cache/752391/481451/174418 0.001 y labels-w-iou-simple-v1-10"
+args<-"../cache/9151 ../cache/9151/495859 ../cache/9151/684779/912256/585112/684857/139682/547857 ../cache/9151/495859/208763 0.001 y labels-w-iou-simple-v1-10"
 
 args<-strsplit(args,split=" ")[[1]]
 
@@ -68,6 +68,9 @@ FGdata<-read.csv(paste(FGpath,"FileGroupFormat.csv.gz",sep="/"))
 #FGdata<-FGdata[which()]
 
 outData<-read.csv(paste(DETpath,"DETx.csv.gz",sep="/"))
+
+
+
 
 #Probabalistic<-FALSE
 #introduce this in most sensible way once we get to 
@@ -349,10 +352,14 @@ if(!all(unique(outLong$DiffTime) %in% unique(GTlong$DiffTime))){
   outLong = rbind(outLong_,outLong[which(outLong$DiffTime %in% difftimes_),])
     
 }else{
-  outLong = outLong_
+  if(!is.null(outLong_)){
+    outLong = outLong_
+  }
 }
 
+
 outLong = outLong[order(outLong$StartTime),]
+
    
 GTlong$DiffTime=NULL
 outLong$DiffTime = NULL
@@ -386,7 +393,11 @@ if(nrow(GTdata)>0){
   
 }
 
-outLong$FGID = FGdata$Name[1]
+if(nrow(outLong>0)){
+  outLong$FGID = FGdata$Name[1]
+}else{
+  outLong$FGID <- character()
+}
 
 GTlong$StartTime<-GTdata$StartTime
 GTlong$EndTime<-GTdata$EndTime
@@ -457,7 +468,6 @@ if(nrow(GTdata)>0){
 
 CombineTab<-CombineTab[order(CombineTab$StartFile,CombineTab$StartTime),]
 
-outName<-paste("DETx.csv.gz",sep="_")
 
 #v1-2:
 if(WriteGT=="n"){
@@ -474,5 +484,5 @@ if(WriteGT=="n"){
 
 }
 
-write.csv(CombineTab,gzfile(paste(resultPath,outName,sep="/")),row.names = FALSE)
+write.csv(CombineTab,gzfile(paste(resultPath,"DETx.csv.gz",sep="/")),row.names = FALSE)
 

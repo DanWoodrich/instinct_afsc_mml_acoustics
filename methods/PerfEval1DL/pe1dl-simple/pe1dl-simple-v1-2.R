@@ -2,7 +2,7 @@
 #for no unnecessary rerun when swapping out fg. 
 
 
-args<-"../cache/9151 ../cache/9151/495859/430657/394210 ../cache/9151/495859/430657/394210/549942 n pe1dl-simple-v1-2"
+args<-"C:/Cache/169763/801106 C:/Cache/169763/578216/573570/137112 C:/Cache/169763/578216/573570/137112/525412 n pe1dl-simple-v1-2"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep="")) 

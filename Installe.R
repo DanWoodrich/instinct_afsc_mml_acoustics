@@ -40,8 +40,8 @@ if (.Platform$OS.type == "windows") {
   if (!is_installed || packageVersion("curl") <= min_version) {
     message("The 'curl' package version is <= 5.0.0 (or not installed). Attempting to upgrade...")
     
-    # Install or upgrade curl
-    install.packages("curl")
+    # Install or upgrade curl using a specific CRAN mirror
+    install.packages("curl", repos = "https://cloud.r-project.org")
     
     # Verify that the installation was successful
     if (!requireNamespace("curl", quietly = TRUE) || packageVersion("curl") <= min_version) {

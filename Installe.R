@@ -29,19 +29,27 @@ install.packages('https://cran.r-project.org/src/contrib/Archive/flux/flux_0.3-0
 install.packages('gh', repos='https://packagemanager.posit.co/cran/2022-04-15')
 
 #if on windows, check for curl verion. Since this requires Rtools, will involve some manual setup in the case that curl 
-if(.Platform$OS.type == "windows"){
-  curl_version <- packageVersion("curl")
+if (.Platform$OS.type == "windows") {
   
-  # too early
-  too_early_version <- "5.0.0"
+  # Define the minimum required version
+  min_version <- package_version("5.0.0")
   
-  # Assert that the installed version is greater than the minimum
-  stopifnot(
-    "The 'curl' package version must be greater than 5.0.0. Please update it: requires Rtools for versions > 5.0.0" = 
-      curl_version > too_early_version
-  )
+  # Check if curl is installed and if the version is too low
+  is_installed <- requireNamespace("curl", quietly = TRUE)
   
-  
+  if (!is_installed || packageVersion("curl") <= min_version) {
+    message("The 'curl' package version is <= 5.0.0 (or not installed). Attempting to upgrade...")
+    
+    # Install or upgrade curl
+    install.packages("curl")
+    
+    # Verify that the installation was successful
+    if (!requireNamespace("curl", quietly = TRUE) || packageVersion("curl") <= min_version) {
+      stop("Failed to upgrade the 'curl' package automatically. Please update it manually (requires Rtools for versions > 5.0.0).")
+    } else {
+      message("Successfully upgraded the 'curl' package.")
+    }
+  }
 }
 
 # 1. Define the repository owner and name

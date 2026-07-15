@@ -1,8 +1,37 @@
 options(timeout=1800)
 
-#gh used to query the object we use to install the pgpamdb file later
-#remove.packages("curl")
-#install.packages("curl")
+#try curl install, aggressive
+if (.Platform$OS.type == "windows") {
+  
+  min_version <- package_version("5.0.0")
+  is_installed <- requireNamespace("curl", quietly = TRUE)
+  
+  if (!is_installed || packageVersion("curl") <= min_version) {
+    message("The 'curl' package requires an upgrade. Attempting a clean installation...")
+    
+    # STEP 1: Unload it from memory if it somehow got loaded
+    if (isNamespaceLoaded("curl")) {
+      unloadNamespace("curl")
+    }
+    
+    # STEP 2: Find where curl is installed and ruthlessly delete the folder
+    curl_path <- system.file(package = "curl")
+    if (curl_path != "") {
+      message("Removing existing curl installation to prevent DLL lock...")
+      unlink(curl_path, recursive = TRUE, force = TRUE)
+    }
+    
+    # STEP 3: Install a completely fresh copy
+    install.packages("curl", repos = "https://cloud.r-project.org")
+    
+    # STEP 4: Verify
+    if (!requireNamespace("curl", quietly = TRUE) || packageVersion("curl") <= min_version) {
+      stop("Fatal: Failed to upgrade the 'curl' package. The DLL might still be locked by another process.")
+    } else {
+      message("Successfully upgraded the 'curl' package.")
+    }
+  }
+}
 
 Packages<-c("imager","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
 
@@ -27,30 +56,6 @@ install.packages('https://cran.r-project.org/src/contrib/Archive/flux/flux_0.3-0
 
 #install gh from earlier cran mirror (issues with version)
 install.packages('gh', repos='https://packagemanager.posit.co/cran/2022-04-15')
-
-#if on windows, check for curl verion. Since this requires Rtools, will involve some manual setup in the case that curl 
-if (.Platform$OS.type == "windows") {
-  
-  # Define the minimum required version
-  min_version <- package_version("5.0.0")
-  
-  # Check if curl is installed and if the version is too low
-  is_installed <- requireNamespace("curl", quietly = TRUE)
-  
-  if (!is_installed || packageVersion("curl") <= min_version) {
-    message("The 'curl' package version is <= 5.0.0 (or not installed). Attempting to upgrade...")
-    
-    # Install or upgrade curl using a specific CRAN mirror
-    install.packages("curl", repos = "https://cloud.r-project.org")
-    
-    # Verify that the installation was successful
-    if (!requireNamespace("curl", quietly = TRUE) || packageVersion("curl") <= min_version) {
-      stop("Failed to upgrade the 'curl' package automatically. Please update it manually (requires Rtools for versions > 5.0.0).")
-    } else {
-      message("Successfully upgraded the 'curl' package.")
-    }
-  }
-}
 
 # 1. Define the repository owner and name
 repo_owner <- "DanWoodrichNOAA"

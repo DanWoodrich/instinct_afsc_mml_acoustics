@@ -4,26 +4,27 @@ Global:
     SF_foc: T:/DecimatedWaves
     Wrapper: False
     parameters:
-        querygt_only_10:
-            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
-            > WHERE detections.status = 1 AND signal_code = 17 AND label = 1 AND procedure = 10 AND bins.id IN {FG}"
+        query_proc_10:
+          > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id 
+          > WHERE detections.label = 1 AND detections.procedure = 10 AND detections.signal_code = 17 AND bins.id IN {FG}"
 Job:
     FormatFG:
         parameters:
             decimate_data: y
             #decimate_data: n
-            difftime_limit: 200
+            difftime_limit: 3600
             methodID: pampgdb-standard-pullfg
             methodvers: v1-3
             methodID2m: matlabdecimate
             methodvers2m: V1s1
-            #target_samp_rate: 4096
-            target_samp_rate: 512
+            target_samp_rate: 16384
+            #target_samp_rate: 8192
             #storage_service: gcp
             file_groupID: 
-                - acoustics_lan_training_library
+                - BS22_AU_PM05_bowhead_for_bearded
+                #- high_prob_negative_bd_unverified_2
         arguments:
-            hard_rerun: n
+            hard_rerun: y
             prestage_data: n
             #matlab workers seem to fail spontaneously, scale down to test if it helps.
             parallel_matlab: y
@@ -36,7 +37,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [querygt_only_10]
+            query: [query_proc_10]
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
@@ -49,12 +50,12 @@ Job:
             methodID: rv-simple-w-metadata
             methodvers: v1-18
         arguments:
-            fg_fill: y
+            fg_fill: n
             hard_rerun: n
             ignore_decimated: n
             randomize_order: n
             stage_data: T:/DecimatedWaves
-            stage_prefix: C:/Users/pam_user/INSTINCT/temp
+            stage_prefix: C:/Users/pam_user/INSTINCT/hard_sample
         descriptors:
             runtype: lib
             language: R
@@ -72,8 +73,18 @@ Job:
       parameters: 
         instructions:
           > Open up a Raven Pro 1.5 window. Holding the control key, drag and drop the file into the Raven window.        
-          > Review the contents for correctness, adding, modifying, or deleting as necessary.
-          > If you are rerunning this process, there may be a previously edited file you are free to override or retain
+          > Your job is to review 'peaks' of hourly percent presence. Each row represents the highest probability detection per 'peak'.
+          > To verify, change the 'label' field for your verifications. use numeric codes: 1 = yes, 0 = no, 2 = maybe. 
+          > Attempt to avoid maybes unless impossible.
+          > if airgun is encountered, change the signal code to 21, and mark the label as 1 (yes). 
+          > comments can and should be added as relevant.
+          > do not change other fields.  
+          >
+          > You will only be able to view the single detection in a peak. The column 'countsInPeak' refers to how many total detections were
+          > in the current peak, which can be useful information to classify the detection. 
+          >
+          > The assumption being made is that the highest probability detection is representative of the whole peak, so mostly just judge the detection. 
+          > The procedure is not perfect and additional consideration will be used to evaluate the results aside from your designations. 
       arguments: 
         #this dicates the unique iteration that will be read. Changing this value allows for redoing processes. 
         rerun_key: 0
@@ -85,8 +96,30 @@ Job:
         methodID: pgpamdb-default-compare-publish
         methodvers: v1-10
         assume_full_review: n
-        insert_ok: 99
+        insert_ok: 37
         on_behalf_of: self
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    CalcPeaks:
+      parameters:
+        methodID: calcpeaks-simple
+        methodvers: v1-4
+        #max or med
+        calc_type: max
+      arguments: 
+        hard_rerun: n
+      descriptors:
+        language: R
+        runtype: lib
+    PeaksAssoc:
+      parameters:
+        methodID: peaks-assoc-simple
+        methodvers: v1-1
+        allow_ambiguous_label: y
+        new_procedure: 25
       arguments: 
         hard_rerun: n
       descriptors:

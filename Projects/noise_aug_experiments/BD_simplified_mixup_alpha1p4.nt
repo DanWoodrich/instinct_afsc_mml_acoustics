@@ -299,7 +299,7 @@ Job:
             cexmod: 2
             suppress_test: n
         arguments:
-            hard_rerun: n
+            hard_rerun: y
         descriptors:
             runtype: lib
             language: R

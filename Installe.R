@@ -4,7 +4,7 @@ options(timeout=1800)
 #remove.packages("curl")
 #install.packages("curl")
 
-Packages<-c("imager","gh","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","flux","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
+Packages<-c("imager","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
 
 for(n in Packages){
   if(require(n,character.only=TRUE)){
@@ -21,6 +21,12 @@ for(n in Packages){
   }
 
 }
+
+#install flux from archive as no longer available on cran:
+install.packages('https://cran.r-project.org/src/contrib/Archive/flux/flux_0.3-0.tar.gz')
+
+#install gh from earlier cran mirror (issues with version)
+install.packages('gh', repos='https://packagemanager.posit.co/cran/2022-04-15')
 
 #if on windows, check for curl verion. Since this requires Rtools, will involve some manual setup in the case that curl 
 if(.Platform$OS.type == "windows"){

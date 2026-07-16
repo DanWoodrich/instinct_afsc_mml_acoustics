@@ -22,7 +22,7 @@ for(n in Packages){
 install.packages('https://cran.r-project.org/src/contrib/Archive/flux/flux_0.3-0.tar.gz')
 
 #install gh from earlier cran mirror (issues with version)
-install.packages('gh','ggplot2', repos='https://packagemanager.posit.co/cran/2022-04-15')
+install.packages(c('gh','ggplot2'), repos='https://packagemanager.posit.co/cran/2022-04-15')
 
 # 1. Define the repository owner and name
 repo_owner <- "DanWoodrichNOAA"

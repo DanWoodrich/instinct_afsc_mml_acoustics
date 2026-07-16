@@ -1,38 +1,5 @@
 options(timeout=1800)
 
-#try curl install, aggressive
-if (.Platform$OS.type == "windows") {
-  
-  min_version <- package_version("5.0.0")
-  is_installed <- requireNamespace("curl", quietly = TRUE)
-  
-  if (!is_installed || packageVersion("curl") <= min_version) {
-    message("The 'curl' package requires an upgrade. Attempting a clean installation...")
-    
-    # STEP 1: Unload it from memory if it somehow got loaded
-    if (isNamespaceLoaded("curl")) {
-      unloadNamespace("curl")
-    }
-    
-    # STEP 2: Find where curl is installed and ruthlessly delete the folder
-    curl_path <- system.file(package = "curl")
-    if (curl_path != "") {
-      message("Removing existing curl installation to prevent DLL lock...")
-      unlink(curl_path, recursive = TRUE, force = TRUE)
-    }
-    
-    # STEP 3: Install a completely fresh copy
-    install.packages("curl", repos = "https://cloud.r-project.org")
-    
-    # STEP 4: Verify
-    if (!requireNamespace("curl", quietly = TRUE) || packageVersion("curl") <= min_version) {
-      stop("Fatal: Failed to upgrade the 'curl' package. The DLL might still be locked by another process.")
-    } else {
-      message("Successfully upgraded the 'curl' package.")
-    }
-  }
-}
-
 Packages<-c("imager","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
 
 for(n in Packages){

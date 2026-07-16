@@ -1,6 +1,6 @@
 options(timeout=1800)
 
-Packages<-c("imager","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","stringi","caTools","sqldf","RPostgres","png") #"Rtools"?
+Packages<-c("imager","doParallel","dplyr","tuneR","signal","foreach","oce","randomForest","seewave","plotrix","autoimage","pracma","PRROC","stringi","caTools","sqldf","RPostgres","png","ggplot2") #"Rtools"?
 
 for(n in Packages){
   if(require(n,character.only=TRUE)){

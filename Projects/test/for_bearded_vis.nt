@@ -2,6 +2,7 @@ Global:
     cache_root: ../cache
     SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
     SF_foc: T:/DecimatedWaves
+    SF_temp: ../temp
     Wrapper: False
     parameters:
         query_proc_37:
@@ -13,23 +14,24 @@ Job:
             decimate_data: y
             #decimate_data: n
             difftime_limit: 3600
-            methodID: pampgdb-standard-pullfg
-            methodvers: v1-3
+            methodID: makara-query
+            methodvers: v1-0
             methodID2m: matlabdecimate
             methodvers2m: V1s1
             #target_samp_rate: 4096
             target_samp_rate: 8192
-            #storage_service: gcp
+            storage_service: gcp
             file_groupID: 
-                - AL18_AU_NM01
+                #- AL18_AU_NM01
+                - SWFSC_BCN_20160824_PASCAL_006
         arguments:
             hard_rerun: n
-            prestage_data: n
+            prestage_data: y
             #matlab workers seem to fail spontaneously, scale down to test if it helps.
             parallel_matlab: y
         descriptors:
             runtype: lib
-            language: R
+            language: Python
             runtype2m: bin
             language2m: MATLAB
     FormatGT:

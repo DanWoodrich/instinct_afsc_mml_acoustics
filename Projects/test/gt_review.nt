@@ -1,6 +1,7 @@
 Global:
     cache_root: ../cache
-    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    #SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_raw: A:/bottom_mounted
     SF_foc: T:/DecimatedWaves
     Wrapper: False
     parameters:
@@ -10,8 +11,7 @@ Global:
 Job:
     FormatFG:
         parameters:
-            decimate_data: y
-            #decimate_data: n
+            decimate_data: n
             difftime_limit: 200
             methodID: pampgdb-standard-pullfg
             methodvers: v1-3
@@ -21,12 +21,12 @@ Job:
             target_samp_rate: 512
             #storage_service: gcp
             file_groupID: 
-                - acoustics_lan_training_library
+                - dk_r1_handpicked
         arguments:
             hard_rerun: n
             prestage_data: n
             #matlab workers seem to fail spontaneously, scale down to test if it helps.
-            parallel_matlab: y
+            parallel_matlab: n
         descriptors:
             runtype: lib
             language: R
@@ -50,10 +50,10 @@ Job:
             methodvers: v1-18
         arguments:
             fg_fill: y
-            hard_rerun: n
-            ignore_decimated: n
+            hard_rerun: y
+            ignore_decimated: y
             randomize_order: n
-            stage_data: T:/DecimatedWaves
+            stage_data: n
             stage_prefix: C:/Users/pam_user/INSTINCT/temp
         descriptors:
             runtype: lib

@@ -30,7 +30,7 @@ formatToDets<-function(data,data2){
   return(data)
 }
 
-args="C:/Users/pam_user/INSTINCT/cache/379084 C:/Users/pam_user/INSTINCT/cache/379084/359062 ../temp/DecimatedWaves/256 BS24_AU_PM02 y 96 0 256 20 128 con_bright_no_rep-v1-6"
+args="../cache/202253/306803 ../cache/202253 ../cache/202253/306803/45671 T:/DecimatedWaves/512 y y y n n C:/Users/pam_user/INSTINCT/temp 1 rv-simple-w-metadata-v1-18 A:/bottom_mounted"
 args<-strsplit(args,split=" ")[[1]]
 
 source(paste(getwd(),"/user/R_misc.R",sep=""))
@@ -47,8 +47,8 @@ stage_prefix <- args[10]
 
 
 #test if supposed to ignore decimation, and then repath dataPath:
-if(args[length(args)-4]=="y"){
-  dataPath=paste(args[length(args)],"Waves",sep="/")
+if(args[length(args)-6]=="y"){
+  dataPath=args[length(args)]
 }
 
 if(stage_data != 'n'){

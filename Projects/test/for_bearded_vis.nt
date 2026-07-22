@@ -1,6 +1,6 @@
 Global:
     cache_root: ../cache
-    SF_raw: C:/pamdata_mount/afsc-1/bottom_mounted
+    SF_raw: S:/
     SF_foc: T:/DecimatedWaves
     SF_temp: ../temp
     Wrapper: False
@@ -8,6 +8,8 @@ Global:
         query_proc_37:
           > "SELECT DISTINCT detections.*,soundfiles.data_collection_id FROM detections JOIN soundfiles ON detections.start_file = soundfiles.id 
           > WHERE detections.procedure = 37 AND detections.start_file IN {FG}"
+        blank_query:
+            > "SELECT DISTINCT detections.* FROM detections JOIN bins_detections on bins_detections.detections_id = detections.id JOIN bins on bins.id = bins_detections.bins_id LIMIT 0"
 Job:
     FormatFG:
         parameters:
@@ -16,19 +18,21 @@ Job:
             difftime_limit: 3600
             methodID: makara-query
             methodvers: v1-0
+            #methodID: pampgdb-standard-pullfg
+            #methodvers: v1-3
             methodID2m: matlabdecimate
             methodvers2m: V1s1
             #target_samp_rate: 4096
-            target_samp_rate: 8192
-            storage_service: gcp
+            target_samp_rate: 16384
+            #storage_service: gcp
             file_groupID: 
                 #- AL18_AU_NM01
                 - SWFSC_BCN_20160824_PASCAL_006
         arguments:
             hard_rerun: n
-            prestage_data: y
+            prestage_data: n
             #matlab workers seem to fail spontaneously, scale down to test if it helps.
-            parallel_matlab: y
+            parallel_matlab: 7
         descriptors:
             runtype: lib
             language: Python
@@ -38,7 +42,7 @@ Job:
         parameters:
             methodID: pampgdb-standard-pullgt
             methodvers: v1-4
-            query: [query_proc_37]
+            query: [blank_query]
             remove_proc_ovlp: n
             standardize_sig_code: n
         arguments:
@@ -49,13 +53,13 @@ Job:
     RavenViewDETx:
         parameters:
             methodID: rv-simple-w-metadata
-            methodvers: v1-17
+            methodvers: v1-18
         arguments:
-            fg_fill: n
+            fg_fill: y
             hard_rerun: n
             ignore_decimated: n
             randomize_order: n
-            stage_data: T:/DecimatedWaves
+            stage_data: n
             stage_prefix: C:/Users/pam_user/INSTINCT/temp
         descriptors:
             runtype: lib

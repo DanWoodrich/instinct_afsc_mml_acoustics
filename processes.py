@@ -812,9 +812,6 @@ class FormatFG(INSTINCT_process):
         
         FG['StartTime'] = pd.to_datetime(FG['StartTime'], format='%y%m%d-%H%M%S')
 
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
-
         if "difftime_limit" in self.parameters:
             difftime_lim = int(self.parameters["difftime_limit"])
         else:
@@ -824,9 +821,6 @@ class FormatFG(INSTINCT_process):
 
         #use this to determine later if temp path was used
         file_read_path = None
-
-        #import code
-        #code.interact(local=dict(globals(), **locals()))
             
         FG['FullPath'] = FG['FullPath'].astype(str)
         
@@ -904,6 +898,9 @@ class FormatFG(INSTINCT_process):
 
         #and self.parameters['methodID2m'] == 'matlabdecimate'
         if 'decimate_data' in self.parameters and self.parameters['decimate_data'] == 'y':
+            
+            #import code
+            #code.interact(local=dict(globals(), **locals()))
 
             file_read_path = PARAMSET_GLOBALS['SF_raw'] if file_read_path==None else file_read_path
 
